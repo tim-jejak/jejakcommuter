@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>jejakcommuter</title>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#ECEFF2; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#14202B; --ink-2:#4C5A68; --line:#CFD6DD;
   --btn:#14202B; --btn-ink:#FFFFFF; --urgent:#B3261E; --urgent-ink:#FFFFFF;
   --warn-bg:#FFEFB8; --warn-ink:#4A3500; --warn-line:#D9B73F; --ok:#1D7A4A; --stop:#8A3B12;
-  --f-body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
@@ -32,27 +32,56 @@ h3{margin:12px 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.0
 p{margin:6px 0}
 #map{position:absolute;inset:0}
 .note{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);border-radius:10px;padding:7px 9px;font-size:13.5px;margin:6px 0}
-#panel{position:absolute;z-index:5;left:max(12px,env(safe-area-inset-left,0px));top:max(12px,env(safe-area-inset-top,0px));
-  width:min(420px,calc(100% - 24px));max-height:calc(100% - 24px);display:flex;flex-direction:column;
-  background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.2);overflow:hidden}
+html{overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;height:auto;width:100%}
+#left{position:absolute;z-index:5;left:max(12px,env(safe-area-inset-left,0px));top:max(12px,env(safe-area-inset-top,0px));width:min(420px,calc(100% - 24px));max-height:calc(100% - 24px);display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.2);pointer-events:auto}
+#search{position:relative;z-index:2;flex:none}
+#results{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;overflow:hidden}
+.rh{display:none}
+.rb{overflow:auto;min-height:0;padding:4px 16px 16px;overscroll-behavior:contain;flex:1}
+#sumbar{display:none;align-items:center;gap:8px;padding:8px 8px 8px 16px;min-height:60px}
+#sumMain{flex:1;min-width:0;border:none;background:transparent;text-align:left;padding:8px 0;font-weight:700;font-size:15.5px}
+#sumMain #sumTxt{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sumbar .sumed{flex:none;font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 13px;background:var(--surface-2);font-weight:700}
+.acct{flex:none;width:42px;height:42px;border-radius:50%;border:none;background:var(--btn);color:var(--btn-ink);display:flex;align-items:center;justify-content:center;padding:0}
+#row2{display:contents}
+#clock{display:none!important}
+#qbar,.oph{display:none}
+.oph{align-items:center;justify-content:space-between;padding:10px 8px 0 16px}
+.oph strong{font-size:16px}
+.xbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;justify-content:center;padding:0}
+#qbar{align-items:center;gap:6px;padding:6px 6px 6px 8px}
+#qMain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:none;background:transparent;text-align:left;padding:8px;font-size:16px;color:var(--ink-2);min-height:40px}
+#qbar .acct,#sumbar .acct{width:38px;height:38px}
+#uiSize{display:flex;gap:8px}
+#uiSize button{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;white-space:nowrap;padding:0 4px}
+#uiSize button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+#search>*,#results .rh,#results .rb,#chips .chip>*,#layers>summary,#layers .lp,#banner>*,#urgent>*,.sheet-in{zoom:var(--ui,.85)}
+#results[data-state="peek"] .rh{border-bottom:none}
+#banner .bmini{display:none}
+#banner #bannerMin{margin-left:auto;border-color:transparent;text-decoration:underline}
+#banner.min{width:auto;padding:6px 12px;cursor:pointer;border-radius:999px}
+#banner.min #bannerTxt,#banner.min #bannerBtn,#banner.min #bannerMin{display:none}
+#banner.min .bmini{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ph{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 10px;border-bottom:1px solid var(--line);gap:8px}
 .ph strong{font-size:18px;letter-spacing:-.01em}
 .tag{font-size:11px;border:1px solid var(--line);padding:1px 6px;border-radius:3px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;margin-left:6px}
-.pc{padding:12px 16px 16px;overflow:auto;min-height:0}
+.pc{padding:12px 16px 16px}
 .row{display:flex;gap:6px;align-items:center}
 .fld{position:relative;flex:1;min-width:0}
 .fld label{position:absolute;left:13px;top:6px;font-size:10.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
 .fld input{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:20px 12px 6px;min-height:54px;font-size:16px}
 .sq{flex:none;width:40px;height:46px;border:1px solid var(--line);background:var(--surface);border-radius:10px;font-size:12px;line-height:1.1;padding:0}
 .sq.on{background:var(--btn);color:var(--btn-ink)}
-.sug{position:absolute;left:0;right:0;top:100%;z-index:10;background:var(--surface);border:1px solid var(--ink);border-radius:4px;margin-top:2px;max-height:240px;overflow:auto}
+.sug{position:absolute;left:0;right:0;top:100%;z-index:10;background:var(--surface);border:1px solid var(--ink);border-radius:12px;margin-top:4px;max-height:min(240px,35vh);overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .sug[hidden]{display:none}
 .sug button{display:block;width:100%;text-align:left;border:none;border-bottom:1px solid var(--line);background:transparent;padding:8px 10px}
 .sug .s2{display:block;font-size:12.5px;color:var(--ink-2)}
-.fields{display:grid;grid-template-columns:minmax(0,1fr) 46px;grid-template-rows:auto auto;gap:8px 8px;margin-bottom:10px}
+.fields{display:grid;grid-template-columns:minmax(0,1fr) 42px;grid-template-rows:auto auto;gap:8px 8px;margin-bottom:10px}
 .fields .fld:nth-of-type(1){grid-column:1;grid-row:1}
 .fields .fld:nth-of-type(2){grid-column:1;grid-row:2}
-.fields .swapb{grid-column:2;grid-row:1/3;align-self:stretch;margin:8px 0;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0}
+.fields .swapb{grid-column:2;grid-row:1/3;align-self:center;justify-self:center;width:42px;height:42px;border:1px solid var(--line);background:var(--surface-2);border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0}
 .ibs{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:4px}
 .ib{border:none;background:var(--surface-2);color:var(--ink);border-radius:8px;font-size:12.5px;font-weight:700;min-height:34px;padding:0 10px}
 .ib.on{background:var(--btn);color:var(--btn-ink)}
@@ -110,26 +139,72 @@ p{margin:6px 0}
 .ui.on{border-color:var(--urgent);box-shadow:inset 3px 0 0 var(--urgent)}
 .uf{border-top:1px solid var(--line);padding:8px 12px;font-size:13px;background:var(--surface-2)}
 .uf b{font-size:18px;font-family:var(--f-mono)}
-#sheet{position:fixed;inset:0;z-index:20;background:rgba(10,15,20,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px}
-#sheet[hidden]{display:none}
+.calls{display:flex;gap:8px}
+.call{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 4px;min-height:52px}
+.call span{font-size:12.5px;color:var(--ink-2)}
+.call:active{background:var(--surface-2)}
+#sheet,.modal{position:fixed;inset:0;z-index:20;background:rgba(10,15,20,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+#sheet[hidden],.modal[hidden]{display:none}
 .sheet-in{width:min(520px,100%);max-height:86%;overflow:auto;background:var(--surface);border:1px solid var(--ink);border-radius:5px;padding:12px}
 .lrow{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#1F5FB5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(31,95,181,.35)}
 .maplibregl-popup-content{font-family:var(--f-body);font-size:13.5px;color:#14202B;padding:10px 12px}
 @media (max-width:760px){
   body{font-size:16px}
-  #panel{left:0;right:0;top:auto;bottom:0;width:100%;max-height:60%;border-radius:20px 20px 0 0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(0,0,0,.25)}
-  .ph{position:relative;padding-top:18px}
-  .ph::before{content:"";position:absolute;top:7px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:var(--line)}
-  .ph strong{font-size:20px}
-  #chips{left:auto;right:max(12px,env(safe-area-inset-right,0px));max-width:calc(100% - 110px)}
+  #left{display:contents}
+  #search{position:absolute;z-index:6;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));top:max(10px,env(safe-area-inset-top,0px))}
+  #search .ph{padding:10px 10px 0 16px}
+  #search .ph strong{font-size:18px}
+  #search .pc{padding:10px 12px 12px}
+  .s-idle .ph,.s-idle #sform,.s-idle #sumbar,.s-idle .oph{display:none}
+  .s-idle #qbar{display:flex}
+  .s-open .ph,.s-open #qbar,.s-open #sumbar{display:none}
+  .s-open .oph{display:flex}
+  .s-compact .ph,.s-compact #sform,.s-compact #qbar,.s-compact .oph{display:none}
+  .s-compact #sumbar{display:flex}
+  #chips .small{display:none}
+  .fields{margin-bottom:8px}
+  #results{position:fixed;z-index:5;left:0;right:0;bottom:0;top:auto;width:auto;max-height:none;flex:none;height:var(--sh,76px);border-radius:20px 20px 0 0;border-width:1px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.25);transition:height .22s ease}
+  #results.drag{transition:none}
+  .rh{display:block;flex:none;touch-action:none;cursor:grab;padding:8px 16px 10px;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none}
+  .grip{display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 8px}
+  .rt{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .rt b{font-size:17px}
+  .rb{padding:6px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+  #results{padding-bottom:env(safe-area-inset-bottom,0px)}
+  #row2{position:absolute;z-index:4;display:flex;flex-wrap:nowrap;gap:6px;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));top:calc(var(--topH,60px) + 8px);pointer-events:none}
+  #chips{display:contents}
+  #row2>*,#chips>*{flex:1 1 auto;min-width:0;pointer-events:auto;position:relative}
+  html[data-ui="3"] #row2{flex-wrap:wrap}
+  html[data-ui="3"] #row2>*,html[data-ui="3"] #chips>*{flex:1 1 calc(50% - 4px)}
+  #layers{order:1;right:auto;left:auto;top:auto;bottom:auto;max-width:none;padding:0;border-radius:10px;display:block}
+  #layers>summary{min-height:36px;line-height:36px;display:block;text-align:center;padding:0 6px!important;list-style:none;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #layers>summary::-webkit-details-marker{display:none}
+  #layers .lp{display:none}
+  #layers[open] .lp{display:block;position:absolute;left:0;top:calc(100% + 6px);width:min(300px,calc(100vw - 20px));max-height:calc(100vh - var(--topH,60px) - 90px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:9}
+  #layers[open]{z-index:9}
+  #banner{order:2;bottom:auto;left:auto;top:auto;width:auto;transform:none;font-size:13px;padding:0 8px;gap:6px 10px;min-height:36px;align-items:center;justify-content:center}
+  #banner.min{width:auto;padding:0 8px;border-radius:10px;justify-content:center;text-align:center}
+  #banner:not(.min){position:absolute;left:0;right:0;top:calc(100% + 8px);flex:none;padding:8px 10px;z-index:8}
+  #chips .chip{min-height:36px;white-space:nowrap;padding:0 6px;overflow:hidden;font-size:12px}
+  #wxChip,#accChip{display:block;line-height:36px;text-align:center;text-overflow:ellipsis}
+  #wxChip[hidden],#accChip[hidden]{display:none}
+  #chips select{font-size:12px}
+  #banner.min .bmini{font-size:12px}
+  #chips label.chip{order:3}
+  #wxChip{order:4}
+  #accChip{order:5}
+  #row2>#chips>#accChip{flex:0 0 auto;padding:0 8px}
+  #chips label.chip select{max-width:none;width:100%;appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center;font-weight:700}
+  #chips label.chip{padding:0 4px}
+  #banner button{padding:5px 9px;font-size:12.5px}
+  .maplibregl-ctrl-bottom-right{bottom:var(--shpx,76px);transition:bottom .22s ease}
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group{display:none}
+  html[data-sheet="full"] .maplibregl-ctrl-bottom-right{display:none}
+  #results{border:none;box-shadow:0 -1px 0 var(--line),0 -4px 14px rgba(0,0,0,.14)}
+  #results[data-state="peek"] .rb{display:none}
   #chips .spd{display:none}
-  #layers{right:auto;left:max(12px,env(safe-area-inset-left,0px));top:max(12px,env(safe-area-inset-top,0px));bottom:auto;max-width:calc(100% - 24px)}
-  #layers:not([open]){padding:0}
-  #layers:not([open]) summary{padding:8px 12px!important;min-height:34px;font-size:13px}
-  #banner{bottom:auto;top:58px;font-size:13px;padding:7px 10px;gap:4px 10px}
-  #banner button{padding:4px 8px;font-size:12.5px}
-  #urgentBtn{top:36%}
+  #urgentBtn{top:56%}
   .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:10px -16px 2px;padding:0 16px}
   .filters::-webkit-scrollbar{display:none}
   .opt-big{font-size:22px}
@@ -138,19 +213,21 @@ p{margin:6px 0}
 </head>
 <body>
 <div id="map" aria-label="Peta"></div>
+<div id="row2">
 <div id="chips">
   <label class="chip"><span class="small">Jam</span>
     <select id="selTime" aria-label="Jam simulasi">
       <option value="now">Sekarang</option><option value="450">07:30</option><option value="720">12:00</option>
       <option value="1050">17:30</option><option value="1290">21:30</option><option value="1380">23:00</option><option value="120">02:00</option>
     </select></label>
-  <span class="chip mono" id="clock">--:--</span>
+  <span class="chip mono" id="clock" hidden>--:--</span>
   <label class="chip spd"><span class="small">Kecepatan animasi</span>
     <select id="selSpeed" aria-label="Kecepatan animasi"><option value="1">1x</option><option value="30" selected>30x</option><option value="120">120x</option></select></label>
   <span class="chip" id="accChip" hidden></span>
   <span class="chip" id="wxChip" hidden></span>
 </div>
-<details id="layers" open aria-label="Lapisan peta"><summary style="cursor:pointer;font-weight:700;padding:2px 0">Tampilan peta</summary>
+<details id="layers" open aria-label="Lapisan peta"><summary style="cursor:pointer;font-weight:700;padding:2px 0">Lapisan</summary>
+<div class="lp">
   <label><input type="checkbox" data-l="krl" checked><i style="background:#E4002B"></i>KRL</label>
   <label><input type="checkbox" data-l="mrt" checked><i style="background:#1A237E"></i>MRT / LRT / Whoosh</label>
   <label><input type="checkbox" data-l="brt" checked><i style="background:#F39C12"></i>TJ koridor BRT</label>
@@ -161,33 +238,59 @@ p{margin:6px 0}
   <label><input type="checkbox" id="detailMap"><i style="background:#999"></i>Detail peta (lebih berat)</label>
   <label><input type="checkbox" data-l="veh"><i style="background:#14202B;height:8px;width:8px;border-radius:50%"></i>Animasi kendaraan (simulasi, berat)</label>
   <div class="small" style="max-width:180px;margin-top:3px">Posisi kendaraan hanya simulasi dari perkiraan jarak antar kendaraan, bukan lokasi asli.</div>
+</div>
 </details>
-<div id="banner" hidden role="status"><span id="bannerTxt"></span><button type="button" id="bannerBtn">Lihat jalur yang masih jalan</button></div>
+<div id="banner" hidden role="status"><span id="bannerTxt"></span><button type="button" id="bannerBtn">Lihat jalur yang masih jalan</button><button type="button" id="bannerMin">Kecilkan</button><span class="bmini">Info Jecom</span></div>
+</div>
+<div id="about" class="modal" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="abT">
+    <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
+    <h3>Ukuran tampilan</h3>
+    <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
+    <h3>Akun</h3>
+    <p class="small" style="font-size:14px">Fitur masuk akun belum tersedia. Untuk sekarang, rute tersimpan hanya ada di perangkat ini.</p>
+    <h3>Sumber data dan lisensi</h3>
+    <p class="small" id="foot" style="font-size:13.5px"></p>
+    <h3>Tentang</h3>
+    <p class="small" style="font-size:13.5px">jejakcommuter (Jecom) masih prototipe. Perkiraan waktu dan jadwal bukan data resmi operator.</p>
+  </div>
+</div>
 
-<aside id="panel" aria-label="Rencana perjalanan">
-  <div class="ph"><div><strong>jejakcommuter</strong><span class="tag">prototipe</span></div></div>
-  <div class="pc">
+
+<div id="left">
+ <section id="search" class="card s-idle" aria-label="Rencana perjalanan">
+  <div class="ph"><div><strong>jejakcommuter</strong><span class="tag">prototipe</span></div><button type="button" class="acct" aria-label="Akun dan pengaturan" title="Akun dan pengaturan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button></div>
+  <div class="oph"><strong>Rute</strong><button type="button" class="xbtn" id="qClose" aria-label="Tutup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div id="qbar"><button type="button" id="qMain" aria-label="Cari tujuan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Mau ke mana?</span></button><button type="button" class="acct" aria-label="Akun dan pengaturan" title="Akun dan pengaturan"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button></div>
+  <div id="sumbar"><button type="button" id="sumMain" aria-label="Ubah asal dan tujuan"><span id="sumTxt"></span></button><button type="button" class="sumed" id="sumEdit">Ubah</button><button type="button" class="acct" aria-label="Akun dan pengaturan" title="Akun dan pengaturan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button></div>
+  <div class="pc" id="sform">
     <div class="fields">
-      <div class="fld"><label for="inFrom">Dari</label><input id="inFrom" type="text" autocomplete="off" placeholder="Ketik nama tempat"><div class="ibs"><button type="button" class="ib" id="gpsFrom" title="Pakai lokasi saya">GPS</button><button type="button" class="ib" id="pickFrom" title="Pilih di peta">Peta</button></div><div class="sug" id="sugFrom" hidden></div></div>
+      <div class="fld"><label for="inFrom">Dari</label><input id="inFrom" type="text" autocomplete="off" placeholder="Dari mana?"><div class="ibs"><button type="button" class="ib" id="gpsFrom" title="Pakai lokasi saya">GPS</button><button type="button" class="ib" id="pickFrom" title="Pilih di peta">Peta</button></div><div class="sug" id="sugFrom" hidden></div></div>
       <button type="button" class="swapb" id="swap" aria-label="Tukar asal dan tujuan" title="Tukar asal dan tujuan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v16M8 4L4 8M8 4l4 4"/><path d="M16 20V4M16 20l-4-4M16 20l4-4"/></svg></button>
-      <div class="fld"><label for="inTo">Ke</label><input id="inTo" type="text" autocomplete="off" placeholder="Ketik tujuan"><div class="ibs"><button type="button" class="ib" id="pickTo" title="Pilih di peta">Peta</button></div><div class="sug" id="sugTo" hidden></div></div>
+      <div class="fld"><label for="inTo">Ke</label><input id="inTo" type="text" autocomplete="off" placeholder="Mau ke mana?"><div class="ibs"><button type="button" class="ib" id="pickTo" title="Pilih di peta">Peta</button></div><div class="sug" id="sugTo" hidden></div></div>
     </div>
     <div class="btnrow">
       <button type="button" class="btn primary" id="go">Cari rute</button>
-      <button type="button" class="btn" id="demo">Contoh: Kranji ke Sudirman</button>
+      <button type="button" class="btn" id="demo">Contoh</button>
     </div>
     <div id="pickHint" class="note" hidden></div>
     <div id="accNote" class="note" hidden></div>
+  </div>
+ </section>
+ <section id="results" class="card" aria-label="Hasil rute" data-state="peek">
+  <div class="rh" id="rhandle" role="button" tabindex="0" aria-label="Geser atau ketuk untuk membesarkan atau mengecilkan daftar rute"><span class="grip"></span><div class="rt"><b id="rtitle">jejakcommuter</b><span class="small" id="rsub">Rute tersimpan dan info</span></div></div>
+  <div class="rb" id="rbody">
     <div id="out"></div>
     <h3>Rute tersimpan</h3>
     <div id="saved"></div>
-    <p class="small" id="foot"></p>
   </div>
-</aside>
+ </section>
+</div>
 
 <button type="button" id="urgentBtn" aria-expanded="false" aria-controls="urgent">Urgent</button>
 <aside id="urgent" aria-hidden="true">
   <div class="uh"><span>Menu urgent</span><button type="button" class="btn" id="uClose">Tutup</button></div>
+  <div class="small" id="uAcc" hidden style="padding:6px 12px;border-bottom:1px solid var(--line)"></div>
   <div class="utabs" role="tablist">
     <button type="button" role="tab" data-u="halte" aria-selected="true">Halte</button>
     <button type="button" role="tab" data-u="mm" aria-selected="false">Minimarket</button>
@@ -195,7 +298,7 @@ p{margin:6px 0}
     <button type="button" role="tab" data-u="masjid" aria-selected="false">Masjid</button>
   </div>
   <div class="ub" id="ub"></div>
-  <div class="uf">Darurat polisi: <b>110</b></div>
+  <div class="uf"><div class="small" style="margin-bottom:6px">Ketuk untuk membuka aplikasi telepon (belum menelepon)</div><div class="calls"><a class="call" href="tel:110"><span>Polisi</span><b>110</b></a><a class="call" href="tel:119"><span>Ambulans</span><b>119</b></a><a class="call" href="tel:113"><span>Pemadam</span><b>113</b></a></div></div>
 </aside>
 
 <div id="sheet" hidden>
@@ -412,7 +515,7 @@ function setPoint(w,p,run){S[w]=p;$(w==='from'?'#inFrom':'#inTo').value=p.label|
   if(run&&S.from&&S.to)plan();else if(!S.to&&w==='from')map.easeTo({center:[p.lon,p.lat],zoom:Math.max(map.getZoom(),13)});}
 function fmtFeat(f){const p=f.properties||{};const street=[p.street,p.housenumber].filter(Boolean).join(' ');const name=p.name||street||p.district||p.city||'Tempat';const sub=[name!==street?street:'',p.district,p.city||p.county].filter(Boolean).join(', ');return {name,sub};}
 async function reverseLabel(w){const p=S[w];if(!p)return;try{const r=await fetch('https://photon.komoot.io/reverse?lat='+p.lat+'&lon='+p.lon);const j=await r.json();const f=j.features&&j.features[0];if(f&&S[w]===p){const x=fmtFeat(f);p.label=x.name+(x.sub?', '+x.sub:'');$(w==='from'?'#inFrom':'#inTo').value=p.label;}}catch(e){}}
-function startPick(w){S.pick=w;map.getCanvas().style.cursor='crosshair';$('#pickFrom').classList.toggle('on',w==='from');$('#pickTo').classList.toggle('on',w==='to');const h=$('#pickHint');h.hidden=false;h.textContent='Ketuk peta untuk menentukan titik '+(w==='from'?'asal':'tujuan')+'.';}
+function startPick(w){if(window.__onPick)window.__onPick();S.pick=w;map.getCanvas().style.cursor='crosshair';$('#pickFrom').classList.toggle('on',w==='from');$('#pickTo').classList.toggle('on',w==='to');const h=$('#pickHint');h.hidden=false;h.textContent='Ketuk peta untuk menentukan titik '+(w==='from'?'asal':'tujuan')+'.';}
 function endPick(){S.pick=null;map.getCanvas().style.cursor='';$('#pickFrom').classList.remove('on');$('#pickTo').classList.remove('on');$('#pickHint').hidden=true;}
 $('#pickFrom').onclick=()=>S.pick==='from'?endPick():startPick('from');$('#pickTo').onclick=()=>S.pick==='to'?endPick():startPick('to');
 let meMk=null;
@@ -425,7 +528,7 @@ function startWatch(cb){
   if(watchId!==null)return;
   watchId=navigator.geolocation.watchPosition(pos=>{S.fix={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy,ts:Date.now()};
       if(!S.gps){applyFix(true);const cbs=watchCbs;watchCbs=[];cbs.forEach(f=>f(S.gps));}},
-    err=>{if(err.code===1){stopWatch();$('#out').innerHTML='<p class="note">Lokasi tidak diizinkan. Izinkan lokasi di browser, atau ketik atau pilih titik di peta.</p>';}},
+    err=>{if(err.code===1){stopWatch();watchCbs=[];if(window.__silentLoc)return;$('#out').innerHTML='<p class="note">Lokasi tidak diizinkan. Izinkan lokasi di browser, atau ketik atau pilih titik di peta.</p>';}},
     {enableHighAccuracy:true,maximumAge:0,timeout:20000});
   scheduleApply();}
 function stopWatch(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}clearTimeout(applyTimer);}
@@ -600,7 +703,7 @@ function applyDim(on){if(!mapReady)return;S.dim=on;
   ['st-rail-l','st-tj-l'].forEach(id=>map.setPaintProperty(id,'text-opacity',on?.15:1));
   if(on&&S.vehShown){map.getSource('veh').setData(emptyFC);S.vehShown=false;}}
 function fitFeatures(fs){const b=new maplibregl.LngLatBounds();fs.forEach(f=>f.coords.forEach(c=>b.extend(c)));if(b.isEmpty())return;const narrow=window.innerWidth<=760;
-  map.fitBounds(b,{padding:narrow?{top:70,bottom:Math.round(window.innerHeight*.5),left:30,right:30}:{top:70,bottom:70,left:470,right:70},maxZoom:16,duration:700});}
+  map.fitBounds(b,{padding:narrow?{top:(window.__topH2||window.__topH||70)+16,bottom:Math.round(window.innerHeight*.46)+20,left:30,right:30}:{top:70,bottom:70,left:470,right:70},maxZoom:16,duration:700});}
 
 /* ---------- hasil ---------- */
 const FILT=[['all','Semua'],['motor','Motor'],['mobil','Mobil'],['walk','Jalan kaki'],['krl','KRL'],['mrt','MRT'],['lrt','LRT'],['tj','TransJakarta'],['whoosh','Whoosh']];
@@ -739,6 +842,66 @@ renderSaved();loadWx();onMinute(true);requestAnimationFrame(frame);
 window.__jc={S,plan,map,LINES,ST,dijk,MASKS,stationsNear,legsFrom,WALKADJ,POS,NS};
 };
 window.__tryLoad();
+</script>
+<script>
+(function(){
+const $=s=>document.querySelector(s),mq=matchMedia('(max-width:760px)');
+const R=$('#results'),H=$('#rhandle'),SE=$('#search'),out=$('#out'),sum=$('#sumbar');
+const probe=document.createElement('div');probe.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden';document.body.appendChild(probe);
+let state='peek';
+const heights=()=>({peek:Math.round(H.getBoundingClientRect().height+1+(parseFloat(getComputedStyle(probe).paddingBottom)||0)),half:Math.round(innerHeight*.46),full:Math.max(240,Math.round(innerHeight-(window.__topH||120)-14))});
+function setSh(v){R.style.setProperty('--sh',v);document.documentElement.style.setProperty('--shpx',v);}
+function setSheet(s){state=s;R.classList.remove('drag');R.dataset.state=s;document.documentElement.dataset.sheet=s;setSh(heights()[s]+'px');}
+function setSearch(m){SE.classList.remove('s-idle','s-open','s-compact');SE.classList.add('s-'+m);if(m==='compact')$('#sumTxt').textContent=($('#inFrom').value||'Asal')+'  \u2192  '+($('#inTo').value||'Tujuan');}
+function compact(on){setSearch(on?'compact':'open');}
+let gpsAsked=false;
+async function autoFrom(){if($('#inFrom').value)return;let st='prompt';try{if(navigator.permissions)st=(await navigator.permissions.query({name:'geolocation'})).state;}catch(_){}
+  if(st==='denied')return;if(st==='prompt'&&gpsAsked)return;gpsAsked=true;window.__silentLoc=true;$('#gpsFrom').click();}
+$('#gpsFrom').addEventListener('click',e=>{if(e.isTrusted)window.__silentLoc=false;},true);
+function openSearch(){setSearch('open');setSheet('peek');autoFrom();setTimeout(()=>{const f=$('#inTo');if(f)f.focus();},60);}
+$('#qMain').addEventListener('click',openSearch);
+$('#qClose').addEventListener('click',()=>{setSearch(out.querySelector('.opt')?'compact':'idle');});
+window.__onPick=()=>{if(mq.matches){setSheet('peek');setSearch('open');}};
+let sy=0,sh=0,drag=false,moved=0,lastY=0,lastT=0,vel=0;
+H.addEventListener('pointerdown',e=>{if(!mq.matches)return;drag=true;sy=lastY=e.clientY;sh=R.getBoundingClientRect().height;moved=0;lastT=e.timeStamp;vel=0;R.classList.add('drag');try{H.setPointerCapture(e.pointerId);}catch(_){}});
+H.addEventListener('pointermove',e=>{if(!drag)return;const h=heights();const nh=Math.max(h.peek,Math.min(h.full,sh+(sy-e.clientY)));setSh(nh+'px');vel=(lastY-e.clientY)/Math.max(1,e.timeStamp-lastT);lastY=e.clientY;lastT=e.timeStamp;moved=Math.max(moved,Math.abs(sy-e.clientY));});
+function endDrag(e){if(!drag)return;drag=false;R.classList.remove('drag');const h=heights(),cur=R.getBoundingClientRect().height;
+  if(moved<6){setSheet(state==='peek'?'half':'peek');return;}
+  const order=['peek','half','full'];let tg;
+  const proj=cur+vel*180;tg=order.reduce((a,b)=>Math.abs(h[a]-proj)<Math.abs(h[b]-proj)?a:b);
+  setSheet(tg);}
+H.addEventListener('pointerup',endDrag);H.addEventListener('pointercancel',endDrag);
+H.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(state==='peek'?'half':'peek');}});
+$('#sumMain').addEventListener('click',()=>setSearch('open'));$('#sumEdit').addEventListener('click',()=>setSearch('open'));
+let hadOpt=false;
+function titles(){const n=out.querySelectorAll('.opt').length;
+  if(n){const f=out.querySelector('.opt.sel .opt-big')||out.querySelector('.opt .opt-big');$('#rtitle').textContent=n+' pilihan rute';$('#rsub').textContent=f?'tercepat/terpilih: '+f.textContent:'';}
+  else if(out.querySelector('.status')){$('#rtitle').textContent='Mencari rute\u2026';$('#rsub').textContent='';}
+  else if(out.textContent.trim()){$('#rtitle').textContent='Info';$('#rsub').textContent='';}
+  else{$('#rtitle').textContent='jejakcommuter';$('#rsub').textContent='Rute tersimpan dan info';}}
+new MutationObserver(()=>{const hasOpt=!!out.querySelector('.opt'),nonEmpty=out.textContent.trim().length>0;titles();if(!mq.matches){hadOpt=hasOpt;return;}
+  if(hasOpt&&!hadOpt){setSheet('half');compact(true);}
+  else if(!hasOpt&&nonEmpty){if(state==='peek')setSheet('half');compact(false);}
+  hadOpt=hasOpt;}).observe(out,{childList:true,subtree:true});
+function measure(){const b=SE.getBoundingClientRect().bottom;window.__topH=b;const r2=$('#row2');window.__topH2=(mq.matches&&r2)?r2.getBoundingClientRect().bottom:b;document.documentElement.style.setProperty('--topH',b+'px');setSheet(state);}
+if(window.ResizeObserver){const ro=new ResizeObserver(measure);ro.observe(SE);ro.observe($('#row2'));ro.observe(H);}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{measure();});
+addEventListener('resize',measure);measure();
+const SCALE={1:.85,2:1,3:1.18};
+function applyUI(n){n=SCALE[n]?n:1;document.documentElement.style.setProperty('--ui',SCALE[n]);document.documentElement.dataset.ui=String(n);document.querySelectorAll('#uiSize button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.u==n)));try{localStorage.setItem('jc_ui',n);}catch(_){}requestAnimationFrame(()=>requestAnimationFrame(measure));}
+document.querySelectorAll('#uiSize button').forEach(b=>b.addEventListener('click',()=>applyUI(b.dataset.u)));
+let n0=1;try{n0=+localStorage.getItem('jc_ui')||1;}catch(_){}
+applyUI(n0);
+new MutationObserver(()=>{const c=$('#accChip'),u=$('#uAcc'),m=(c.textContent||'').match(/±\s*(\d+)/);if(!m){u.hidden=true;return;}const n=+m[1];u.hidden=false;u.textContent='Akurasi lokasi: ±'+n+' m'+(n>100?' (kurang akurat, hasil terdekat bisa meleset)':'');}).observe($('#accChip'),{childList:true,subtree:true,characterData:true});
+const bn=$('#banner');
+const lay=$('#layers');
+function syncMobile(){if(mq.matches){lay.open=false;bn.classList.add('min');}setSheet(state);}
+if(mq.addEventListener)mq.addEventListener('change',syncMobile);else mq.addListener(syncMobile);
+syncMobile();
+document.addEventListener('click',e=>{if(mq.matches&&lay.open&&!lay.contains(e.target))lay.open=false;});$('#bannerMin').addEventListener('click',e=>{e.stopPropagation();bn.classList.add('min');});
+bn.addEventListener('click',()=>{if(bn.classList.contains('min'))bn.classList.remove('min');});
+document.querySelectorAll('.acct').forEach(b=>b.addEventListener('click',()=>{$('#about').hidden=false;}));$('#abClose').addEventListener('click',()=>{$('#about').hidden=true;});$('#about').addEventListener('click',e=>{if(e.target.id==='about')$('#about').hidden=true;});
+})();
 </script>
 </body>
 </html>
