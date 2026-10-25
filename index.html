@@ -129,7 +129,8 @@ body{position:fixed;inset:0;height:auto;width:100%}
 #urgentBtn[hidden]{display:none}
 #urgent{position:absolute;z-index:6;top:0;right:0;bottom:0;width:min(350px,92%);background:var(--surface);border-left:2px solid var(--urgent);display:flex;flex-direction:column;transform:translateX(105%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s}
 #urgent.open{transform:none;visibility:visible;transition:transform .2s ease}
-.uh{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:700}
+.ugrip{display:none;position:absolute;top:6px;left:50%;width:42px;height:5px;margin-left:-21px;border-radius:3px;background:var(--line);zoom:1!important}
+.uh{position:relative;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:700}
 .utabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
 .utabs button{border:none;background:transparent;padding:10px 2px;font-size:12.5px;border-bottom:3px solid transparent}
 .utabs button[aria-selected="true"]{border-bottom-color:var(--urgent);font-weight:700}
@@ -207,6 +208,11 @@ body{position:fixed;inset:0;height:auto;width:100%}
   #urgentBtn{top:56%}
   #urgent{z-index:12;top:auto;left:0;right:0;bottom:0;width:100%;height:62%;border-left:none;border-top:2px solid var(--urgent);border-radius:18px 18px 0 0;transform:translateY(105%);box-shadow:0 -4px 20px rgba(0,0,0,.3)}
   #urgent.open{transform:none}
+  #urgent{height:var(--uhh,62%);transition:transform .2s ease,visibility 0s linear .2s,height .22s ease}
+  #urgent.open{transition:transform .2s ease,height .22s ease}
+  #urgent.drag{transition:none!important}
+  #urgent .uh{touch-action:none;cursor:grab;padding-top:16px}
+  #urgent .ugrip{display:block}
   .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:10px -16px 2px;padding:0 16px}
   .filters::-webkit-scrollbar{display:none}
   .opt-big{font-size:22px}
@@ -291,7 +297,7 @@ body{position:fixed;inset:0;height:auto;width:100%}
 
 <button type="button" id="urgentBtn" aria-expanded="false" aria-controls="urgent">Urgent</button>
 <aside id="urgent" aria-hidden="true">
-  <div class="uh"><span>Menu urgent</span><button type="button" class="btn" id="uClose">Tutup</button></div>
+  <div class="uh"><span class="ugrip"></span><span>Menu urgent</span><button type="button" class="btn" id="uClose">Tutup</button></div>
   <div class="small" id="uAcc" hidden style="padding:6px 12px;border-bottom:1px solid var(--line)"></div>
   <div class="utabs" role="tablist">
     <button type="button" role="tab" data-u="halte" aria-selected="true">Transum</button>
@@ -496,7 +502,7 @@ map.on('load',()=>{
   mapReady=true;applyVis();draw();
 });
 map.on('moveend',()=>{lastDraw=0;});
-map.on('click',e=>{if(!S.pick)return;const w=S.pick;endPick();setPoint(w,{lat:e.lngLat.lat,lon:e.lngLat.lng,label:'Titik di peta'},true);reverseLabel(w);});
+map.on('click',e=>{if(!S.pick){const ly=['st-rail','st-tj','poi'].filter(i=>map.getLayer(i));if(ly.length&&map.queryRenderedFeatures(e.point,{layers:ly}).length)return;if(S.urgentOn){setUrgent(false);return;}if(window.__mapTap)window.__mapTap();return;}const w=S.pick;endPick();setPoint(w,{lat:e.lngLat.lat,lon:e.lngLat.lng,label:'Titik di peta'},true);reverseLabel(w);});
 const lb=(L)=>'<span class="lb'+(['tj','brt'].includes(L.cls)?' dark':'')+'" style="background:'+L.col+'">'+esc(L.label)+'</span>';
 function stationPopup(id){id=+id;const s=ST[id],t=Math.floor(S.t);
   const ls=[...s.lines].map(i=>LINES[i]);
@@ -821,10 +827,10 @@ async function renderUrgent(){const {p,w}=posForUrgent(),t=Math.floor(S.t),ub=$(
 $('#ub').addEventListener('click',async e=>{if(e.target.id==='uRetry')return renderUrgent();const b=e.target.closest('.ui');if(!b)return;
   document.querySelectorAll('.ui').forEach(x=>x.classList.toggle('on',x===b));const {p}=posForUrgent();const target=$('#ub')._items[+b.dataset.i];
   const v=await valhalla(p,target,'pedestrian');S.focus={coords:v.coords};draw();const bb=new maplibregl.LngLatBounds();v.coords.forEach(c=>bb.extend(c));
-  map.fitBounds(bb,{padding:window.innerWidth<=760?{top:(window.__topH2||80)+16,bottom:Math.round(window.innerHeight*.62)+20,left:40,right:40}:{top:80,bottom:80,left:60,right:Math.min(380,window.innerWidth*.9)},maxZoom:17});});
+  map.fitBounds(bb,{padding:window.innerWidth<=760?{top:(window.__topH2||80)+16,bottom:Math.round($('#urgent').getBoundingClientRect().height)+20,left:40,right:40}:{top:80,bottom:80,left:60,right:Math.min(380,window.innerWidth*.9)},maxZoom:17});});
 function setUrgent(v){S.urgentOn=v;$('#urgent').classList.toggle('open',v);$('#urgent').setAttribute('aria-hidden',!v);$('#urgentBtn').setAttribute('aria-expanded',v);$('#urgentBtn').hidden=v;
   if(v){renderUrgent();locate(()=>S.urgentOn&&renderUrgent());}else{S.focus=null;draw();setPoi([]);}}
-$('#urgentBtn').onclick=()=>setUrgent(true);$('#uClose').onclick=()=>setUrgent(false);
+window.__closeUrgent=()=>setUrgent(false);$('#urgentBtn').onclick=()=>setUrgent(true);$('#uClose').onclick=()=>setUrgent(false);
 document.querySelectorAll('.utabs button').forEach(b=>b.onclick=()=>{S.utab=b.dataset.u;document.querySelectorAll('.utabs button').forEach(x=>x.setAttribute('aria-selected',x===b));renderUrgent();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#sheet').hidden)$('#sheet').hidden=true;else if(S.urgentOn)setUrgent(false);else if(S.pick)endPick();}});
 
@@ -884,6 +890,16 @@ function endDrag(e){if(!drag)return;drag=false;R.classList.remove('drag');const 
   const proj=cur+vel*180;tg=order.reduce((a,b)=>Math.abs(h[a]-proj)<Math.abs(h[b]-proj)?a:b);
   setSheet(tg);}
 H.addEventListener('pointerup',endDrag);H.addEventListener('pointercancel',endDrag);
+window.__mapTap=()=>{if(mq.matches&&out.querySelector('.opt')&&state!=='peek'){setSheet('peek');}if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();};
+(function(){const U=$('#urgent'),UH=U.querySelector('.uh');let d=false,y0=0,h0=0,ly=0,lt=0,v=0,mv=0;
+const stops=()=>({lo:Math.round(innerHeight*.38),mid:Math.round(innerHeight*.62),hi:Math.round(innerHeight*.9)});
+UH.addEventListener('pointerdown',e=>{if(!mq.matches||e.target.closest('button'))return;d=true;y0=ly=e.clientY;h0=U.getBoundingClientRect().height;lt=e.timeStamp;v=0;mv=0;U.classList.add('drag');try{UH.setPointerCapture(e.pointerId);}catch(_){}});
+UH.addEventListener('pointermove',e=>{if(!d)return;const s=stops();const nh=Math.max(120,Math.min(s.hi,h0+(y0-e.clientY)));U.style.setProperty('--uhh',nh+'px');v=(ly-e.clientY)/Math.max(1,e.timeStamp-lt);ly=e.clientY;lt=e.timeStamp;mv=Math.max(mv,Math.abs(y0-e.clientY));});
+function end(){if(!d)return;d=false;U.classList.remove('drag');const s=stops(),cur=U.getBoundingClientRect().height,proj=cur+v*180;
+  if(mv<6){return;}
+  if(proj<s.lo*.6){window.__closeUrgent&&window.__closeUrgent();U.style.removeProperty('--uhh');return;}
+  const tg=[s.lo,s.mid,s.hi].reduce((a,b)=>Math.abs(a-proj)<Math.abs(b-proj)?a:b);U.style.setProperty('--uhh',tg+'px');}
+UH.addEventListener('pointerup',end);UH.addEventListener('pointercancel',end);})();
 H.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(state==='peek'?'half':'peek');}});
 $('#sumMain').addEventListener('click',()=>setSearch('open'));$('#sumEdit').addEventListener('click',()=>setSearch('open'));
 let hadOpt=false;
