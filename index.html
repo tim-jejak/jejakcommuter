@@ -371,7 +371,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 17.52 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 18.27 WIB</p>
     <h3>Akun</h3>
     <p class="small" style="font-size:14px">Fitur masuk akun belum tersedia. Untuk sekarang, rute tersimpan hanya ada di perangkat ini.</p>
     <h3>Sumber data dan lisensi</h3>
@@ -674,7 +674,7 @@ function startWatch(cb){
 function stopWatch(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}clearTimeout(applyTimer);}
 /* pembaruan di latar belakang: tiap 1 detik bila rute sedang tampil, tiap 5 detik bila tidak. Halaman tidak dimuat ulang. */
 function scheduleApply(){clearTimeout(applyTimer);applyTimer=setTimeout(()=>{applyFix(false);scheduleApply();},S.opts.length?1000:5000);}
-function applyFix(first){const f=S.fix;if(!f||(f.ts===lastApplied&&!first))return;lastApplied=f.ts;
+function applyFix(first){const f=S.fix;if(f&&!wxPos&&window.loadWx)setTimeout(()=>window.loadWx(),0);if(!f||(f.ts===lastApplied&&!first))return;lastApplied=f.ts;
   S.gps={lat:f.lat,lon:f.lon,acc:f.acc};
   if(window.navTick)window.navTick();
   if(!meMk){const el=document.createElement('div');el.className='dot-me';meMk=new maplibregl.Marker({element:el});}
@@ -1030,10 +1030,18 @@ function renderSheet(){const t=Math.floor(S.t);$('#shSub').textContent='Sekarang
   $('#shList').innerHTML=rows.map(r=>'<div class="lrow"><div><span class="lb" style="background:'+r.c+'">&nbsp;</span> <b>'+esc(r.n)+'</b><div class="small">Perkiraan '+fmt(r.M.start)+' sampai '+(r.M.end>=1440?'24:00':fmt(r.M.end))+'</div></div><span class="pill '+(r.run?'ok':'stop')+'">'+(r.run?'sisa '+hm(r.M.end-t):(t<r.M.start?'belum mulai':'berhenti'))+'</span></div>').join('');}
 $('#bannerBtn').onclick=()=>{$('#sheet').hidden=false;renderSheet();};$('#shClose').onclick=()=>$('#sheet').hidden=true;
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true;});
-async function loadWx(){try{const r=await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=31.71.03.1001');const j=await r.json();
-  const slots=[].concat(...((j.data&&j.data[0]&&j.data[0].cuaca)||[]));const now=Date.now();let best=null,bd=1e18;
-  slots.forEach(s=>{const ts=Date.parse((s.local_datetime||s.datetime||'').replace(' ','T')+(s.local_datetime?'+07:00':'Z'));const d=Math.abs(ts-now);if(d<bd){bd=d;best=s;}});
-  if(best){S.wx={desc:best.weather_desc||'-',t:best.t};const c=$('#wxChip');c.hidden=false;c.innerHTML='<span class="small">Cuaca Jakarta</span> <b>'+esc(S.wx.desc)+' '+esc(S.wx.t)+'&deg;</b> <span class="small">BMKG</span>';}}catch(e){}}
+const WMO={0:'Cerah',1:'Cerah Berawan',2:'Berawan',3:'Mendung',45:'Berkabut',48:'Berkabut',51:'Gerimis',53:'Gerimis',55:'Gerimis',56:'Gerimis',57:'Gerimis',61:'Hujan Ringan',63:'Hujan Sedang',65:'Hujan Lebat',66:'Hujan',67:'Hujan',80:'Hujan Ringan',81:'Hujan Sedang',82:'Hujan Lebat',95:'Petir',96:'Petir',99:'Petir'};
+let wxAt=0,wxPos=null;
+function wxShow(desc,t,src,where){S.wx={desc,t};const c=$('#wxChip');c.hidden=false;c.innerHTML='<span class="small">'+esc(where)+'</span> <b>'+esc(desc)+' '+esc(t)+'&deg;</b> <span class="small">'+esc(src)+'</span>';}
+async function loadWx(){const p=S.gps||wxPos,la=p?p.lat:-6.2,lo=p?p.lon:106.82,where=p?'Cuaca di lokasimu':'Cuaca Jakarta';wxAt=Date.now();if(S.gps)wxPos={lat:S.gps.lat,lon:S.gps.lon};
+  try{const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+la.toFixed(3)+'&longitude='+lo.toFixed(3)+'&current=temperature_2m,precipitation,weather_code&timezone=auto');const j=await r.json(),c=j.current;
+    let d=WMO[c.weather_code]||'Berawan';if(c.precipitation>0&&c.weather_code<51)d='Hujan Ringan';if(c.precipitation<=0&&c.weather_code>=51&&c.weather_code<=82)d='Mendung';
+    wxShow(d,Math.round(c.temperature_2m),'Open-Meteo',where);return;}catch(e){}
+  try{const r=await fetch('https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=31.71.03.1001');const j=await r.json();
+    const slots=[].concat(...((j.data&&j.data[0]&&j.data[0].cuaca)||[]));const now=Date.now();let best=null,bd=1e18;
+    slots.forEach(s=>{const ts=Date.parse((s.local_datetime||s.datetime||'').replace(' ','T')+(s.local_datetime?'+07:00':'Z'));const d=Math.abs(ts-now);if(d<bd){bd=d;best=s;}});
+    if(best)wxShow(best.weather_desc||'-',best.t,'BMKG','Cuaca Jakarta');}catch(e){}}
+setInterval(()=>{if(S.gps&&(!wxPos||hav(S.gps,wxPos)>3000||Date.now()-wxAt>900000))loadWx();},60000);
 
 /* ---------- menu urgent ---------- */
 function posForUrgent(){if(S.gps)return {p:S.gps,w:'lokasi Anda'};if(S.from)return {p:S.from,w:'titik asal'};const c=map.getCenter();return {p:{lat:c.lat,lon:c.lng},w:'pusat peta'};}
@@ -1123,7 +1131,7 @@ function frame(ts){const dt=lastTs?Math.min(ts-lastTs,1000):0;lastTs=ts;S.t=(S.t
   requestAnimationFrame(frame);}
 $('#foot').innerHTML='Peta: OpenFreeMap, data &copy; OpenStreetMap. Jalur dan halte: OpenStreetMap ('+LINES.length+' lini, '+ST.length+' stasiun dan halte). Rute motor dan jalan kaki: Valhalla. Cari tempat: Photon. Cuaca: BMKG. Jam operasional dan jarak antar kendaraan adalah perkiraan per jenis moda, bukan jadwal resmi.';
 if(window.innerWidth<=760)$('#layers').open=false;
-renderSaved();loadWx();onMinute(true);requestAnimationFrame(frame);
+renderSaved();window.loadWx=loadWx;loadWx();onMinute(true);requestAnimationFrame(frame);
 window.__jc={setPoint,S,locate,draw,plan,startNav,stopNav,NAV,applyFix,map,LINES,ST,dijk,MASKS,stationsNear,legsFrom,WALKADJ,POS,NS};
 };
 window.__tryLoad();
