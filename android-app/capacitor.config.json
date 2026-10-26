@@ -1,0 +1,11 @@
+{
+  "appId": "id.jejak.commuter",
+  "appName": "jejakcommuter",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
