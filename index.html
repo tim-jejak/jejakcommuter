@@ -371,7 +371,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 17.13 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 17.52 WIB</p>
     <h3>Akun</h3>
     <p class="small" style="font-size:14px">Fitur masuk akun belum tersedia. Untuk sekarang, rute tersimpan hanya ada di perangkat ini.</p>
     <h3>Sumber data dan lisensi</h3>
@@ -889,7 +889,10 @@ function updStops(o,kLeg,k){if(!mapReady||!map.getSource('navstops'))return;cons
     const st=NAV.on?(i<kLeg?'p':(i===kLeg?(q<=k?'p':(q===k+1?'n':'u')):'u')):'u';
     f.push({type:'Feature',properties:{name:p.name,st},geometry:{type:'Point',coordinates:[p.lon,p.lat]}});});});
   map.getSource('navstops').setData({type:'FeatureCollection',features:f});}
-function navTick(noCam){if(!NAV.on||!S.gps)return;const r=navProject(S.gps);if(!NAV.legs.length)return;const now=Date.now();
+function navTick(noCam){if(!NAV.on)return;
+  if(!NAV.live){const o=NAV.o,m=Math.max(1,Math.round(o.total||0));$('#nvOff').hidden=true;$('#nvTitle').textContent='Pratinjau rute';$('#nvDet').textContent=(o.title||'')+' · titik asal bukan lokasimu';
+    $('#nvRem').innerHTML='<b>'+m+' mnt</b> · '+fmtD(NAV.total);return;}
+  if(!S.gps)return;const r=navProject(S.gps);if(!NAV.legs.length)return;const now=Date.now();
   if(!NAV.anc||hav(S.gps,NAV.anc)>10){NAV.anc={lat:S.gps.lat,lon:S.gps.lon};NAV.ancT=now;}NAV.stillMs=now-NAV.ancT;
   const rem=Math.max(0,NAV.total-r.s);let legEnd=0;for(let k=0;k<=r.leg;k++)legEnd+=NAV.legs[k].len;const legRem=Math.max(0,legEnd-r.s);
   const L=NAV.legs[r.leg],nx=NAV.legs[r.leg+1];let ti,de;
@@ -919,12 +922,12 @@ async function compassOn(){if(NAV.cmp)return;NAV.cmp=true;NAV.hd=null;
   try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){NAV.cmp=false;return;}}}catch(e){}
   window.addEventListener('deviceorientationabsolute',onOri,true);window.addEventListener('deviceorientation',onOri,true);}
 function compassOff(){NAV.cmp=false;NAV.hd=null;window.removeEventListener('deviceorientationabsolute',onOri,true);window.removeEventListener('deviceorientation',onOri,true);}
-function startNav(){const o=S.opts[S.sel];if(!o){return;}stopAnim();compassOn();
-  const go=()=>{S.holdRoute=null;NAV.o=o;NAV.legs=navLegs(o);NAV.total=NAV.legs.reduce((a,l)=>a+l.len,0);NAV.on=true;NAV.follow=true;NAV.off=0;NAV.done=null;NAV.arr=null;NAV.rk=null;NAV.anc=null;NAV.k=-1;NAV.sk='';clearInterval(NAV.iv);NAV.iv=setInterval(()=>navTick(true),1000);
+function startNav(){const o=S.opts[S.sel];if(!o){return;}stopAnim();
+  const go=()=>{S.holdRoute=null;NAV.o=o;NAV.live=!!(S.from&&(S.from.gps||S.from.label==='Lokasi saya'||(S.gps&&hav(S.gps,S.from)<1000)));if(NAV.live)compassOn();NAV.legs=navLegs(o);NAV.total=NAV.legs.reduce((a,l)=>a+l.len,0);NAV.on=true;NAV.follow=true;NAV.off=0;NAV.done=null;NAV.arr=null;NAV.rk=null;NAV.anc=null;NAV.k=-1;NAV.sk='';clearInterval(NAV.iv);NAV.iv=setInterval(()=>navTick(true),1000);
     document.documentElement.classList.add('nav');$('#navbar').hidden=false;$('#nvCenter').hidden=true;if(window.__setSheet)window.__setSheet('peek');
     try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{NAV.wl=w;}).catch(()=>{});}catch(e){}
     navTick();};
-  if(S.gps)go();else locate(()=>go());}
+  if(S.gps||(S.from&&!S.from.gps&&S.from.label!=='Lokasi saya'))go();else locate(()=>go());}
 function stopNav(){S.holdRoute=null;NAV.on=false;compassOff();clearInterval(NAV.iv);try{if(map.getSource('navtrail'))map.getSource('navtrail').setData(emptyFC);}catch(e){}if(S.opts[S.sel])updStops(S.opts[S.sel],-1,-1);clearTimeout(NAV.done);try{NAV.wl&&NAV.wl.release();}catch(e){}document.documentElement.classList.remove('nav');$('#navbar').hidden=true;$('#nvCenter').hidden=true;
   map.easeTo({pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:600});if(window.__setSheet)window.__setSheet('half');}
 map.on('dragstart',()=>{if(NAV.on&&NAV.follow){NAV.follow=false;$('#nvCenter').hidden=false;}});
