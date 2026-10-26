@@ -142,6 +142,7 @@ body{position:fixed;inset:0;height:auto;width:100%}
 .ui .lp{position:absolute;left:0;bottom:0;height:5px;width:0;background:var(--urgent)}
 .ui.lping .lp{width:100%;transition:width 3s linear}
 #urgent.pk>*:not(.uh){display:none}
+#sClear:disabled{opacity:.4;cursor:not-allowed}
 #urgent .uh,#grp .uh,#chH,#rhandle{-webkit-user-select:none;user-select:none}
 .uf{border-top:1px solid var(--line);padding:8px 12px;font-size:13px;background:var(--surface-2)}
 .uf b{font-size:18px;font-family:var(--f-mono)}
@@ -387,7 +388,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     </div>
     <div class="btnrow">
       <button type="button" class="btn primary" id="go">Cari rute</button>
-      <button type="button" class="btn" id="demo">Contoh</button>
+      <button type="button" class="btn" id="sClear" disabled>Hapus rute</button><button type="button" id="demo" style="display:none!important" tabindex="-1" aria-hidden="true">Contoh</button>
     </div>
     <div id="pickHint" class="note" hidden></div>
     <div id="accNote" class="note" hidden></div>
@@ -396,7 +397,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
  <section id="results" class="card" aria-label="Hasil rute" data-state="peek">
   <div class="rh" id="rhandle" role="button" tabindex="0" aria-label="Geser atau ketuk untuk membesarkan atau mengecilkan daftar rute"><span class="grip"></span><div class="rt"><b id="rtitle">jejakcommuter</b><span class="small" id="rsub">Rute tersimpan dan info</span></div></div>
   <div class="rb" id="rbody">
-    <div id="rActs" hidden><button type="button" class="btn pri" id="rStart">Mulai</button><button type="button" class="btn" id="rShare">Bagikan rute</button><button type="button" class="btn" id="rClear">Hapus</button></div>
+    <div id="rActs" hidden><button type="button" class="btn pri" id="rStart">Mulai</button><button type="button" class="btn" id="rShare">Bagikan rute</button></div>
     <div id="out"></div>
     <h3>Rute tersimpan</h3>
     <div id="saved"></div>
@@ -638,7 +639,7 @@ document.querySelectorAll('#layers input[data-l]').forEach(i=>i.onchange=()=>{S.
 /* ---------- titik, pin, lokasi ---------- */
 const mk={};
 function setPin(w){const p=S[w];if(mk[w]){mk[w].remove();mk[w]=null;}if(!p)return;mk[w]=new maplibregl.Marker({color:w==='from'?'#1D7A4A':'#B3261E'}).setLngLat([p.lon,p.lat]).addTo(map);}
-function setPoint(w,p,run){S[w]=p;$(w==='from'?'#inFrom':'#inTo').value=p.label||'';setPin(w);
+function setPoint(w,p,run){S[w]=p;syncClear();$(w==='from'?'#inFrom':'#inTo').value=p.label||'';setPin(w);
   if(run&&S.from&&S.to)plan();else if(!S.to&&w==='from')map.easeTo({center:[p.lon,p.lat],zoom:Math.max(map.getZoom(),13)});}
 function fmtFeat(f){const p=f.properties||{};const street=[p.street,p.housenumber].filter(Boolean).join(' ');const name=p.name||street||p.district||p.city||'Tempat';const sub=[name!==street?street:'',p.district,p.city||p.county].filter(Boolean).join(', ');return {name,sub};}
 async function reverseLabel(w){const p=S[w];if(!p)return;try{const r=await fetch('https://photon.komoot.io/reverse?lat='+p.lat+'&lon='+p.lon);const j=await r.json();const f=j.features&&j.features[0];if(f&&S[w]===p){const x=fmtFeat(f);p.label=x.name+(x.sub?', '+x.sub:'');$(w==='from'?'#inFrom':'#inTo').value=p.label;}}catch(e){}}
@@ -761,7 +762,7 @@ async function plan(){
     const nb=best.find(c=>ST[c.A.sid].g!=='tj'&&c.A.sid===nearest[ST[c.A.sid].g]);
     if(nb){const r=legsFrom(nb.R.prev,nb.R.dist,nb.A.sid,nb.B.sid,t);if(r.legs.some(l=>l.kind==='ride'))cand.push({mask:M.key,est:nb.est,A:nb.A,B:nb.B,near:true,legs:r.legs,transit:r.total,sig:sigOf(r.legs)+'@'+nb.A.sid});}
   });
-  for(let k=cand.length-1;k>=0;k--){const c=cand[k],s=ST[c.A.sid];if(c.A.d<=500||!parkable(s))continue;const l0=c.legs[0];if(!(c.A.d<=4000&&l0.kind==='ride'&&LINES[l0.line].M.group===s.g))cand.splice(k,1);}
+  for(let k=cand.length-1;k>=0;k--){const c=cand[k],s=ST[c.A.sid];const rideD=hav(s,ST[c.B.sid]);if(dist<1200||c.B.d>dist*0.6+400||rideD<400||c.A.d+rideD+c.B.d>dist*1.8+1500){cand.splice(k,1);continue;}if(c.A.d<=500||!parkable(s))continue;const l0=c.legs[0];if(!(c.A.d<=4000&&l0.kind==='ride'&&LINES[l0.line].M.group===s.g))cand.splice(k,1);}
   const seen=new Set(),pick=[];cand.sort((a,b)=>(a.est+a.A.d/8000)-(b.est+b.A.d/8000)).forEach(c=>{if(seen.has(c.sig))return;seen.add(c.sig);if(pick.length<16||c.near||c.nearest)pick.push(c);});
   const tj=pick.map(c=>{
     const fs=ST[c.A.sid],ls=ST[c.B.sid];
@@ -884,7 +885,7 @@ $('#nvCenter').onclick=()=>{NAV.follow=true;$('#nvCenter').hidden=true;navTick()
 $('#nvEnd').onclick=()=>stopNav();
 function clearRoute(){stopNav();S.holdRoute=null;S.from=null;S.to=null;S.focus=null;$('#inFrom').value='';$('#inTo').value='';setPin('from');setPin('to');S.opts=[];S.sel=-1;draw();if(window.__resetUI)window.__resetUI();}
 let cancelT=0;$('#nvCancel').onclick=()=>{const b=$('#nvCancel');if(b.classList.contains('ask')){clearTimeout(cancelT);b.classList.remove('ask');b.textContent='Batalkan';clearRoute();}else{b.classList.add('ask');b.textContent='Yakin hapus?';cancelT=setTimeout(()=>{b.classList.remove('ask');b.textContent='Batalkan';},3500);}};
-$('#rClear').onclick=()=>clearRoute();
+$('#sClear').onclick=()=>clearRoute();
 function replanHere(auto){const g=S.gps,old=NAV.o;if(!g||!S.to){return;}stopNav();S.holdRoute=old;S.from={lat:g.lat,lon:g.lon,label:'Lokasi saya'};$('#inFrom').value='Lokasi saya';NAV.resume=!!auto;$('#go')&&$('#go').click();}
 $('#nvAlt').onclick=()=>replanHere(false);
 $('#nvRe').onclick=()=>replanHere(true);
@@ -892,7 +893,8 @@ $('#rStart').onclick=startNav;
 
 /* ---------- gambar ke peta ---------- */
 const caseFor=c=>{const n=parseInt(c.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (.2126*r+.7152*g+.0722*b)/255<.4?'#FFFFFF':'#14202B';};
-function draw(){if(!mapReady)return;const o=S.opts[S.sel],f=[];
+function syncClear(){const c=$('#sClear');if(c)c.disabled=!(S.from||S.to||S.opts.length);}
+function draw(){syncClear();if(!mapReady)return;const o=S.opts[S.sel],f=[];
   if(o)o.features.forEach(x=>f.push({type:'Feature',properties:{kind:x.kind,color:(S.myColor&&x.kind!=='walk')?S.myColor:x.color,cs:(S.myColor&&x.kind!=='walk')?caseFor(S.myColor):'#14202B'},geometry:{type:'LineString',coordinates:x.coords}}));
   if(S.focus&&S.focus.coords)f.push({type:'Feature',properties:{kind:'walk',color:'#4C5A68'},geometry:{type:'LineString',coordinates:S.focus.coords}});
   map.getSource('route').setData({type:'FeatureCollection',features:f});
