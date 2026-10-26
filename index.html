@@ -745,7 +745,7 @@ let planSeq=0;
 const parkable=s=>s.g==='krl'||s.g==='lrt'||(s.g==='mrt'&&/^(lebak bulus|dukuh atas|blok m)$/.test(normName(s.name)));
 function sigOf(legs){return legs.filter(l=>l.kind==='ride').map(l=>l.line+'>'+l.toSid).join('/');}
 async function plan(){
-  const o=S.from,d=S.to;if(!o||!d)return;const my=++planSeq,t=Math.floor(S.t),dist=hav(o,d);
+  stopAnim();const o=S.from,d=S.to;if(!o||!d)return;const my=++planSeq,t=Math.floor(S.t),dist=hav(o,d);
   $('#out').innerHTML='<div class="status">Mencari rute…</div>';S.opts=[];S.sel=-1;draw();
   const jobsM=[valMulti(o,d,'motor_scooter').then(rs=>({kind:'motorM',rs})),valMulti(o,d,'auto').then(rs=>({kind:'carM',rs}))];
   if(dist<=7000)jobsM.push(valhalla(o,d,'pedestrian').then(v=>({kind:'walk',v})));
@@ -872,7 +872,7 @@ async function compassOn(){if(NAV.cmp)return;NAV.cmp=true;NAV.hd=null;
   try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){NAV.cmp=false;return;}}}catch(e){}
   window.addEventListener('deviceorientationabsolute',onOri,true);window.addEventListener('deviceorientation',onOri,true);}
 function compassOff(){NAV.cmp=false;NAV.hd=null;window.removeEventListener('deviceorientationabsolute',onOri,true);window.removeEventListener('deviceorientation',onOri,true);}
-function startNav(){const o=S.opts[S.sel];if(!o){return;}compassOn();
+function startNav(){const o=S.opts[S.sel];if(!o){return;}stopAnim();compassOn();
   const go=()=>{S.holdRoute=null;NAV.o=o;NAV.legs=navLegs(o);NAV.total=NAV.legs.reduce((a,l)=>a+l.len,0);NAV.on=true;NAV.follow=true;NAV.off=0;NAV.done=null;
     document.documentElement.classList.add('nav');$('#navbar').hidden=false;$('#nvCenter').hidden=true;if(window.__setSheet)window.__setSheet('peek');
     try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{NAV.wl=w;}).catch(()=>{});}catch(e){}
@@ -883,7 +883,7 @@ function stopNav(){S.holdRoute=null;NAV.on=false;compassOff();clearTimeout(NAV.d
 map.on('dragstart',()=>{if(NAV.on&&NAV.follow){NAV.follow=false;$('#nvCenter').hidden=false;}});
 $('#nvCenter').onclick=()=>{NAV.follow=true;$('#nvCenter').hidden=true;navTick();};
 $('#nvEnd').onclick=()=>stopNav();
-function clearRoute(){stopNav();S.holdRoute=null;S.from=null;S.to=null;S.focus=null;$('#inFrom').value='';$('#inTo').value='';setPin('from');setPin('to');S.opts=[];S.sel=-1;draw();if(window.__resetUI)window.__resetUI();}
+function clearRoute(){stopAnim();stopNav();S.holdRoute=null;S.from=null;S.to=null;S.focus=null;$('#inFrom').value='';$('#inTo').value='';setPin('from');setPin('to');S.opts=[];S.sel=-1;draw();if(window.__resetUI)window.__resetUI();}
 let cancelT=0;$('#nvCancel').onclick=()=>{const b=$('#nvCancel');if(b.classList.contains('ask')){clearTimeout(cancelT);b.classList.remove('ask');b.textContent='Batalkan';clearRoute();}else{b.classList.add('ask');b.textContent='Yakin hapus?';cancelT=setTimeout(()=>{b.classList.remove('ask');b.textContent='Batalkan';},3500);}};
 $('#sClear').onclick=()=>clearRoute();
 function replanHere(auto){const g=S.gps,old=NAV.o;if(!g||!S.to){return;}stopNav();S.holdRoute=old;S.from={lat:g.lat,lon:g.lon,label:'Lokasi saya'};$('#inFrom').value='Lokasi saya';NAV.resume=!!auto;$('#go')&&$('#go').click();}
@@ -933,22 +933,23 @@ function render(){const box=$('#out');if(!S.opts.length)return;let h='';
     return x+'</div>';}).join('');
   box.innerHTML=h;tickCount();}
 $('#out').addEventListener('click',e=>{
-  const sb=e.target.closest('[data-sort]');if(sb){S.sortBy=sb.dataset.sort;sortOpts();draw();render();return;}
+  const sb=e.target.closest('[data-sort]');if(sb){stopAnim();S.sortBy=sb.dataset.sort;sortOpts();draw();render();return;}
   const f=e.target.closest('[data-f]');if(f){S.filter=f.dataset.f;render();return;}
-  const b=e.target.closest('[data-i]');if(b){S.sel=+b.dataset.i;draw();render();if(NAV.on)navSwitch();else fitFeatures(S.opts[S.sel].features);return;}
+  const b=e.target.closest('[data-i]');if(b){stopAnim();S.sel=+b.dataset.i;draw();render();if(NAV.on)navSwitch();else fitFeatures(S.opts[S.sel].features);return;}
   if(e.target.closest('[data-anim]')){playAnim();return;}
   if(e.target.closest('[data-save]')&&S.from&&S.to){if(!S.saved.some(s=>s.from.label===S.from.label&&s.to.label===S.to.label)){S.saved.unshift({from:S.from,to:S.to});S.saved=S.saved.slice(0,12);store.set('jc_saved_v3',S.saved);}renderSaved();}});
 function tickCount(){document.querySelectorAll('[data-last]').forEach(el=>{const left=+el.dataset.last;el.textContent=left>=0?'sisa '+hm(left):'sudah lewat, cari alternatif';});}
 /* animasi perjalanan: titik bergerak sepanjang rute terpilih */
-let animRaf=0;
-function playAnim(){const o=S.opts[S.sel];if(!o||!mapReady)return;cancelAnimationFrame(animRaf);
+let animRaf=0,animT=0;
+function stopAnim(){cancelAnimationFrame(animRaf);clearTimeout(animT);try{if(mapReady&&map.getSource('anim'))map.getSource('anim').setData(emptyFC);}catch(e){}}
+function playAnim(){const o=S.opts[S.sel];if(!o||!mapReady)return;stopAnim();
   const pts=[];o.features.forEach(f=>f.coords.forEach(c=>pts.push(c)));if(pts.length<2)return;
   const cd=[0];for(let i=1;i<pts.length;i++)cd.push(cd[i-1]+hav({lat:pts[i-1][1],lon:pts[i-1][0]},{lat:pts[i][1],lon:pts[i][0]}));
   const tot=cd[cd.length-1],T=14000,t0=performance.now();
   const step=ts=>{const f=Math.min(1,(ts-t0)/T),d=f*tot;let lo=0,hi=cd.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(cd[m]<=d)lo=m;else hi=m;}
     const seg=cd[hi]-cd[lo]||1,u=(d-cd[lo])/seg,p=[pts[lo][0]+(pts[hi][0]-pts[lo][0])*u,pts[lo][1]+(pts[hi][1]-pts[lo][1])*u];
     map.getSource('anim').setData({type:'FeatureCollection',features:[{type:'Feature',properties:{},geometry:{type:'Point',coordinates:p}}]});
-    if(f<1)animRaf=requestAnimationFrame(step);else setTimeout(()=>map.getSource('anim').setData(emptyFC),1500);};
+    if(f<1)animRaf=requestAnimationFrame(step);else animT=setTimeout(()=>map.getSource('anim').setData(emptyFC),1500);};
   animRaf=requestAnimationFrame(step);}
 function renderSaved(){const el=$('#saved');if(!S.saved.length){el.innerHTML='<div class="small">Belum ada. Cari rute lalu tekan Simpan rute. Tersimpan di perangkat ini, tanpa akun.</div>';return;}
   el.innerHTML=S.saved.map((s,i)=>'<div class="sv"><span>'+esc(s.from.label)+' → '+esc(s.to.label)+'</span><span style="flex:none"><button type="button" class="btn" data-open="'+i+'">Buka</button> <button type="button" class="btn" data-del="'+i+'">Hapus</button></span></div>').join('');}
