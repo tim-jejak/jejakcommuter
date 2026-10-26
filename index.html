@@ -86,6 +86,9 @@ body{position:fixed;inset:0;height:auto;width:100%}
 .ib{border:none;background:var(--surface-2);color:var(--ink);border-radius:8px;font-size:12.5px;font-weight:700;min-height:34px;padding:0 10px}
 .ib.on{background:var(--btn);color:var(--btn-ink)}
 .fld input{padding-right:104px}
+#inFrom{padding-right:148px}
+.ib.xb{width:34px;padding:0;font-size:14px;color:var(--ink-2)}
+.fld input:placeholder-shown~.ibs .xb{display:none}
 .fields .fld:nth-of-type(2) input{padding-right:62px}
 .btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
 .btnrow .primary{flex:1;min-width:120px}
@@ -119,6 +122,7 @@ body{position:fixed;inset:0;height:auto;width:100%}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:4px 9px;font-size:13px;display:inline-flex;gap:6px;align-items:center;min-height:34px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .chip select{border:none;background:transparent;padding:0;max-width:92px}
 .chip[hidden]{display:none}
+button.chip{font:inherit;font-size:13px;font-weight:700;color:inherit;cursor:pointer}
 #layers{position:absolute;z-index:4;right:max(12px,env(safe-area-inset-right,0px));bottom:64px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 9px;box-shadow:0 1px 4px rgba(0,0,0,.15);font-size:13px}
 #layers label{display:flex;gap:6px;align-items:center;padding:1px 0;white-space:nowrap}
 #layers i{display:inline-block;width:14px;height:4px;border-radius:2px}
@@ -185,22 +189,25 @@ body{position:fixed;inset:0;height:auto;width:100%}
   html[data-ui="3"] #row2{flex-wrap:wrap}
   html[data-ui="3"] #row2>*,html[data-ui="3"] #chips>*{flex:1 1 calc(50% - 4px)}
   #layers{order:1;right:auto;left:auto;top:auto;bottom:auto;max-width:none;padding:0;border-radius:10px;display:block}
-  #layers>summary{min-height:36px;line-height:36px;display:block;text-align:center;padding:0 6px!important;list-style:none;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #layers>summary{list-style:none;zoom:1!important}
   #layers>summary::-webkit-details-marker{display:none}
   #layers .lp{display:none}
   #layers[open] .lp{display:block;position:absolute;left:0;top:calc(100% + 6px);width:min(300px,calc(100vw - 20px));max-height:calc(100vh - var(--topH,60px) - 90px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:9}
   #layers[open]{z-index:9}
-  #banner{order:2;bottom:auto;left:auto;top:auto;width:auto;transform:none;font-size:13px;padding:0 8px;gap:6px 10px;min-height:36px;align-items:center;justify-content:center}
+  #banner{order:5;bottom:auto;left:auto;top:auto;width:auto;transform:none;font-size:13px;padding:0 8px;gap:6px 10px;min-height:36px;align-items:center;justify-content:center}
   #banner.min{width:auto;padding:0 8px;border-radius:10px;justify-content:center;text-align:center}
   #banner:not(.min){position:absolute;left:0;right:0;top:calc(100% + 8px);flex:none;padding:8px 10px;z-index:8}
-  #chips .chip{min-height:36px;white-space:nowrap;padding:0 6px;overflow:hidden;font-size:12px}
-  #wxChip,#accChip{display:block;line-height:36px;text-align:center;text-overflow:ellipsis}
+  #chips .chip{white-space:nowrap;padding:0 6px;overflow:hidden;font-size:12.5px}
+  #layers,#wxChip,#locChip,#accChip{box-sizing:border-box;height:38px;min-height:38px}
+  #layers>summary,#wxChip,#locChip,#accChip{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;line-height:1;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px!important;height:100%}
+  #wxChip,#locChip,#accChip{height:38px}
+  #locChip{color:inherit;cursor:pointer}
   #wxChip[hidden],#accChip[hidden]{display:none}
   #chips select{font-size:12px}
   #banner.min .bmini{font-size:12px}
-  #chips label.chip{order:3}
-  #wxChip{order:4}
-  #accChip{order:5}
+  #wxChip{order:2}
+  #locChip{order:3}
+  #accChip{order:4}
   #row2>#chips>#accChip{flex:0 0 auto;padding:0 8px}
   #chips label.chip select{max-width:none;width:100%;appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center;font-weight:700}
   #chips label.chip{padding:0 4px}
@@ -331,7 +338,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 <div id="map" aria-label="Peta"></div>
 <div id="row2">
 <div id="chips">
-  <label class="chip"><span class="small">Jam</span>
+  <label class="chip" style="display:none!important"><span class="small">Jam</span>
     <select id="selTime" aria-label="Jam simulasi">
       <option value="now">Sekarang</option><option value="450">07:30</option><option value="720">12:00</option>
       <option value="1050">17:30</option><option value="1290">21:30</option><option value="1380">23:00</option><option value="120">02:00</option>
@@ -339,6 +346,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
   <span class="chip mono" id="clock" hidden>--:--</span>
   <label class="chip spd"><span class="small">Kecepatan animasi</span>
     <select id="selSpeed" aria-label="Kecepatan animasi"><option value="1">1x</option><option value="30" selected>30x</option><option value="120">120x</option></select></label>
+  <button type="button" class="chip" id="locChip">Lokasi saya</button>
   <span class="chip" id="accChip" hidden></span>
   <span class="chip" id="wxChip" hidden></span>
 </div>
@@ -363,7 +371,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 16.38 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 16.51 WIB</p>
     <h3>Akun</h3>
     <p class="small" style="font-size:14px">Fitur masuk akun belum tersedia. Untuk sekarang, rute tersimpan hanya ada di perangkat ini.</p>
     <h3>Sumber data dan lisensi</h3>
@@ -382,9 +390,9 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
   <div id="sumbar"><button type="button" id="sumMain" aria-label="Ubah asal dan tujuan"><span id="sumTxt"></span></button><button type="button" class="sumed" id="sumEdit">Ubah</button><button type="button" class="acct" aria-label="Akun dan pengaturan" title="Akun dan pengaturan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button></div>
   <div class="pc" id="sform">
     <div class="fields">
-      <div class="fld"><label for="inFrom">Dari</label><input id="inFrom" type="text" autocomplete="off" placeholder="Dari mana?"><div class="ibs"><button type="button" class="ib" id="gpsFrom" title="Pakai lokasi saya">GPS</button><button type="button" class="ib" id="pickFrom" title="Pilih di peta">Peta</button></div><div class="sug" id="sugFrom" hidden></div></div>
+      <div class="fld"><label for="inFrom">Dari</label><input id="inFrom" type="text" autocomplete="off" placeholder="Dari mana?"><div class="ibs"><button type="button" class="ib xb" data-clr="from" aria-label="Hapus asal">&#10005;</button><button type="button" class="ib" id="gpsFrom" title="Pakai lokasi saya">GPS</button><button type="button" class="ib" id="pickFrom" title="Pilih di peta">Peta</button></div><div class="sug" id="sugFrom" hidden></div></div>
       <button type="button" class="swapb" id="swap" aria-label="Tukar asal dan tujuan" title="Tukar asal dan tujuan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v16M8 4L4 8M8 4l4 4"/><path d="M16 20V4M16 20l-4-4M16 20l4-4"/></svg></button>
-      <div class="fld"><label for="inTo">Ke</label><input id="inTo" type="text" autocomplete="off" placeholder="Mau ke mana?"><div class="ibs"><button type="button" class="ib" id="pickTo" title="Pilih di peta">Peta</button></div><div class="sug" id="sugTo" hidden></div></div>
+      <div class="fld"><label for="inTo">Ke</label><input id="inTo" type="text" autocomplete="off" placeholder="Mau ke mana?"><div class="ibs"><button type="button" class="ib xb" data-clr="to" aria-label="Hapus tujuan">&#10005;</button><button type="button" class="ib" id="pickTo" title="Pilih di peta">Peta</button></div><div class="sug" id="sugTo" hidden></div></div>
     </div>
     <div class="btnrow">
       <button type="button" class="btn primary" id="go">Cari rute</button>
@@ -889,6 +897,9 @@ $('#nvEnd').onclick=()=>stopNav();
 function clearRoute(){stopAnim();stopNav();S.holdRoute=null;S.from=null;S.to=null;S.focus=null;$('#inFrom').value='';$('#inTo').value='';setPin('from');setPin('to');S.opts=[];S.sel=-1;draw();if(window.__resetUI)window.__resetUI();}
 let cancelT=0;$('#nvCancel').onclick=()=>{const b=$('#nvCancel');if(b.classList.contains('ask')){clearTimeout(cancelT);b.classList.remove('ask');b.textContent='Batalkan';clearRoute();}else{b.classList.add('ask');b.textContent='Yakin hapus?';cancelT=setTimeout(()=>{b.classList.remove('ask');b.textContent='Batalkan';},3500);}};
 $('#sClear').onclick=()=>clearRoute();
+function clearPoint(w){const inp=$(w==='from'?'#inFrom':'#inTo');S[w]=null;inp.value='';setPin(w);stopAnim();S.opts=[];S.sel=-1;S.focus=null;draw();syncClear();if(window.__clearOut)window.__clearOut();inp.focus();}
+document.addEventListener('click',e=>{const x=e.target.closest('[data-clr]');if(x){e.preventDefault();clearPoint(x.dataset.clr);}});
+$('#locChip').onclick=()=>{const go=()=>{if(S.gps)map.easeTo({center:[S.gps.lon,S.gps.lat],zoom:Math.max(map.getZoom(),15.5),duration:400});};go();locate(go);};
 function replanHere(auto){const g=S.gps,old=NAV.o;if(!g||!S.to){return;}stopNav();S.holdRoute=old;S.from={lat:g.lat,lon:g.lon,label:'Lokasi saya'};$('#inFrom').value='Lokasi saya';NAV.resume=!!auto;$('#go')&&$('#go').click();}
 $('#nvAlt').onclick=()=>replanHere(false);
 $('#nvRe').onclick=()=>replanHere(true);
@@ -1116,6 +1127,7 @@ function end(){if(!d)return;d=false;U.classList.remove('drag');const s=stops(),c
   if(!keep&&proj<s.lo*.6){closeFn();U.style.removeProperty('--uhh');return;}
   const tg=(keep?[peekH(),s.lo,s.mid,s.hi]:[s.lo,s.mid,s.hi]).reduce((a,b)=>Math.abs(a-proj)<Math.abs(b-proj)?a:b);U.style.setProperty('--uhh',tg+'px');U.classList.toggle('pk',!!keep&&tg<=peekH()+2);}
 UH.addEventListener('pointerup',end);UH.addEventListener('pointercancel',end);}
+window.__clearOut=()=>{out.innerHTML='';};
 window.__resetUI=()=>{out.innerHTML='';setSearch('idle');setSheet('peek');};
 dragPanel($('#urgent'),()=>window.__closeUrgent&&window.__closeUrgent(),true);dragPanel($('#grp'),()=>window.__closeGrp&&window.__closeGrp());
 H.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(state==='peek'?'half':'peek');}});
