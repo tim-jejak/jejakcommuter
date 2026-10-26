@@ -31,6 +31,9 @@ jobs:
       - name: Pasang paket
         run: npm install
 
+      - name: Isi nomor versi
+        run: sed -i "s/__APPBUILD__/${{ github.run_number }}/" www/index.html
+
       - name: Buat proyek Android
         run: |
           npx cap add android
