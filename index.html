@@ -320,7 +320,7 @@ html.chatopen #search,html.chatopen #row2,html.chatopen #results,html.chatopen #
 #navbar .btn{min-height:38px;padding:6px 14px;background:#fff;color:#14202B}
 #nvOff{margin-top:10px;background:#B3261E;border-radius:12px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 #nvOff[hidden]{display:none}
-#nvCenter{position:absolute;z-index:9;right:12px;bottom:180px;background:#fff;color:#14202B;border:none;border-radius:20px;padding:10px 14px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#nvCenter{position:absolute;z-index:9;right:12px;bottom:180px;width:54px;height:54px;padding:0;display:flex;align-items:center;justify-content:center;background:#fff;color:#1F5FB5;border:none;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.4)}
 #nvCenter[hidden]{display:none}
 html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:none!important}
 #navbar .nv2{flex-wrap:wrap}#navbar .nv2>span:last-child{flex-wrap:wrap;justify-content:flex-end}
@@ -363,7 +363,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 16.38 WIB</p>
     <h3>Akun</h3>
     <p class="small" style="font-size:14px">Fitur masuk akun belum tersedia. Untuk sekarang, rute tersimpan hanya ada di perangkat ini.</p>
     <h3>Sumber data dan lisensi</h3>
@@ -407,7 +407,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 
 <button type="button" id="urgentBtn" aria-expanded="false" aria-controls="urgent">Urgent</button>
 <div id="navbar" hidden><div class="nv1"><b id="nvTitle"></b><div class="nvd" id="nvDet"></div></div><div id="nvOff" hidden><span>Kamu keluar jalur</span><button type="button" class="btn" id="nvRe">Cari ulang</button></div><div class="nv2"><span class="nvr" id="nvRem"></span><span style="display:flex;gap:6px"><button type="button" class="btn" id="nvAlt">Ganti rute</button><button type="button" class="btn" id="nvEnd">Selesai</button><button type="button" class="btn" id="nvCancel">Batalkan</button></span></div></div>
-<button type="button" id="nvCenter" hidden>Pusatkan</button>
+<button type="button" id="nvCenter" hidden aria-label="Ke lokasi saya"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 4.5 20.3l7.5-4 7.5 4z"/></svg></button>
 <button type="button" id="grpBtn" aria-controls="grp">Grup<span id="grpBadge" hidden></span></button>
 <button type="button" id="chatBtn" aria-controls="chat" hidden>Chat<span id="chatBadge" hidden></span></button>
 <aside id="grp" aria-hidden="true"><div class="uh"><span class="ugrip"></span><span id="gTitle">Grup</span><button type="button" class="btn" id="gClose">Tutup</button></div><div id="gBody"></div></aside>
@@ -881,7 +881,10 @@ function startNav(){const o=S.opts[S.sel];if(!o){return;}stopAnim();compassOn();
 function stopNav(){S.holdRoute=null;NAV.on=false;compassOff();clearTimeout(NAV.done);try{NAV.wl&&NAV.wl.release();}catch(e){}document.documentElement.classList.remove('nav');$('#navbar').hidden=true;$('#nvCenter').hidden=true;
   map.easeTo({pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:600});if(window.__setSheet)window.__setSheet('half');}
 map.on('dragstart',()=>{if(NAV.on&&NAV.follow){NAV.follow=false;$('#nvCenter').hidden=false;}});
-$('#nvCenter').onclick=()=>{NAV.follow=true;$('#nvCenter').hidden=true;navTick();};
+$('#nvCenter').onclick=()=>{NAV.follow=true;$('#nvCenter').hidden=true;
+  const go=()=>{if(!S.gps||!NAV.on)return;const r=NAV.legs&&NAV.legs.length?navProject(S.gps):null;const br=NAV.hd!=null?NAV.hd:(r?r.brg:map.getBearing());
+    map.easeTo({center:[S.gps.lon,S.gps.lat],zoom:17,bearing:br,pitch:50,duration:350,padding:{top:150,bottom:170,left:0,right:0}});};
+  go();locate(()=>{if(NAV.on&&NAV.follow)go();});};
 $('#nvEnd').onclick=()=>stopNav();
 function clearRoute(){stopAnim();stopNav();S.holdRoute=null;S.from=null;S.to=null;S.focus=null;$('#inFrom').value='';$('#inTo').value='';setPin('from');setPin('to');S.opts=[];S.sel=-1;draw();if(window.__resetUI)window.__resetUI();}
 let cancelT=0;$('#nvCancel').onclick=()=>{const b=$('#nvCancel');if(b.classList.contains('ask')){clearTimeout(cancelT);b.classList.remove('ask');b.textContent='Batalkan';clearRoute();}else{b.classList.add('ask');b.textContent='Yakin hapus?';cancelT=setTimeout(()=>{b.classList.remove('ask');b.textContent='Batalkan';},3500);}};
@@ -894,7 +897,7 @@ $('#rStart').onclick=startNav;
 /* ---------- gambar ke peta ---------- */
 const caseFor=c=>{const n=parseInt(c.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (.2126*r+.7152*g+.0722*b)/255<.4?'#FFFFFF':'#14202B';};
 function syncClear(){const c=$('#sClear');if(c)c.disabled=!(S.from||S.to||S.opts.length);}
-function draw(){syncClear();if(!mapReady)return;const o=S.opts[S.sel],f=[];
+function draw(){syncClear();if(animRaf&&animSel!==S.sel)stopAnim();if(!mapReady)return;const o=S.opts[S.sel],f=[];
   if(o)o.features.forEach(x=>f.push({type:'Feature',properties:{kind:x.kind,color:(S.myColor&&x.kind!=='walk')?S.myColor:x.color,cs:(S.myColor&&x.kind!=='walk')?caseFor(S.myColor):'#14202B'},geometry:{type:'LineString',coordinates:x.coords}}));
   if(S.focus&&S.focus.coords)f.push({type:'Feature',properties:{kind:'walk',color:'#4C5A68'},geometry:{type:'LineString',coordinates:S.focus.coords}});
   map.getSource('route').setData({type:'FeatureCollection',features:f});
@@ -940,9 +943,9 @@ $('#out').addEventListener('click',e=>{
   if(e.target.closest('[data-save]')&&S.from&&S.to){if(!S.saved.some(s=>s.from.label===S.from.label&&s.to.label===S.to.label)){S.saved.unshift({from:S.from,to:S.to});S.saved=S.saved.slice(0,12);store.set('jc_saved_v3',S.saved);}renderSaved();}});
 function tickCount(){document.querySelectorAll('[data-last]').forEach(el=>{const left=+el.dataset.last;el.textContent=left>=0?'sisa '+hm(left):'sudah lewat, cari alternatif';});}
 /* animasi perjalanan: titik bergerak sepanjang rute terpilih */
-let animRaf=0,animT=0;
+var animRaf=0,animT=0,animSel=-1;
 function stopAnim(){cancelAnimationFrame(animRaf);clearTimeout(animT);try{if(mapReady&&map.getSource('anim'))map.getSource('anim').setData(emptyFC);}catch(e){}}
-function playAnim(){const o=S.opts[S.sel];if(!o||!mapReady)return;stopAnim();
+function playAnim(){const o=S.opts[S.sel];if(!o||!mapReady)return;stopAnim();animSel=S.sel;
   const pts=[];o.features.forEach(f=>f.coords.forEach(c=>pts.push(c)));if(pts.length<2)return;
   const cd=[0];for(let i=1;i<pts.length;i++)cd.push(cd[i-1]+hav({lat:pts[i-1][1],lon:pts[i-1][0]},{lat:pts[i][1],lon:pts[i][0]}));
   const tot=cd[cd.length-1],T=14000,t0=performance.now();
