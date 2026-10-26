@@ -371,7 +371,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 21.01 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 21.15 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -1152,7 +1152,24 @@ function frame(ts){const dt=lastTs?Math.min(ts-lastTs,1000):0;lastTs=ts;S.t=(S.t
   requestAnimationFrame(frame);}
 $('#foot').innerHTML='Peta: OpenFreeMap, data &copy; OpenStreetMap. Jalur dan halte: OpenStreetMap ('+LINES.length+' lini, '+ST.length+' stasiun dan halte). Rute motor dan jalan kaki: Valhalla. Cari tempat: Photon. Cuaca: Open-Meteo (cadangan: BMKG). Jam operasional dan jarak antar kendaraan adalah perkiraan per jenis moda, bukan jadwal resmi.';
 if(window.innerWidth<=760)$('#layers').open=false;
-renderSaved();window.loadWx=loadWx;loadWx();onMinute(true);requestAnimationFrame(frame);
+renderSaved();window.loadWx=loadWx;loadWx();
+/* ---------- pembaruan aplikasi (hanya di aplikasi Android) ---------- */
+window.JC_BUILD='__APPBUILD__';try{if(/^\d+$/.test(window.JC_BUILD))document.getElementById('verTag').textContent+=' · aplikasi #'+window.JC_BUILD;}catch(e){}
+let updAt=0;
+async function chkUpd(){const C=window.Capacitor;if(!(C&&C.isNativePlatform&&C.isNativePlatform()))return;
+  const cur=/^\d+$/.test(window.JC_BUILD)?+window.JC_BUILD:0;if(!cur||Date.now()-updAt<1800000)return;updAt=Date.now();
+  try{const r=await fetch('https://api.github.com/repos/tim-jejak/jejakcommuter/releases/latest',{headers:{Accept:'application/vnd.github+json'}});if(!r.ok)return;const j=await r.json();
+    const n=+((j.tag_name||'').replace(/^apk-/,''))||0,as=(j.assets||[]).find(x=>/\.apk$/i.test(x.name));if(!as||n<=cur)return;
+    let skip=0;try{skip=+localStorage.getItem('jc_upd_skip')||0;}catch(e){}if(skip===n)return;
+    const b=document.createElement('div');b.id='updBar';b.setAttribute('role','alert');
+    b.style.cssText='position:fixed;left:10px;right:10px;top:max(10px,env(safe-area-inset-top,0px));z-index:99999;background:#1F5FB5;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.45);display:grid;gap:8px;font:600 14px/1.35 system-ui,sans-serif';
+    b.innerHTML='<div><b>Terdapat pembaruan versi.</b><br><span style="font-weight:500;opacity:.9">Lakukan pembaruan untuk mendapat perbaikan dan fitur terbaru.</span></div><div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" id="updNo" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);border-radius:10px;padding:8px 12px;font:600 13px system-ui">Nanti</button><button type="button" id="updGo" style="background:#fff;color:#1F5FB5;border:none;border-radius:10px;padding:8px 14px;font:700 13px system-ui">Perbarui</button></div>';
+    document.body.appendChild(b);
+    $('#updNo').onclick=()=>{try{localStorage.setItem('jc_upd_skip',String(n));}catch(e){}b.remove();};
+    $('#updGo').onclick=()=>{b.remove();const u=as.browser_download_url;let ok=false;try{const B=C.registerPlugin('Browser');B.open({url:u});ok=true;}catch(e){}if(!ok)location.href=u;};
+  }catch(e){}}
+setTimeout(chkUpd,3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(chkUpd,1500);});
+onMinute(true);requestAnimationFrame(frame);
 window.__jc={setPoint,S,locate,draw,plan,startNav,stopNav,NAV,applyFix,map,LINES,ST,dijk,MASKS,stationsNear,legsFrom,WALKADJ,POS,NS};
 };
 window.__tryLoad();
