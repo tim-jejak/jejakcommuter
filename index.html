@@ -811,16 +811,31 @@ function navTick(){if(!NAV.on||!S.gps)return;const r=navProject(S.gps);if(!NAV.l
   $('#nvRem').innerHTML='<b>'+mins+' mnt</b> · '+fmtD(rem)+' · tiba '+String(eta.getHours()).padStart(2,'0')+':'+String(eta.getMinutes()).padStart(2,'0');
   NAV.off=r.d>150?NAV.off+1:0;$('#nvOff').hidden=NAV.off<3;
   if(rem<40&&NAV.total>100){$('#nvTitle').textContent='Kamu sudah sampai';$('#nvDet').textContent='';$('#nvRem').textContent='';if(!NAV.done){NAV.done=setTimeout(()=>stopNav(true),4000);}}
-  if(NAV.follow&&!NAV.off)map.easeTo({center:[S.gps.lon,S.gps.lat],zoom:16.5,bearing:r.brg,pitch:50,duration:900,padding:{top:150,bottom:170,left:0,right:0}});}
+  if(NAV.follow&&!NAV.off)map.easeTo({center:[S.gps.lon,S.gps.lat],zoom:16.5,bearing:(NAV.hd!=null?NAV.hd:r.brg),pitch:50,duration:900,padding:{top:150,bottom:170,left:0,right:0}});}
 window.navTick=navTick;
 function navSwitch(){const o=S.opts[S.sel];if(!o)return;NAV.o=o;NAV.legs=navLegs(o);NAV.total=NAV.legs.reduce((a,l)=>a+l.len,0);NAV.off=0;NAV.follow=true;NAV.done=null;$('#nvOff').hidden=true;$('#nvCenter').hidden=true;if(window.__setSheet)window.__setSheet('peek');navTick();}
-function startNav(){const o=S.opts[S.sel];if(!o){return;}
+/* kompas: peta ikut arah HP */
+function compassHeading(a,b,g){if(a==null||b==null||g==null)return null;if(Math.abs(b)<35)return (360-a)%360;
+  const r=Math.PI/180;a*=r;b*=r;g*=r;const cA=Math.cos(a),sA=Math.sin(a),cB=Math.cos(b),sB=Math.sin(b),cG=Math.cos(g),sG=Math.sin(g);
+  const rA=-cA*sG-sA*sB*cG,rB=-sA*sG+cA*sB*cG;let h=Math.atan2(rA,rB);if(h<0)h+=2*Math.PI;return h*180/Math.PI;}
+function onOri(e){if(!NAV.on)return;let h=null;
+  if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;
+  else if(e.absolute||e.type==='deviceorientationabsolute')h=compassHeading(e.alpha,e.beta,e.gamma);
+  if(h==null||isNaN(h))return;
+  if(NAV.hd==null)NAV.hd=h;else{let d=((h-NAV.hd+540)%360)-180;NAV.hd=(NAV.hd+d*0.25+360)%360;}
+  const now=performance.now();if(NAV.follow&&now-(NAV.hdT||0)>180){const cur=map.getBearing();const d=Math.abs(((NAV.hd-cur+540)%360)-180);
+    if(d>3){NAV.hdT=now;map.easeTo({bearing:NAV.hd,duration:200,easing:x=>x});}}}
+async function compassOn(){if(NAV.cmp)return;NAV.cmp=true;NAV.hd=null;
+  try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){NAV.cmp=false;return;}}}catch(e){}
+  window.addEventListener('deviceorientationabsolute',onOri,true);window.addEventListener('deviceorientation',onOri,true);}
+function compassOff(){NAV.cmp=false;NAV.hd=null;window.removeEventListener('deviceorientationabsolute',onOri,true);window.removeEventListener('deviceorientation',onOri,true);}
+function startNav(){const o=S.opts[S.sel];if(!o){return;}compassOn();
   const go=()=>{S.holdRoute=null;NAV.o=o;NAV.legs=navLegs(o);NAV.total=NAV.legs.reduce((a,l)=>a+l.len,0);NAV.on=true;NAV.follow=true;NAV.off=0;NAV.done=null;
     document.documentElement.classList.add('nav');$('#navbar').hidden=false;$('#nvCenter').hidden=true;if(window.__setSheet)window.__setSheet('peek');
     try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>{NAV.wl=w;}).catch(()=>{});}catch(e){}
     navTick();};
   if(S.gps)go();else locate(()=>go());}
-function stopNav(){S.holdRoute=null;NAV.on=false;clearTimeout(NAV.done);try{NAV.wl&&NAV.wl.release();}catch(e){}document.documentElement.classList.remove('nav');$('#navbar').hidden=true;$('#nvCenter').hidden=true;
+function stopNav(){S.holdRoute=null;NAV.on=false;compassOff();clearTimeout(NAV.done);try{NAV.wl&&NAV.wl.release();}catch(e){}document.documentElement.classList.remove('nav');$('#navbar').hidden=true;$('#nvCenter').hidden=true;
   map.easeTo({pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0},duration:600});if(window.__setSheet)window.__setSheet('half');}
 map.on('dragstart',()=>{if(NAV.on&&NAV.follow){NAV.follow=false;$('#nvCenter').hidden=false;}});
 $('#nvCenter').onclick=()=>{NAV.follow=true;$('#nvCenter').hidden=true;navTick();};
