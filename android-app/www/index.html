@@ -364,14 +364,14 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
   <div class="small" style="max-width:180px;margin-top:3px">Posisi kendaraan hanya simulasi dari perkiraan jarak antar kendaraan, bukan lokasi asli.</div>
 </div>
 </details>
-<div id="banner" hidden role="status"><span id="bannerTxt"></span><button type="button" id="bannerBtn">Lihat jalur yang masih jalan</button><button type="button" id="bannerMin">Kecilkan</button><span class="bmini">Info Jecom</span></div>
+<div id="banner" hidden role="status"><span id="bannerTxt"></span><button type="button" id="bannerBtn">Jadwal dan rute</button><button type="button" id="bannerMin">Kecilkan</button><span class="bmini">Info Jecom</span></div>
 </div>
 <div id="about" class="modal" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="abT">
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 26-10 21.15 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 27-10 14.13 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -417,6 +417,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
   <div class="rb" id="rbody">
     <div id="rActs" hidden><button type="button" class="btn pri" id="rStart">Mulai</button><button type="button" class="btn" id="rShare">Bagikan rute</button></div>
     <div id="out"></div>
+    <button type="button" class="btn" id="schOpen" style="width:100%;margin:10px 0 0;min-height:42px;font-weight:700">Jadwal dan rute transportasi</button>
     <h3>Rute tersimpan</h3>
     <div id="saved"></div>
   </div>
@@ -449,9 +450,9 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 
 <div id="sheet" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="shT">
-    <div class="row" style="justify-content:space-between;align-items:flex-start"><div><b id="shT" style="font-size:17px">Jalur yang masih beroperasi</b><div class="small" id="shSub"></div></div><button type="button" class="btn" id="shClose">Tutup</button></div>
+    <div class="row" style="justify-content:space-between;align-items:flex-start"><div><b id="shT" style="font-size:17px">Jadwal dan rute</b><div class="small" id="shSub"></div></div><button type="button" class="btn" id="shClose">Tutup</button></div>
     <div id="shList"></div>
-    <p class="small">Jam operasional adalah perkiraan per jenis moda, bukan jadwal resmi per lini.</p>
+    <p class="small">Jam operasional dan jarak antar kendaraan adalah perkiraan per jenis moda, bukan jadwal resmi per lini atau per kereta.</p>
   </div>
 </div>
 
@@ -611,7 +612,7 @@ map.on('load',()=>{
   map.addSource('route',{type:'geojson',data:emptyFC});
   map.addSource('poi',{type:'geojson',data:emptyFC});
   map.addSource('anim',{type:'geojson',data:emptyFC});
-  map.addSource('navstops',{type:'geojson',data:emptyFC});map.addSource('navtrail',{type:'geojson',data:emptyFC});
+  map.addSource('navstops',{type:'geojson',data:emptyFC});map.addSource('jsel',{type:'geojson',data:emptyFC});map.addSource('navtrail',{type:'geojson',data:emptyFC});
   map.addSource('acc',{type:'geojson',data:emptyFC});
   map.addLayer({id:'acc-fill',type:'fill',source:'acc',paint:{'fill-color':'#1F5FB5','fill-opacity':.12}});
   map.addLayer({id:'acc-line',type:'line',source:'acc',paint:{'line-color':'#1F5FB5','line-width':1.5,'line-opacity':.6}});
@@ -634,6 +635,9 @@ map.on('load',()=>{
   map.addLayer({id:'st-rail',type:'circle',source:'st-rail',paint:{'circle-radius':['interpolate',['linear'],['zoom'],9,['case',['==',['get','big'],1],4,2.6],14,['case',['==',['get','big'],1],8,6]],'circle-color':'#fff','circle-stroke-width':['interpolate',['linear'],['zoom'],9,1.8,14,3],'circle-stroke-color':['case',['==',['get','big'],1],'#14202B',['get','col']]}});
   map.addLayer({id:'st-rail-l',type:'symbol',source:'st-rail',minzoom:11,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],11,11,15,13],'text-offset':[0,1.1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.8}});
   map.addLayer({id:'veh',type:'circle',source:'veh',paint:{'circle-radius':['interpolate',['linear'],['zoom'],9,['case',['==',['get','k'],1],3.5,2],14,['case',['==',['get','k'],1],7,3.5]],'circle-color':['get','col'],'circle-stroke-color':['case',['==',['get','k'],1],'#fff','#14202B'],'circle-stroke-width':['case',['==',['get','k'],1],1.8,1.2]}});
+  map.addLayer({id:'jsel-l',type:'line',source:'jsel',filter:['==',['geometry-type'],'LineString'],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','col'],'line-width':['interpolate',['linear'],['zoom'],9,5,15,9],'line-opacity':.95}});
+  map.addLayer({id:'jsel-p',type:'circle',source:'jsel',filter:['==',['geometry-type'],'Point'],paint:{'circle-radius':4.5,'circle-color':'#fff','circle-stroke-color':'#14202B','circle-stroke-width':2}});
+  map.addLayer({id:'jsel-t',type:'symbol',source:'jsel',minzoom:11.5,filter:['==',['geometry-type'],'Point'],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.6}});
   map.addLayer({id:'navtrail',type:'line',source:'navtrail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#8A97A3','line-width':['interpolate',['linear'],['zoom'],9,5,15,8],'line-opacity':.95}});
   map.addLayer({id:'navstops',type:'circle',source:'navstops',paint:{'circle-radius':['match',['get','st'],'n',7,5],'circle-color':['match',['get','st'],'p','#8A97A3','n','#E8A200','#ffffff'],'circle-stroke-color':'#14202B','circle-stroke-width':2}});
   map.addLayer({id:'navstops-l',type:'symbol',source:'navstops',minzoom:12.5,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.6}});
@@ -1046,10 +1050,104 @@ function bannerInfo(t){if(!isNight(t))return null;const stopped=Object.keys(MODE
   const hh=fmt(t).replace(':','.');return {text:'Info dari Jecom: sekarang jam '+hh+(t<300?', sebagian transportasi umum belum beroperasi.':', beberapa transportasi umum sudah mulai berhenti beroperasi.')};}
 function banner(){const b=bannerInfo(Math.floor(S.t));$('#banner').hidden=!b;if(b)$('#bannerTxt').textContent=b.text;}
 const SHEETROWS=[['krl','KRL Commuter Line (semua lini)','#E4002B'],['mrt','MRT Jakarta','#1A237E'],['lrt','LRT Jakarta dan Jabodebek','#0288D1'],['whoosh','Whoosh','#7B1FA2'],['brt','TransJakarta koridor BRT','#F39C12'],['tj','TransJakarta non-BRT','#E59866'],['mikro','Mikrotrans (JakLingko)','#16A085']];
-function renderSheet(){const t=Math.floor(S.t);$('#shSub').textContent='Sekarang jam '+fmt(t).replace(':','.');
-  const rows=SHEETROWS.map(([k,n,c])=>({k,n,c,M:MODES[k],run:t>=MODES[k].start&&t<MODES[k].end})).sort((a,b)=>b.run-a.run);
-  $('#shList').innerHTML=rows.map(r=>'<div class="lrow"><div><span class="lb" style="background:'+r.c+'">&nbsp;</span> <b>'+esc(r.n)+'</b><div class="small">Perkiraan '+fmt(r.M.start)+' sampai '+(r.M.end>=1440?'24:00':fmt(r.M.end))+'</div></div><span class="pill '+(r.run?'ok':'stop')+'">'+(r.run?'sisa '+hm(r.M.end-t):(t<r.M.start?'belum mulai':'berhenti'))+'</span></div>').join('');}
-$('#bannerBtn').onclick=()=>{$('#sheet').hidden=false;renderSheet();};$('#shClose').onclick=()=>$('#sheet').hidden=true;
+let SCH={v:'modes',mode:'',line:-1,q:'',tj:'',day:''};
+let MRD=null,MRP=null;
+const MRT_URL='https://tim-jejak.github.io/jejakcommuter/mrt-jadwal.json';
+function ensureMRD(){if(MRD||MRP)return MRP;MRP=fetch(window.__MRT_URL||MRT_URL,{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{MRD=j;MRP=null;if(j&&!$('#sheet').hidden)renderSheet();return j;}).catch(()=>{MRP=null;return null;});return MRP;}
+const toMin=s=>{const a=s.split(':');return +a[0]*60+ +a[1];};
+const MDIR={lebak:'Arah Lebak Bulus',hi:'Arah Bundaran HI'};
+function mrtDay(){const d=new Date().getDay();return (d===0||d===6)?'we':'wd';}
+let TJD=null,TJP=null;
+const TJ_URL='https://tim-jejak.github.io/jejakcommuter/tj-jadwal.json';
+function ensureTJ(){if(TJD||TJP)return TJP;TJP=fetch(window.__TJ_URL||TJ_URL,{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{TJD=j;TJP=null;if(j)buildTJIdx();if(!$('#sheet').hidden)renderSheet();return j;}).catch(()=>{TJP=null;return null;});return TJP;}
+const TJCAT=[['BRT','TransJakarta BRT','#F39C12'],['Angkutan Umum Integrasi','TransJakarta non-BRT (integrasi)','#E59866'],['Mikrotrans','Mikrotrans (JakLingko)','#16A085'],['Transjabodetabek','Transjabodetabek','#8E44AD'],['Royaltrans','Royaltrans','#B7950B'],['Rusun','Bus Rusun','#7F8C8D'],['Bus Wisata','Bus Wisata','#D35400']];
+let TJIDX={};
+function tjKey(s){s=String(s||'').toUpperCase().replace(/[\s.]/g,'');return s.replace(/^JAK0*(\d)/,'JAK$1');}
+function buildTJIdx(){TJIDX={};LINES.forEach(L=>{if(L.M&&L.M.group==='tj')TJIDX[tjKey(L.ref)]=L.idx;});}
+function dayKey(){const d=new Date().getDay();return d===0?'sun':(d===6?'sat':'wd');}
+const DAYN={wd:'Hari kerja',sat:'Sabtu',sun:'Minggu'};
+function tjWin(x,day){let a=1e9,b=0;x.d.forEach(dd=>(dd.w[day]||[]).forEach(w=>{a=Math.min(a,w[0]);b=Math.max(b,w[1]);}));return b?[a,b]:null;}
+function tjRunning(x,day,t){return x.d.some(dd=>(dd.w[day]||[]).some(w=>t>=w[0]&&t<w[1]));}
+
+const HM=m=>fmt(m).replace(':','.');
+function lineTerm(L){return [cleanName(L.s[0][0]),cleanName(L.s[L.n-1][0])];}
+function depList(L,t,off){const out=[];let c=L.start+off;while(c<t&&c<L.end)c+=L.hw[band(c)];while(out.length<4&&c<L.end){out.push(c);c+=L.hw[band(c)];}return out;}
+function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
+  const back=(to,txt)=>'<button type="button" class="btn" data-sch="'+to+'" style="margin-bottom:8px">&lsaquo; '+txt+'</button>';
+  if(SCH.v==='modes'){$('#shT').textContent='Jadwal dan rute';$('#shSub').textContent='Sekarang jam '+HM(t)+'. Ketuk satu moda untuk melihat semua lininya.';
+    ensureTJ();ensureMRD();const day=dayKey();
+    let rows=SHEETROWS.filter(r=>!(TJD&&['brt','tj','mikro'].includes(r[0]))).map(([k,n,c])=>({k,n,c,M:MODES[k],run:t>=MODES[k].start&&t<MODES[k].end,cnt:LINES.filter(L=>L.cls===k).length}));
+    if(TJD){TJCAT.forEach(([cat,n,c])=>{const rs=Object.values(TJD.routes).filter(x=>x.cat===cat);if(!rs.length)return;const run=rs.filter(x=>tjRunning(x,day,t)).length;rows.push({k:'tj:'+cat,n,c,tj:true,cnt:rs.length,run:run>0,runN:run});});}
+    if(MRD){const mr=rows.find(r=>r.k==='mrt');if(mr){const dk=mrtDay();let a=1e9,b=0;MRD.st.forEach(s=>Object.values(s[dk]||{}).forEach(l=>{a=Math.min(a,toMin(l[0]));b=Math.max(b,toMin(l[l.length-1]));}));mr.tj=true;mr.run=t>=a&&t<=b;mr.txt=MRD.st.length+' stasiun · jadwal resmi · '+HM(a)+' sampai '+HM(b);}}
+    rows.sort((a,b)=>b.run-a.run);
+    box.innerHTML=rows.map(r=>'<button type="button" class="lrow" data-mode="'+r.k+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+r.c+'">&nbsp;</span> <b>'+esc(r.n)+'</b><div class="small">'+(r.txt?r.txt:r.tj?r.cnt+' lini · data resmi · '+r.runN+' beroperasi sekarang':r.cnt+' lini · perkiraan '+HM(r.M.start)+' sampai '+(r.M.end>=1440?'24.00':HM(r.M.end)))+'</div></div><span><span class="pill '+(r.run?'ok':'stop')+'">'+(r.tj?(r.run?'beroperasi':'berhenti'):(r.run?'sisa '+hm(r.M.end-t):(t<r.M.start?'belum mulai':'berhenti')))+'</span> &rsaquo;</span></button>').join('');return;}
+  if(SCH.v==='lines'&&SCH.mode==='mrt'&&MRD){$('#shT').textContent='MRT Jakarta';$('#shSub').textContent='Jadwal resmi per stasiun, '+(mrtDay()==='we'?'hari libur':'hari biasa')+' ini';
+    box.innerHTML=back('modes','Semua moda')+MRD.st.map(s=>'<button type="button" class="lrow" data-mrs="'+s.id+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:#1A237E">&nbsp;</span> <b>'+esc(s.n)+'</b></div><span>&rsaquo;</span></button>').join('');return;}
+  if(SCH.v==='mrtst'&&MRD){const s=MRD.st.find(x=>x.id===SCH.mst);if(s){const dk=SCH.day==='wd'||SCH.day==='we'?SCH.day:mrtDay(),dd=s[dk]||{},dirs=Object.keys(dd);let dr=dirs.includes(SCH.mdir)?SCH.mdir:dirs[0];
+    $('#shT').textContent='Stasiun '+s.n;$('#shSub').textContent='Jadwal resmi MRT Jakarta';
+    const tabs=[['wd','Hari biasa'],['we','Hari libur']].map(([d,n])=>'<button type="button" class="btn" data-day="'+d+'" style="'+(d===dk?'background:#14202B;color:#fff;':'')+'padding:6px 10px">'+n+'</button>').join(' ');
+    const dtabs=dirs.length>1?dirs.map(d=>'<button type="button" class="btn" data-dir="'+d+'" style="'+(d===dr?'background:#1A237E;color:#fff;':'')+'padding:6px 10px">'+MDIR[d]+'</button>').join(' '):'';
+    const l=dd[dr]||[],mins=l.map(toMin),isToday=dk===mrtDay(),nx=isToday?l.filter((x,i)=>mins[i]>=t).slice(0,5):[];
+    const byH={};l.forEach(x=>{(byH[x.slice(0,2)]=byH[x.slice(0,2)]||[]).push(x.slice(3));});
+    box.innerHTML=back('mrtlist','Daftar stasiun')+'<div style="display:grid;gap:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div>'+(dtabs?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+dtabs+'</div>':'<b>'+MDIR[dr]+'</b>')+
+      (isToday?'<div><b>Berangkat berikutnya</b><div style="font-size:20px;font-weight:800;margin-top:4px">'+(nx.length?nx.map(x=>x.replace(':','.')).join(' · '):'Sudah tidak ada kereta hari ini')+'</div></div>':'')+
+      '<details open style="margin-top:4px"><summary class="small" style="cursor:pointer">Semua jam ('+l.length+' kereta)</summary><div style="margin-top:6px;font-size:14px;line-height:1.7">'+Object.keys(byH).sort().map(h=>'<div><b>'+h+'</b>&nbsp; '+byH[h].map(m=>{const cur=isToday&&nx[0]===h+':'+m;return cur?'<b style="background:#FFE9A8;color:#14202B;border-radius:4px;padding:0 3px">'+m+'</b>':m;}).join('&nbsp; ')+'</div>').join('')+'</div></details>'+
+      (dr==='hi'?'<p class="small">'+esc(MRD.last||'')+'</p>':'')+
+      '<p class="small">Sumber: MRT Jakarta, <a href="https://jakartamrt.co.id/jadwal-keberangkatan" target="_blank" rel="noopener noreferrer" style="color:inherit">jadwal keberangkatan resmi</a>, diperbarui '+esc(MRD.built||'')+'. Jam bisa berubah, cek informasi resmi.</p></div>';return;}}
+  if(SCH.v==='lines'&&SCH.mode.startsWith('tj:')&&TJD){const cat=SCH.mode.slice(3),ce=TJCAT.find(c=>c[0]===cat),day=dayKey();$('#shT').textContent=ce?ce[1]:cat;$('#shSub').textContent='Data resmi TransJakarta · '+DAYN[day]+' ini';
+    const q=normName(SCH.q||'');let rs=Object.entries(TJD.routes).filter(([k,x])=>x.cat===cat);
+    if(q.length>=2)rs=rs.filter(([k,x])=>normName(x.n+' '+x.name).includes(q)||x.d.some(dd=>dd.h.some(h=>normName(h).includes(q))||dd.s.some(i=>normName(TJD.names[i]).includes(q))));
+    rs.sort((a,b)=>String(a[1].n).localeCompare(String(b[1].n),'id',{numeric:true}));
+    box.innerHTML=back('modes','Semua moda')+'<input id="schQ" type="search" placeholder="Cari lini atau halte" value="'+esc(SCH.q||'')+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line);margin-bottom:6px;font:inherit">'+
+      (rs.length?rs.map(([k,x])=>{const w=tjWin(x,day),run=tjRunning(x,day,t);return '<button type="button" class="lrow" data-tj="'+esc(k)+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.n)+'</b> '+esc(x.name)+'<div class="small">'+(w?HM(w[0])+' sampai '+(w[1]>=1440?'24.00':HM(w[1])):'tidak beroperasi')+(run?' · beroperasi sekarang':'')+'</div></div><span>&rsaquo;</span></button>';}).join(''):'<p class="small">Tidak ada lini yang cocok.</p>');
+    return;}
+  if(SCH.v==='tjline'&&TJD&&TJD.routes[SCH.tj]){const x=TJD.routes[SCH.tj],day=SCH.day||dayKey(),mi=TJIDX[tjKey(x.n)];$('#shT').textContent=x.n+' '+x.name;$('#shSub').textContent=x.cat;
+    const tabs=['wd','sat','sun'].map(d=>'<button type="button" class="btn" data-day="'+d+'" style="'+(d===day?'background:#14202B;color:#fff;':'')+'padding:6px 10px">'+DAYN[d]+'</button>').join(' ');
+    const dirs=x.d.map(dd=>{const ws=dd.w[day]||[],cur=ws.find(w=>t>=w[0]&&t<w[1]);
+      return '<div style="border-top:1px solid var(--line);padding-top:8px"><b>Menuju '+esc(dd.h[0]||'-')+'</b>'+(dd.h.length>1?'<div class="small">Juga: '+esc(dd.h.slice(1).join(', '))+'</div>':'')+
+       '<div class="small" style="margin-top:4px">'+(ws.length?ws.map(w=>HM(w[0])+'–'+(w[1]>=1440?'24.00':HM(w[1]))+': tiap '+w[2]+' mnt').join('<br>'):'Tidak beroperasi pada hari ini.')+'</div>'+
+       (day===dayKey()?'<div class="small"><b>Sekarang:</b> '+(cur?'tiap '+cur[2]+' mnt':'di luar jam layanan')+'</div>':'')+
+       '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">'+dd.s.length+' pemberhentian</summary><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+dd.s.map(i=>'<li>'+esc(TJD.names[i])+'</li>').join('')+'</ol></details></div>';}).join('');
+    box.innerHTML=back('tjlist','Daftar lini')+'<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.name)+'</b></div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div>'+dirs+
+      (mi!==undefined?'<button type="button" class="btn" data-show="'+mi+'">Tampilkan jalur di peta</button>':'')+
+      '<p class="small">Sumber: TransJakarta (data GTFS resmi), diperbarui '+esc(TJD.built||'')+'. Jarak antar bus adalah data resmi berbasis frekuensi, bukan jam berangkat per bus. Bisa berubah, cek informasi resmi TransJakarta.</p></div>';return;}
+  if(SCH.v==='lines'){const row=SHEETROWS.find(r=>r[0]===SCH.mode),M=MODES[SCH.mode];$('#shT').textContent=row[1];$('#shSub').textContent=HM(M.start)+' sampai '+(M.end>=1440?'24.00':HM(M.end))+' (perkiraan)';
+    const q=normName(SCH.q||'');let ls=LINES.filter(L=>L.cls===SCH.mode);
+    if(q.length>=2)ls=ls.filter(L=>normName(L.label+' '+L.name).includes(q)||L.s.some(s=>normName(s[0]).includes(q)));
+    ls.sort((a,b)=>String(a.label).localeCompare(String(b.label),'id',{numeric:true}));
+    box.innerHTML=back('modes','Semua moda')+'<input id="schQ" type="search" placeholder="Cari lini atau stasiun/halte" value="'+esc(SCH.q||'')+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line);margin-bottom:6px;font:inherit">'+
+      (ls.length?ls.map(L=>{const [a,b]=lineTerm(L);return '<button type="button" class="lrow" data-line="'+L.idx+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+L.col+'">&nbsp;</span> <b>'+esc(L.label)+'</b><div class="small">'+esc(a)+' &harr; '+esc(b)+' · '+L.n+' pemberhentian</div></div><span>&rsaquo;</span></button>';}).join(''):'<p class="small">Tidak ada lini yang cocok.</p>');
+    return;}
+  const L=LINES[SCH.line];if(!L){SCH.v='modes';return renderSheet();}const [a,b]=lineTerm(L),run=t>=L.start&&t<L.end;
+  $('#shT').textContent=L.label;$('#shSub').textContent=a+' ↔ '+b;
+  const f=(x)=>'tiap '+x+' mnt';const dl=(from,off)=>{const d=depList(L,t,off);return '<div class="small"><b>Dari '+esc(from)+':</b> '+(d.length?d.map(HM).join(' · '):'tidak ada lagi hari ini')+'</div>';};
+  box.innerHTML=back('lines','Daftar lini')+
+   '<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+L.col+'">&nbsp;</span> <b>'+esc(L.name||L.label)+'</b> <span class="pill '+(run?'ok':'stop')+'">'+(run?'sisa '+hm(L.end-t):(t<L.start?'belum mulai':'berhenti'))+'</span></div>'+
+   '<div class="small">Rute: '+esc(a)+' &harr; '+esc(b)+' (dua arah) · '+L.n+' pemberhentian · ±'+Math.round(L.len/1000)+' km</div>'+
+   '<div class="small"><b>Jam operasional (perkiraan):</b> '+HM(L.start)+' sampai '+(L.end>=1440?'24.00':HM(L.end))+'</div>'+
+   '<div class="small"><b>Jarak antar kendaraan (perkiraan):</b><br>Jam sibuk (07.00–09.00, 17.00–19.00): '+f(L.hw.peak)+'<br>Siang dan sore: '+f(L.hw.off)+'<br>Malam (21.00–06.00): '+f(L.hw.late)+'</div>'+
+   '<div><b>Keberangkatan berikutnya (perkiraan)</b>'+dl(a,0)+dl(b,2)+'</div>'+
+   '<button type="button" class="btn" data-show="'+L.idx+'">Tampilkan jalur di peta</button>'+
+   '<div><b>Pemberhentian berurutan</b><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+L.s.map(s=>'<li>'+esc(cleanName(s[0]))+'</li>').join('')+'</ol></div></div>';}
+function showLineMap(i){const L=LINES[i];if(!mapReady||!L)return;
+  map.getSource('jsel').setData({type:'FeatureCollection',features:[{type:'Feature',properties:{col:L.col},geometry:{type:'LineString',coordinates:L.pts}}].concat(L.s.map(s=>({type:'Feature',properties:{name:cleanName(s[0]),col:L.col},geometry:{type:'Point',coordinates:[s[2],s[1]]}})))});
+  const bb=L.pts.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(L.pts[0],L.pts[0]));map.fitBounds(bb,{padding:{top:90,bottom:200,left:30,right:30},duration:700,maxZoom:14});
+  let p=$('#jselPill');if(!p){p=document.createElement('div');p.id='jselPill';p.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:104px;z-index:9;background:#14202B;color:#fff;border-radius:999px;padding:8px 8px 8px 14px;font:700 13px system-ui,sans-serif;display:flex;gap:10px;align-items:center;box-shadow:0 3px 12px rgba(0,0,0,.4);max-width:92vw';document.body.appendChild(p);}
+  p.innerHTML='<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(L.label)+'</span><button type="button" id="jselX" style="background:#fff;color:#14202B;border:none;border-radius:999px;padding:5px 11px;font:700 12px system-ui">Hapus</button>';p.hidden=false;
+  $('#jselX').onclick=clearLineMap;}
+function clearLineMap(){try{map.getSource('jsel').setData(emptyFC);}catch(e){}const p=$('#jselPill');if(p)p.hidden=true;}
+$('#sheet').addEventListener('click',e=>{const g=e.target.closest('[data-mode],[data-line],[data-sch],[data-show],[data-tj],[data-day],[data-mrs],[data-dir]');if(!g)return;
+  if(g.dataset.mode){SCH={v:'lines',mode:g.dataset.mode,line:-1,q:'',tj:'',day:''};renderSheet();}
+  else if(g.dataset.tj){SCH.v='tjline';SCH.tj=g.dataset.tj;SCH.day='';renderSheet();$('#shList').scrollTop=0;}
+  else if(g.dataset.mrs){SCH.v='mrtst';SCH.mst=g.dataset.mrs;SCH.day='';SCH.mdir='';renderSheet();$('#shList').scrollTop=0;}
+  else if(g.dataset.dir){SCH.mdir=g.dataset.dir;renderSheet();}
+  else if(g.dataset.day){SCH.day=g.dataset.day;renderSheet();}
+  else if(g.dataset.line){SCH.v='line';SCH.line=+g.dataset.line;renderSheet();$('#shList').scrollTop=0;}
+  else if(g.dataset.sch){SCH.v=(g.dataset.sch==='tjlist'||g.dataset.sch==='mrtlist')?'lines':g.dataset.sch;renderSheet();}
+  else if(g.dataset.show){showLineMap(+g.dataset.show);$('#sheet').hidden=true;}});
+$('#sheet').addEventListener('input',e=>{if(e.target.id==='schQ'){SCH.q=e.target.value;const pos=e.target.selectionStart;renderSheet();const n=$('#schQ');if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}}}});
+$('#bannerBtn').onclick=()=>{SCH={v:'modes',mode:'',line:-1,q:'',tj:'',day:''};$('#sheet').hidden=false;renderSheet();};
+$('#schOpen').onclick=$('#bannerBtn').onclick;$('#shClose').onclick=()=>$('#sheet').hidden=true;
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true;});
 const WMO={0:'Cerah',1:'Cerah Berawan',2:'Berawan',3:'Mendung',45:'Berkabut',48:'Berkabut',51:'Gerimis',53:'Gerimis',55:'Gerimis',56:'Gerimis',57:'Gerimis',61:'Hujan Ringan',63:'Hujan Sedang',65:'Hujan Lebat',66:'Hujan',67:'Hujan',80:'Hujan Ringan',81:'Hujan Sedang',82:'Hujan Lebat',95:'Petir',96:'Petir',99:'Petir'};
 let wxAt=0,wxPos=null;
@@ -1459,7 +1557,7 @@ async function startTrip(){const j=J();
   if(G){toast(G.mode==='v'?'Perjalananmu sudah dibagikan.':'Kamu sedang di grup. Rutemu dibagikan ke anggota lewat tab Anggota.');openPanel(true);return;}
   if(!P.name){toast('Isi nama kamu dulu di Pengaturan.');const a=$('#about');if(a)a.hidden=false;return;}
   const code=rand(10),raw=crypto.getRandomValues(new Uint8Array(32));
-  const u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('v',code);u.hash='k='+b64u(raw);const url=u.toString();
+  const u=new URL(shareBase());u.search='';u.hash='';u.searchParams.set('v',code);u.hash='k='+b64u(raw);const url=u.toString();
   let shared=false;
   try{if(navigator.share){await navigator.share({title:'Perjalanan saya',text:P.name+' membagikan perjalanannya. Buka untuk melihat rute dan posisinya.',url});shared=true;}}
   catch(e){if(e&&e.name==='AbortError')return;}
@@ -1581,7 +1679,8 @@ function showIn(){tab=tab||'mem';const b=$('#gBody');$('#gTitle').textContent='G
    '<div class="gsec"><button type="button" class="btn dng" data-act="leave">'+(G.owner?'Hentikan grup':'Keluar dari grup')+'</button></div>';
   $('#gBody').dataset.view='in';updHead();updMembers();updChat();updPending();updStat();updBadge();}
 function setTab(t){return;tab=t;if(!$('#gTabMem'))return;$('#gTabMem').hidden=t!=='mem';$('#gTabChat').hidden=t!=='chat';document.querySelectorAll('.gtabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));if(t==='chat'){unread=0;updBadge();const l=$('#gLog');l.scrollTop=l.scrollHeight;}}
-function link(){if(G.tripUrl)return G.tripUrl;const u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('g',G.code);u.searchParams.set('m',G.mode);return u.toString();}
+function shareBase(){const h=location.hostname;return(location.protocol==='file:'||location.protocol==='capacitor:'||h==='localhost'||h==='127.0.0.1')&&!window.__TESTBASE?'https://tim-jejak.github.io/jejakcommuter/app/':location.href;}
+function link(){if(G.tripUrl)return G.tripUrl;const u=new URL(shareBase());u.search='';u.hash='';u.searchParams.set('g',G.code);u.searchParams.set('m',G.mode);return u.toString();}
 function fmtT(ms){const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function updHead(){const e=$('#gTime');if(e&&G)e.textContent=fmtT(G.exp-Date.now());}
 function updStat(){const e=$('#gStat');if(!e||!G)return;e.textContent=G.online?(useServer()?'Terhubung':'Mode lokal (antar tab)'):'Offline, menyambung ulang…';e.className='small '+(G.online?'ok':'off');}
