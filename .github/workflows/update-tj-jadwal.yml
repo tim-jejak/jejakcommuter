@@ -1,0 +1,25 @@
+name: Update jadwal TransJakarta
+
+on:
+  schedule:
+    - cron: '0 2 1 * *'   # tiap tanggal 1, jam 09.00 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unduh GTFS TransJakarta
+        run: curl -fsSL -A "Mozilla/5.0" -o gtfs.zip https://gtfs.transjakarta.co.id/files/file_gtfs.zip
+      - name: Olah jadi tj-jadwal.json
+        run: python3 scripts/process_gtfs.py gtfs.zip tj-jadwal.json
+      - name: Simpan jika berubah
+        run: |
+          git config user.name "jecom-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add tj-jadwal.json
+          git diff --cached --quiet || (git commit -m "Update jadwal TransJakarta" && git push)
