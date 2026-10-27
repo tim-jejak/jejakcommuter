@@ -371,7 +371,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 27-10 14.13 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 27-10 22.37 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -452,7 +452,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="shT">
     <div class="row" style="justify-content:space-between;align-items:flex-start"><div><b id="shT" style="font-size:17px">Jadwal dan rute</b><div class="small" id="shSub"></div></div><button type="button" class="btn" id="shClose">Tutup</button></div>
     <div id="shList"></div>
-    <p class="small">Jam operasional dan jarak antar kendaraan adalah perkiraan per jenis moda, bukan jadwal resmi per lini atau per kereta.</p>
+    <p class="small" id="shNote">Jam operasional dan jarak antar kendaraan adalah perkiraan per jenis moda, bukan jadwal resmi per lini atau per kereta.</p>
   </div>
 </div>
 
@@ -635,9 +635,13 @@ map.on('load',()=>{
   map.addLayer({id:'st-rail',type:'circle',source:'st-rail',paint:{'circle-radius':['interpolate',['linear'],['zoom'],9,['case',['==',['get','big'],1],4,2.6],14,['case',['==',['get','big'],1],8,6]],'circle-color':'#fff','circle-stroke-width':['interpolate',['linear'],['zoom'],9,1.8,14,3],'circle-stroke-color':['case',['==',['get','big'],1],'#14202B',['get','col']]}});
   map.addLayer({id:'st-rail-l',type:'symbol',source:'st-rail',minzoom:11,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],11,11,15,13],'text-offset':[0,1.1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.8}});
   map.addLayer({id:'veh',type:'circle',source:'veh',paint:{'circle-radius':['interpolate',['linear'],['zoom'],9,['case',['==',['get','k'],1],3.5,2],14,['case',['==',['get','k'],1],7,3.5]],'circle-color':['get','col'],'circle-stroke-color':['case',['==',['get','k'],1],'#fff','#14202B'],'circle-stroke-width':['case',['==',['get','k'],1],1.8,1.2]}});
-  map.addLayer({id:'jsel-l',type:'line',source:'jsel',filter:['==',['geometry-type'],'LineString'],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','col'],'line-width':['interpolate',['linear'],['zoom'],9,5,15,9],'line-opacity':.95}});
-  map.addLayer({id:'jsel-p',type:'circle',source:'jsel',filter:['==',['geometry-type'],'Point'],paint:{'circle-radius':4.5,'circle-color':'#fff','circle-stroke-color':'#14202B','circle-stroke-width':2}});
-  map.addLayer({id:'jsel-t',type:'symbol',source:'jsel',minzoom:11.5,filter:['==',['geometry-type'],'Point'],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.6}});
+  map.addSource('jdim',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]]]}}});
+  map.addLayer({id:'jdim',type:'fill',source:'jdim',paint:{'fill-color':'#0B1018','fill-opacity':0}});
+  map.addLayer({id:'jsel-case',type:'line',source:'jsel',filter:['==',['geometry-type'],'LineString'],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':['interpolate',['linear'],['zoom'],9,9,15,14],'line-opacity':.95}});
+  map.addLayer({id:'jsel-l',type:'line',source:'jsel',filter:['==',['geometry-type'],'LineString'],layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','col'],'line-width':['interpolate',['linear'],['zoom'],9,5,15,9],'line-opacity':1}});
+  map.addLayer({id:'jsel-p',type:'circle',source:'jsel',filter:['==',['geometry-type'],'Point'],paint:{'circle-radius':['interpolate',['linear'],['zoom'],10,3.5,15,6],'circle-color':'#fff','circle-stroke-color':'#14202B','circle-stroke-width':2.2}});
+  map.addLayer({id:'jsel-sel',type:'circle',source:'jsel',filter:['all',['==',['geometry-type'],'Point'],['==',['get','sel'],1]],paint:{'circle-radius':11,'circle-color':'#FFD54A','circle-stroke-color':'#14202B','circle-stroke-width':3}});
+  map.addLayer({id:'jsel-t',type:'symbol',source:'jsel',minzoom:11,filter:['==',['geometry-type'],'Point'],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':12.5,'text-offset':[0,1.2],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':2}});
   map.addLayer({id:'navtrail',type:'line',source:'navtrail',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#8A97A3','line-width':['interpolate',['linear'],['zoom'],9,5,15,8],'line-opacity':.95}});
   map.addLayer({id:'navstops',type:'circle',source:'navstops',paint:{'circle-radius':['match',['get','st'],'n',7,5],'circle-color':['match',['get','st'],'p','#8A97A3','n','#E8A200','#ffffff'],'circle-stroke-color':'#14202B','circle-stroke-width':2}});
   map.addLayer({id:'navstops-l',type:'symbol',source:'navstops',minzoom:12.5,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,1],'text-anchor':'top','text-optional':true},paint:{'text-color':'#14202B','text-halo-color':'#fff','text-halo-width':1.6}});
@@ -1056,6 +1060,10 @@ const MRT_URL='https://tim-jejak.github.io/jejakcommuter/mrt-jadwal.json';
 function ensureMRD(){if(MRD||MRP)return MRP;MRP=fetch(window.__MRT_URL||MRT_URL,{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{MRD=j;MRP=null;if(j&&!$('#sheet').hidden)renderSheet();return j;}).catch(()=>{MRP=null;return null;});return MRP;}
 const toMin=s=>{const a=s.split(':');return +a[0]*60+ +a[1];};
 const MDIR={lebak:'Arah Lebak Bulus',hi:'Arah Bundaran HI'};
+function mrtBands(mins){const by={};for(let i=1;i<mins.length;i++){const h=Math.floor(mins[i-1]/60);(by[h]=by[h]||[]).push(mins[i]-mins[i-1]);}
+  const hs=Object.keys(by).map(Number).sort((a,b)=>a-b),med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)];},bands=[];
+  hs.forEach(h=>{const m=med(by[h]),b=bands[bands.length-1];if(b&&b.h2===h-1&&Math.abs(b.m-m)<=2.5){b.h2=h;b.g.push(...by[h]);b.m=med(b.g);}else bands.push({h1:h,h2:h,g:[...by[h]],m});});
+  return bands.map(b=>({a:b.h1,z:b.h2+1,lo:Math.round(Math.min(...b.g)),hi:Math.round(Math.max(...b.g))}));}
 function mrtDay(){const d=new Date().getDay();return (d===0||d===6)?'we':'wd';}
 let TJD=null,TJP=null;
 const TJ_URL='https://tim-jejak.github.io/jejakcommuter/tj-jadwal.json';
@@ -1073,6 +1081,7 @@ const HM=m=>fmt(m).replace(':','.');
 function lineTerm(L){return [cleanName(L.s[0][0]),cleanName(L.s[L.n-1][0])];}
 function depList(L,t,off){const out=[];let c=L.start+off;while(c<t&&c<L.end)c+=L.hw[band(c)];while(out.length<4&&c<L.end){out.push(c);c+=L.hw[band(c)];}return out;}
 function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
+  const nt=$('#shNote');if(nt)nt.hidden=(SCH.v==='mrtst'&&!!MRD)||(SCH.v==='tjline'&&!!TJD)||(SCH.v==='lines'&&((SCH.mode==='mrt'&&!!MRD)||(SCH.mode.startsWith('tj:')&&!!TJD)));
   const back=(to,txt)=>'<button type="button" class="btn" data-sch="'+to+'" style="margin-bottom:8px">&lsaquo; '+txt+'</button>';
   if(SCH.v==='modes'){$('#shT').textContent='Jadwal dan rute';$('#shSub').textContent='Sekarang jam '+HM(t)+'. Ketuk satu moda untuk melihat semua lininya.';
     ensureTJ();ensureMRD();const day=dayKey();
@@ -1084,16 +1093,28 @@ function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
   if(SCH.v==='lines'&&SCH.mode==='mrt'&&MRD){$('#shT').textContent='MRT Jakarta';$('#shSub').textContent='Jadwal resmi per stasiun, '+(mrtDay()==='we'?'hari libur':'hari biasa')+' ini';
     box.innerHTML=back('modes','Semua moda')+MRD.st.map(s=>'<button type="button" class="lrow" data-mrs="'+s.id+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:#1A237E">&nbsp;</span> <b>'+esc(s.n)+'</b></div><span>&rsaquo;</span></button>').join('');return;}
   if(SCH.v==='mrtst'&&MRD){const s=MRD.st.find(x=>x.id===SCH.mst);if(s){const dk=SCH.day==='wd'||SCH.day==='we'?SCH.day:mrtDay(),dd=s[dk]||{},dirs=Object.keys(dd);let dr=dirs.includes(SCH.mdir)?SCH.mdir:dirs[0];
-    $('#shT').textContent='Stasiun '+s.n;$('#shSub').textContent='Jadwal resmi MRT Jakarta';
-    const tabs=[['wd','Hari biasa'],['we','Hari libur']].map(([d,n])=>'<button type="button" class="btn" data-day="'+d+'" style="'+(d===dk?'background:#14202B;color:#fff;':'')+'padding:6px 10px">'+n+'</button>').join(' ');
-    const dtabs=dirs.length>1?dirs.map(d=>'<button type="button" class="btn" data-dir="'+d+'" style="'+(d===dr?'background:#1A237E;color:#fff;':'')+'padding:6px 10px">'+MDIR[d]+'</button>').join(' '):'';
-    const l=dd[dr]||[],mins=l.map(toMin),isToday=dk===mrtDay(),nx=isToday?l.filter((x,i)=>mins[i]>=t).slice(0,5):[];
-    const byH={};l.forEach(x=>{(byH[x.slice(0,2)]=byH[x.slice(0,2)]||[]).push(x.slice(3));});
-    box.innerHTML=back('mrtlist','Daftar stasiun')+'<div style="display:grid;gap:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div>'+(dtabs?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+dtabs+'</div>':'<b>'+MDIR[dr]+'</b>')+
-      (isToday?'<div><b>Berangkat berikutnya</b><div style="font-size:20px;font-weight:800;margin-top:4px">'+(nx.length?nx.map(x=>x.replace(':','.')).join(' · '):'Sudah tidak ada kereta hari ini')+'</div></div>':'')+
-      '<details open style="margin-top:4px"><summary class="small" style="cursor:pointer">Semua jam ('+l.length+' kereta)</summary><div style="margin-top:6px;font-size:14px;line-height:1.7">'+Object.keys(byH).sort().map(h=>'<div><b>'+h+'</b>&nbsp; '+byH[h].map(m=>{const cur=isToday&&nx[0]===h+':'+m;return cur?'<b style="background:#FFE9A8;color:#14202B;border-radius:4px;padding:0 3px">'+m+'</b>':m;}).join('&nbsp; ')+'</div>').join('')+'</div></details>'+
+    $('#shT').textContent='Stasiun '+s.n;$('#shSub').textContent='Jadwal resmi MRT Jakarta · estimasi';
+    const B=(on,c)=>'padding:7px 12px;'+(on?'background:'+(c||'#14202B')+';color:#fff;':'');
+    const tabs=[['wd','Hari biasa'],['we','Hari libur']].map(([d,n])=>'<button type="button" class="btn" data-day="'+d+'" style="'+B(d===dk)+'">'+n+'</button>').join(' ');
+    const dtabs=dirs.length>1?dirs.map(d=>'<button type="button" class="btn" data-dir="'+d+'" style="'+B(d===dr,'#1A237E')+'">'+MDIR[d]+'</button>').join(' '):'<b>'+MDIR[dr]+'</b>';
+    const l=dd[dr]||[],mins=l.map(toMin),now=S.t,isToday=dk===mrtDay(),ni=isToday?mins.findIndex(m=>m>=now):-1;
+    const fm=x=>x.replace(':','.');
+    const until=m=>{const d=Math.max(0,Math.ceil(m-now));return d===0?'sekarang':d<60?'sekitar '+d+' menit lagi':'sekitar '+Math.floor(d/60)+' j '+(d%60)+' mnt lagi';};
+    const EST='<span style="background:#FFE9A8;color:#14202B;border-radius:6px;padding:2px 8px;font-weight:700;font-size:12px">Estimasi</span>';
+    let hero;
+    if(isToday&&ni>=0)hero='<div style="border:1px solid var(--line);border-radius:14px;padding:12px 14px"><div class="small">Berangkat berikutnya '+EST+'</div><div style="font-size:40px;font-weight:800;line-height:1.15;margin-top:2px">'+fm(l[ni])+'</div><div style="font-size:16px;font-weight:600">'+until(mins[ni])+'</div>'+(l.slice(ni+1,ni+5).length?'<div class="small" style="margin-top:6px">Lalu: '+l.slice(ni+1,ni+5).map(fm).join(' · ')+'</div>':'')+'</div>';
+    else if(isToday)hero='<div style="border:1px solid var(--line);border-radius:14px;padding:12px 14px"><b>Kereta terakhir hari ini sudah lewat.</b><div class="small">Besok mulai sekitar '+fm(l[0])+'.</div></div>';
+    else hero='<div style="border:1px solid var(--line);border-radius:14px;padding:12px 14px"><div class="small">Jadwal '+(dk==='we'?'hari libur':'hari biasa')+' '+EST+'</div><div style="font-size:20px;font-weight:800;margin-top:2px">'+fm(l[0])+' sampai '+fm(l[l.length-1])+'</div></div>';
+    const bands=mrtBands(mins),bl=bands.map((b,k)=>{const a=k===0?fm(l[0]):String(b.a).padStart(2,'0')+'.00',z=k===bands.length-1?fm(l[l.length-1]):String(b.z).padStart(2,'0')+'.00';return '<div>'+a+'–'+z+': tiap '+(b.lo===b.hi?b.lo:b.lo+'–'+b.hi)+' mnt</div>';}).join('');
+    const chips=SCH.mall?'<div id="mallBox" style="position:relative;max-height:42vh;overflow:auto;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start">'+l.map((x,k)=>{const past=isToday&&mins[k]<now&&k!==ni,nx=k===ni;return '<span '+(nx?'data-next="1" ':'')+'style="padding:5px 9px;border-radius:8px;border:1px solid var(--line);font-size:14px;'+(past?'opacity:.35;':'')+(nx?'background:#FFE9A8;color:#14202B;font-weight:800;border-color:#E8A200;':'')+'">'+fm(x)+'</span>';}).join('')+'</div>':'';
+    box.innerHTML=back('mrtlist','Daftar stasiun')+'<div style="display:grid;gap:10px"><div style="display:flex;gap:8px;align-items:center;justify-content:space-between"><b style="font-size:16px">'+esc(s.n)+'</b><button type="button" class="btn" data-loc="'+s.id+'" style="padding:7px 12px">Lihat lokasi</button></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+dtabs+'</div>'+hero+
+      '<div><b style="font-size:13.5px">Pola jarak antar kereta</b><div class="small" style="line-height:1.6;margin-top:2px">'+bl+'</div></div>'+
+      '<div><button type="button" class="btn" data-mall="1" style="width:100%">'+(SCH.mall?'Sembunyikan semua jam':'Lihat semua jam ('+l.length+' kereta)')+'</button>'+chips+'</div>'+
       (dr==='hi'?'<p class="small">'+esc(MRD.last||'')+'</p>':'')+
-      '<p class="small">Sumber: MRT Jakarta, <a href="https://jakartamrt.co.id/jadwal-keberangkatan" target="_blank" rel="noopener noreferrer" style="color:inherit">jadwal keberangkatan resmi</a>, diperbarui '+esc(MRD.built||'')+'. Jam bisa berubah, cek informasi resmi.</p></div>';return;}}
+      '<p class="small">Estimasi berdasarkan jadwal resmi MRT Jakarta, bukan jaminan. Jam bisa bergeser, datanglah lebih awal. Sumber: <a href="https://jakartamrt.co.id/jadwal-keberangkatan" target="_blank" rel="noopener noreferrer" style="color:inherit">jadwal keberangkatan resmi</a>, diperbarui '+esc(MRD.built||'')+'.</p></div>';
+    if(SCH.mall){const n=box.querySelector('[data-next]'),mb=$('#mallBox');if(n&&mb)mb.scrollTop=Math.max(0,n.offsetTop-mb.offsetTop-70);}
+    return;}}
   if(SCH.v==='lines'&&SCH.mode.startsWith('tj:')&&TJD){const cat=SCH.mode.slice(3),ce=TJCAT.find(c=>c[0]===cat),day=dayKey();$('#shT').textContent=ce?ce[1]:cat;$('#shSub').textContent='Data resmi TransJakarta · '+DAYN[day]+' ini';
     const q=normName(SCH.q||'');let rs=Object.entries(TJD.routes).filter(([k,x])=>x.cat===cat);
     if(q.length>=2)rs=rs.filter(([k,x])=>normName(x.n+' '+x.name).includes(q)||x.d.some(dd=>dd.h.some(h=>normName(h).includes(q))||dd.s.some(i=>normName(TJD.names[i]).includes(q))));
@@ -1106,11 +1127,11 @@ function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
     const dirs=x.d.map(dd=>{const ws=dd.w[day]||[],cur=ws.find(w=>t>=w[0]&&t<w[1]);
       return '<div style="border-top:1px solid var(--line);padding-top:8px"><b>Menuju '+esc(dd.h[0]||'-')+'</b>'+(dd.h.length>1?'<div class="small">Juga: '+esc(dd.h.slice(1).join(', '))+'</div>':'')+
        '<div class="small" style="margin-top:4px">'+(ws.length?ws.map(w=>HM(w[0])+'–'+(w[1]>=1440?'24.00':HM(w[1]))+': tiap '+w[2]+' mnt').join('<br>'):'Tidak beroperasi pada hari ini.')+'</div>'+
-       (day===dayKey()?'<div class="small"><b>Sekarang:</b> '+(cur?'tiap '+cur[2]+' mnt':'di luar jam layanan')+'</div>':'')+
+       (day===dayKey()?'<div class="small"><b>Sekarang:</b> '+(cur?'sekitar tiap '+cur[2]+' mnt <span style="background:#FFE9A8;color:#14202B;border-radius:6px;padding:1px 6px;font-weight:700;font-size:11px">Estimasi</span>':'di luar jam layanan')+'</div>':'')+
        '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">'+dd.s.length+' pemberhentian</summary><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+dd.s.map(i=>'<li>'+esc(TJD.names[i])+'</li>').join('')+'</ol></details></div>';}).join('');
     box.innerHTML=back('tjlist','Daftar lini')+'<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.name)+'</b></div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div>'+dirs+
-      (mi!==undefined?'<button type="button" class="btn" data-show="'+mi+'">Tampilkan jalur di peta</button>':'')+
-      '<p class="small">Sumber: TransJakarta (data GTFS resmi), diperbarui '+esc(TJD.built||'')+'. Jarak antar bus adalah data resmi berbasis frekuensi, bukan jam berangkat per bus. Bisa berubah, cek informasi resmi TransJakarta.</p></div>';return;}
+      '<button type="button" class="btn" data-spot="'+esc(SCH.tj)+'">Tampilkan jalur di peta</button>'+
+      '<p class="small">Sumber: TransJakarta (data GTFS resmi), diperbarui '+esc(TJD.built||'')+'. Jarak antar bus berbasis frekuensi resmi, bukan jam berangkat per bus, jadi hanya estimasi. Waktu tunggu nyata bisa lebih lama, datanglah lebih awal dan cek informasi resmi TransJakarta.</p></div>';return;}
   if(SCH.v==='lines'){const row=SHEETROWS.find(r=>r[0]===SCH.mode),M=MODES[SCH.mode];$('#shT').textContent=row[1];$('#shSub').textContent=HM(M.start)+' sampai '+(M.end>=1440?'24.00':HM(M.end))+' (perkiraan)';
     const q=normName(SCH.q||'');let ls=LINES.filter(L=>L.cls===SCH.mode);
     if(q.length>=2)ls=ls.filter(L=>normName(L.label+' '+L.name).includes(q)||L.s.some(s=>normName(s[0]).includes(q)));
@@ -1129,23 +1150,56 @@ function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
    '<div><b>Keberangkatan berikutnya (perkiraan)</b>'+dl(a,0)+dl(b,2)+'</div>'+
    '<button type="button" class="btn" data-show="'+L.idx+'">Tampilkan jalur di peta</button>'+
    '<div><b>Pemberhentian berurutan</b><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+L.s.map(s=>'<li>'+esc(cleanName(s[0]))+'</li>').join('')+'</ol></div></div>';}
-function showLineMap(i){const L=LINES[i];if(!mapReady||!L)return;
-  map.getSource('jsel').setData({type:'FeatureCollection',features:[{type:'Feature',properties:{col:L.col},geometry:{type:'LineString',coordinates:L.pts}}].concat(L.s.map(s=>({type:'Feature',properties:{name:cleanName(s[0]),col:L.col},geometry:{type:'Point',coordinates:[s[2],s[1]]}})))});
-  const bb=L.pts.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(L.pts[0],L.pts[0]));map.fitBounds(bb,{padding:{top:90,bottom:200,left:30,right:30},duration:700,maxZoom:14});
-  let p=$('#jselPill');if(!p){p=document.createElement('div');p.id='jselPill';p.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:104px;z-index:9;background:#14202B;color:#fff;border-radius:999px;padding:8px 8px 8px 14px;font:700 13px system-ui,sans-serif;display:flex;gap:10px;align-items:center;box-shadow:0 3px 12px rgba(0,0,0,.4);max-width:92vw';document.body.appendChild(p);}
-  p.innerHTML='<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(L.label)+'</span><button type="button" id="jselX" style="background:#fff;color:#14202B;border:none;border-radius:999px;padding:5px 11px;font:700 12px system-ui">Hapus</button>';p.hidden=false;
-  $('#jselX').onclick=clearLineMap;}
-function clearLineMap(){try{map.getSource('jsel').setData(emptyFC);}catch(e){}const p=$('#jselPill');if(p)p.hidden=true;}
-$('#sheet').addEventListener('click',e=>{const g=e.target.closest('[data-mode],[data-line],[data-sch],[data-show],[data-tj],[data-day],[data-mrs],[data-dir]');if(!g)return;
+const SPOT={on:false,dirs:[],di:0,sel:-1,title:'',sub:'',col:'#1A237E',back:null,single:false};
+function spotData(){if(!mapReady)return;const d=SPOT.dirs[SPOT.di];if(!d)return;const fs=[];
+  if(d.line&&d.line.length>1)fs.push({type:'Feature',properties:{col:SPOT.col},geometry:{type:'LineString',coordinates:d.line}});
+  d.stops.forEach((s,k)=>fs.push({type:'Feature',properties:{name:s.n,col:SPOT.col,sel:k===SPOT.sel?1:0},geometry:{type:'Point',coordinates:[s.lng,s.lat]}}));
+  map.getSource('jsel').setData({type:'FeatureCollection',features:fs});}
+function spotFit(){const d=SPOT.dirs[SPOT.di];if(!d)return;const c=$('#jcard'),pb=(c?c.offsetHeight:220)+30;
+  const pts=(d.line&&d.line.length>1)?d.line:d.stops.map(s=>[s.lng,s.lat]);if(!pts.length)return;
+  if(SPOT.single||pts.length===1){map.flyTo({center:pts[0],zoom:16,duration:700,padding:{top:90,bottom:pb,left:20,right:20}});return;}
+  const bb=pts.reduce((b,p)=>b.extend(p),new maplibregl.LngLatBounds(pts[0],pts[0]));map.fitBounds(bb,{padding:{top:100,bottom:pb,left:30,right:30},duration:700,maxZoom:15});}
+function spotCard(){let c=$('#jcard');
+  if(!c){c=document.createElement('div');c.id='jcard';c.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:12;background:#14202B;color:#fff;border-radius:16px 16px 0 0;padding:10px 14px max(12px,env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.45);max-height:44vh;display:flex;flex-direction:column;gap:8px;font:14px system-ui,sans-serif';document.body.appendChild(c);c.addEventListener('click',spotClick);}
+  const prev=$('#jcList'),st=prev?prev.scrollTop:0,d=SPOT.dirs[SPOT.di],B='background:#243546;color:#fff;border:1px solid #3B516A;border-radius:10px;padding:7px 12px;font:600 13px system-ui';
+  const tabs=SPOT.dirs.length>1?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+SPOT.dirs.map((x,k)=>'<button type="button" data-sdir="'+k+'" style="'+B+(k===SPOT.di?';background:#fff;color:#14202B':'')+'">'+esc(x.label)+'</button>').join('')+'</div>':'';
+  const list=(!SPOT.single&&d.stops.length>1)?'<div id="jcList" style="overflow:auto;flex:1;min-height:0;border-top:1px solid #2C3F52">'+d.stops.map((s,k)=>'<button type="button" data-sstop="'+k+'" style="display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:'+(k===SPOT.sel?'#33475C':'none')+';color:#fff;border:0;border-bottom:1px solid #22344A;padding:9px 6px;font:14px system-ui"><span style="width:10px;height:10px;border-radius:50%;background:'+(k===SPOT.sel?'#FFD54A':SPOT.col)+';border:2px solid #fff;flex:none"></span><span>'+esc(s.n)+'</span></button>').join('')+'</div>':'';
+  c.innerHTML='<div style="display:flex;gap:8px;align-items:center"><div style="flex:1;min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px">'+esc(SPOT.title)+'</b><div style="font-size:12px;color:#B8C4D0">'+esc(SPOT.sub)+(list?' · ketuk pemberhentian untuk melihat di peta':'')+'</div></div>'+(SPOT.back?'<button type="button" data-sback="1" style="'+B+'">Jadwal</button>':'')+'<button type="button" data-sx="1" style="background:#fff;color:#14202B;border:0;border-radius:10px;padding:7px 12px;font:700 13px system-ui">Hapus</button></div>'+tabs+list;
+  c.hidden=false;c.style.display='flex';const nl=$('#jcList');if(nl)nl.scrollTop=st;}
+function spotClick(e){const g=e.target.closest('[data-sdir],[data-sstop],[data-sback],[data-sx]');if(!g)return;
+  if(g.dataset.sx){spotClear();return;}
+  if(g.dataset.sback){if(SPOT.back)SPOT.back();return;}
+  if(g.dataset.sdir){SPOT.di=+g.dataset.sdir;SPOT.sel=-1;spotData();spotCard();spotFit();return;}
+  if(g.dataset.sstop){const k=+g.dataset.sstop,s=SPOT.dirs[SPOT.di].stops[k];SPOT.sel=k;spotData();spotCard();const c=$('#jcard');map.flyTo({center:[s.lng,s.lat],zoom:Math.max(map.getZoom(),15.5),duration:600,padding:{top:90,bottom:(c?c.offsetHeight:220)+10,left:20,right:20}});}}
+function spotOpen(cfg){if(!mapReady)return;Object.assign(SPOT,{on:true,dirs:cfg.dirs,di:0,sel:cfg.single?0:-1,title:cfg.title,sub:cfg.sub||'',col:cfg.col||'#1A237E',back:cfg.back||null,single:!!cfg.single});
+  map.setPaintProperty('jdim','fill-opacity',.64);spotData();spotCard();spotFit();}
+function spotClear(){SPOT.on=false;try{map.getSource('jsel').setData(emptyFC);map.setPaintProperty('jdim','fill-opacity',0);}catch(e){}const c=$('#jcard');if(c){c.hidden=true;c.style.display='none';}}
+const clearLineMap=spotClear;
+const reopenSheet=()=>{$('#sheet').hidden=false;renderSheet();};
+function showLineMap(i){const L=LINES[i];if(!L)return;
+  spotOpen({title:L.label,sub:'Jalur dan pemberhentian',col:L.col,back:reopenSheet,dirs:[{label:'',line:L.pts,stops:L.s.map(s=>({n:cleanName(s[0]),lat:s[1],lng:s[2]}))}]});}
+function spotTJ(key){const x=TJD&&TJD.routes[key];if(!x)return;
+  const dirs=x.d.filter(dd=>dd.c&&dd.c.length).map(dd=>({label:'Menuju '+(dd.h[0]||'-'),line:dd.p?decodePoly(dd.p):null,stops:dd.s.map((ni,k)=>({n:TJD.names[ni],lat:dd.c[k][0],lng:dd.c[k][1]}))}));
+  if(!dirs.length){const mi=TJIDX[tjKey(x.n)];if(mi!==undefined)showLineMap(mi);return;}
+  spotOpen({title:x.n+' '+x.name,sub:x.cat,col:x.col,back:reopenSheet,dirs});}
+function mrtCoord(i){const L=LINES.find(l=>l.cls==='mrt');if(!L)return null;const st=MRD.st[i],nn=normName(st.n);
+  let s=L.s.find(q=>{const a=normName(q[0]);return a===nn||a.startsWith(nn)||nn.startsWith(a);});if(!s)s=L.s[i];return s?{lat:s[1],lng:s[2]}:null;}
+function spotMRT(id){const i=MRD.st.findIndex(x=>x.id===id),c=i<0?null:mrtCoord(i);if(!c)return;
+  spotOpen({title:'Stasiun '+MRD.st[i].n,sub:'MRT Jakarta',col:'#1A237E',single:true,back:reopenSheet,dirs:[{label:'',line:null,stops:[{n:MRD.st[i].n,lat:c.lat,lng:c.lng}]}]});}
+$('#sheet').addEventListener('click',e=>{const g=e.target.closest('[data-mode],[data-line],[data-sch],[data-show],[data-tj],[data-day],[data-mrs],[data-dir],[data-spot],[data-loc],[data-mall]');if(!g)return;
   if(g.dataset.mode){SCH={v:'lines',mode:g.dataset.mode,line:-1,q:'',tj:'',day:''};renderSheet();}
   else if(g.dataset.tj){SCH.v='tjline';SCH.tj=g.dataset.tj;SCH.day='';renderSheet();$('#shList').scrollTop=0;}
-  else if(g.dataset.mrs){SCH.v='mrtst';SCH.mst=g.dataset.mrs;SCH.day='';SCH.mdir='';renderSheet();$('#shList').scrollTop=0;}
+  else if(g.dataset.mrs){SCH.v='mrtst';SCH.mst=g.dataset.mrs;SCH.day='';SCH.mdir='';SCH.mall=false;renderSheet();$('#shList').scrollTop=0;}
   else if(g.dataset.dir){SCH.mdir=g.dataset.dir;renderSheet();}
   else if(g.dataset.day){SCH.day=g.dataset.day;renderSheet();}
   else if(g.dataset.line){SCH.v='line';SCH.line=+g.dataset.line;renderSheet();$('#shList').scrollTop=0;}
   else if(g.dataset.sch){SCH.v=(g.dataset.sch==='tjlist'||g.dataset.sch==='mrtlist')?'lines':g.dataset.sch;renderSheet();}
+  else if(g.dataset.spot){spotTJ(g.dataset.spot);$('#sheet').hidden=true;}
+  else if(g.dataset.loc){spotMRT(g.dataset.loc);$('#sheet').hidden=true;}
+  else if(g.dataset.mall){SCH.mall=!SCH.mall;renderSheet();}
   else if(g.dataset.show){showLineMap(+g.dataset.show);$('#sheet').hidden=true;}});
 $('#sheet').addEventListener('input',e=>{if(e.target.id==='schQ'){SCH.q=e.target.value;const pos=e.target.selectionStart;renderSheet();const n=$('#schQ');if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}}}});
+setInterval(()=>{if(!$('#sheet').hidden&&SCH.v==='mrtst'&&!SCH.mall)renderSheet();},20000);
 $('#bannerBtn').onclick=()=>{SCH={v:'modes',mode:'',line:-1,q:'',tj:'',day:''};$('#sheet').hidden=false;renderSheet();};
 $('#schOpen').onclick=$('#bannerBtn').onclick;$('#shClose').onclick=()=>$('#sheet').hidden=true;
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true;});
@@ -1572,7 +1626,8 @@ async function joinTrip(code,kb){
   await connect();clearInterval(tickT);clearInterval(hbT);tickT=setInterval(tick,1000);
   const ping=()=>{if(G&&G.viewer)sendE({t:'vw',id:G.me},true);};hbT=setInterval(ping,10000);setTimeout(ping,500);
   showWait('Menyambung ke perjalanan…');openPanel(true);
-  G.waitT=setTimeout(()=>{if(G&&!G.confirmed)endLocal('Perjalanan tidak ditemukan atau sudah berakhir.');},12000);}
+  viewerWait();}
+function viewerWait(){const g0=G;G.waitT=setTimeout(()=>{if(G!==g0||G.confirmed)return;showWait('Pemilik perjalanan belum online. Aplikasinya harus terbuka di HP pemilik. Terus mencoba menyambung…');G.waitT=setTimeout(()=>{if(G===g0&&!G.confirmed)endLocal('Perjalanan tidak ditemukan atau sudah berakhir.');},600000);},12000);}
 function showTrip(){$('#gTitle').textContent='Bagikan rute';
   $('#gBody').innerHTML='<div id="gStat" class="small"></div><div class="gsec"><b>Perjalananmu sedang dibagikan</b><p class="small">Siapa pun yang menerima tautan bisa melihat rute dan posisimu secara langsung. Mereka hanya melihat, tidak bisa mengirim apa pun. Sisa waktu <b id="gTime"></b> · Dilihat <b id="gViews">0</b> orang.</p><div class="row2"><button type="button" class="btn" data-act="share">Kirim tautan</button><button type="button" class="btn" data-act="copy">Salin tautan</button></div></div>'+
    '<div class="gsec"><label class="chk"><input type="checkbox" id="gShLoc" '+(G.share.loc?'checked':'')+'> Bagikan posisi saya</label><label class="chk"><input type="checkbox" id="gShRt" '+(G.share.route?'checked':'')+'> Bagikan rute yang saya pilih</label></div>'+
@@ -1770,7 +1825,7 @@ async function resumeSess(){let s=null;try{s=JSON.parse(localStorage.getItem(SES
       if(!G.roster.has(G.me))G.roster.set(G.me,{id:G.me,name:P.name||'Saya',color:P.color||COLORS[2][1],dot:P.dot,owner:!!x.owner,seen:Date.now(),joined:true});
       await connect();
       if(G.viewer){clearInterval(tickT);clearInterval(hbT);tickT=setInterval(tick,1000);const ping=()=>{if(G&&G.viewer)sendE({t:'vw',id:G.me},true);};hbT=setInterval(ping,10000);setTimeout(ping,500);showWait('Menyambung ke perjalanan…');
-        G.waitT=setTimeout(()=>{if(G&&!G.confirmed)endLocal('Perjalanan tidak ditemukan atau sudah berakhir.');},12000);}
+        viewerWait();}
       else{startTimers();
         if(G.owner){if(G.mode==='v')showTrip();else showIn();tab='mem';}
         else{showWait('Menyambung ulang ke grup…');let n=0;const iv=setInterval(()=>{if(!G){clearInterval(iv);return;}if(G.online||++n>25){clearInterval(iv);afterKey();}},300);}}
