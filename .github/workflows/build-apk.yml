@@ -39,12 +39,24 @@ jobs:
           npx cap add android
           python3 patch_android.py
           npx cap sync android
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle || true
 
       - name: Bangun APK
         working-directory: android-app/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+
+      - name: Tanda tangani dengan kunci tetap
+        env:
+          KS_B64: ${{ secrets.KS_B64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::warning::Kunci tetap belum diisi, APK memakai kunci sementara"; exit 0; fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/jc.p12"
+          SIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          $SIGNER sign --ks "$RUNNER_TEMP/jc.p12" --ks-pass env:KS_PASS --key-pass env:KS_PASS --ks-key-alias jecom android/app/build/outputs/apk/debug/app-debug.apk
+          $SIGNER verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | head -3
 
       - name: Ganti nama APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk jejakcommuter.apk
