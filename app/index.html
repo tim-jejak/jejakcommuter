@@ -586,7 +586,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 21.03 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 21.31 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -1930,19 +1930,28 @@ function chatDrag(){const H=$('#chH'),C=$('#chat'),Sh=$('#chSheet');if(!H)return
   H.addEventListener('pointermove',e=>{if(!dr)return;const r=C.getBoundingClientRect();const f=Math.max(.3,Math.min(1,(r.bottom-e.clientY+18)/r.height));C.style.setProperty('--chf',f);dr.f=f;});
   const end=()=>{if(!dr)return;const f=dr.f==null?(parseFloat(C.style.getPropertyValue('--chf'))||1):dr.f;dr=null;Sh.classList.remove('drag');C.style.setProperty('--chf',[1,.62,.38].reduce((a,b)=>Math.abs(a-f)<Math.abs(b-f)?a:b));};
   H.addEventListener('pointerup',end);H.addEventListener('pointercancel',end);}
-function showHome(){const b=$('#gBody');$('#gTitle').textContent='Grup';const q=new URLSearchParams(location.search);const lc=q.get('g'),lm=q.get('m')==='p'?'p':'a';
+function showHome(sub){const b=$('#gBody');const q=new URLSearchParams(location.search);const lc=q.get('g'),lm=q.get('m')==='p'?'p':'a';
+  sub=sub||(lc?'join':'home');const back=$('#gClose');
   const srv=useServer()?'':'<p class="note">Server berbagi belum diatur. Grup hanya berfungsi antar tab di perangkat ini (untuk uji coba).</p>';
-  b.innerHTML=srv+
-   '<div class="gsec pfbox">'+profileHTML()+'</div>'+
-   (lc?'<div class="gsec"><h4>Gabung grup</h4><p class="small">Kode grup: <b>'+esc(lc)+'</b></p>'+(lm==='p'?'<input id="gJoinPw" class="gin" inputmode="numeric" maxlength="6" placeholder="Password 6 angka">':'<p class="small">Pemilik grup perlu menyetujui permintaanmu.</p>')+
-     '<p class="small">Dengan bergabung, lokasi dan rute yang kamu bagikan terlihat oleh semua anggota grup. Kamu bisa berhenti kapan saja.</p><button type="button" class="btn pri" data-act="join" data-code="'+esc(lc)+'" data-mode="'+lm+'">Gabung grup</button></div>':'')+
-   '<div class="gsec"><h4>Buat grup</h4><div class="gl">Jumlah anggota</div><div class="seg" id="gSize"><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5" class="on">5</button></div>'+
-   '<div class="gl">Cara masuk</div><div class="seg" id="gMode"><button type="button" data-m="a" class="on">Persetujuan pemilik</button><button type="button" data-m="p">Password 6 angka</button></div>'+
-   '<input id="gPw" class="gin" inputmode="numeric" maxlength="6" placeholder="6 angka" hidden>'+
-   '<label class="chk"><input type="checkbox" id="gSim"> Tambah teman simulasi (untuk uji sendiri)</label>'+
-   '<button type="button" class="btn pri" data-act="create">Buat grup</button><p class="small">Grup aktif maksimal 2 jam. Lokasi, rute, dan chat dienkripsi dan tidak disimpan di server.</p></div>'+
-   (lc?'':'<div class="gsec"><h4>Gabung dengan tautan</h4><input id="gJoinIn" class="gin" placeholder="Tempel tautan grup"><button type="button" class="btn" data-act="joinlink">Lanjut</button></div>');
-  $('#gBody').dataset.view='home';}
+  if(back)back.textContent=sub==='home'?'Tutup':'Kembali';
+  if(sub==='home'){$('#gTitle').textContent='Grup';
+    b.innerHTML=srv+'<div class="gem"><div class="gemi"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M17 14.2c2.4.1 4 1.5 4 4"/></svg></div>'+
+      '<h3>Belum ada grup</h3><p>Buat grup untuk lihat posisi teman di peta selama perjalanan.</p>'+
+      '<button type="button" class="btn pri gbig" data-act="gnew">Buat grup</button><button type="button" class="btn gbig" data-act="gcode">Masukkan kode</button>'+
+      '<p class="small">Grup aktif maksimal 2 jam. Lokasi, rute, dan chat dienkripsi dan tidak disimpan di server.</p></div>';}
+  else if(sub==='new'){$('#gTitle').textContent='Buat grup';
+    b.innerHTML=srv+'<div class="gsec pfbox">'+profileHTML()+'</div>'+
+     '<div class="gsec"><div class="gl">Jumlah anggota</div><div class="seg" id="gSize"><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5" class="on">5</button></div>'+
+     '<div class="gl">Cara masuk</div><div class="seg" id="gMode"><button type="button" data-m="a" class="on">Persetujuan pemilik</button><button type="button" data-m="p">Password 6 angka</button></div>'+
+     '<input id="gPw" class="gin" inputmode="numeric" maxlength="6" placeholder="6 angka" hidden>'+
+     '<label class="chk"><input type="checkbox" id="gSim"> Tambah teman simulasi (untuk uji sendiri)</label></div>'+
+     '<button type="button" class="btn pri gbig" data-act="create">Buat grup</button>';}
+  else if(sub==='code'){$('#gTitle').textContent='Masukkan kode';
+    b.innerHTML=srv+'<div class="gsec"><div class="gl">Tautan grup</div><input id="gJoinIn" class="gin" placeholder="Tempel tautan grup"></div><button type="button" class="btn pri gbig" data-act="joinlink">Lanjut</button>';}
+  else{$('#gTitle').textContent='Gabung grup';
+    b.innerHTML=srv+'<div class="gsec pfbox">'+profileHTML()+'</div><div class="gsec"><p class="small">Kode grup: <b>'+esc(lc||'')+'</b></p>'+(lm==='p'?'<input id="gJoinPw" class="gin" inputmode="numeric" maxlength="6" placeholder="Password 6 angka">':'<p class="small">Pemilik grup perlu menyetujui permintaanmu.</p>')+
+     '<p class="small">Dengan bergabung, lokasi dan rute yang kamu bagikan terlihat oleh semua anggota grup. Kamu bisa berhenti kapan saja.</p></div><button type="button" class="btn pri gbig" data-act="join" data-code="'+esc(lc||'')+'" data-mode="'+lm+'">Gabung grup</button>';}
+  $('#gBody').dataset.view='home';$('#gBody').dataset.sub=sub;}
 function showWait(t){$('#gTitle').textContent='Menyambung';$('#gBody').innerHTML='<div class="gsec"><p>'+esc(t)+'</p><button type="button" class="btn" data-act="leave">Batal</button></div><div id="gStat" class="small"></div>';$('#gBody').dataset.view='wait';updStat();}
 function showIn(){tab=tab||'mem';const b=$('#gBody');$('#gTitle').textContent='Grup '+G.code.slice(0,4);
   b.innerHTML='<div id="gStat" class="small"></div><div class="ghead"><div class="small">Sisa waktu <b id="gTime"></b> · '+(G.mode==='p'?'Password':'Persetujuan')+'</div><div class="row2"><button type="button" class="btn" data-act="share">Kirim tautan grup</button><button type="button" class="btn" data-act="copy">Salin tautan</button></div></div>'+
@@ -1994,7 +2003,7 @@ document.addEventListener('click',async e=>{
     const a2=e.target.closest('[data-act]');if(a2){if(a2.dataset.act==='send'){const i=$('#gMsg');await sendChat(i.value,false);i.value='';}else if(a2.dataset.act==='hreq'&&G){G.histAsked=true;await sendE({t:'hreq',id:G.me},true);updPending();}}
     return;}
   const gb=e.target.closest('#grpBtn');if(gb){if(chatOpen())openChat(false);openPanel(true);if(!G)showHome();return;}
-  if(e.target.closest('#gClose')){openPanel(false);return;}
+  if(e.target.closest('#gClose')){if(!G&&$('#gBody').dataset.view==='home'&&$('#gBody').dataset.sub!=='home'){showHome(new URLSearchParams(location.search).get('g')?'join':'home');return;}openPanel(false);return;}
   const root=e.target.closest('#grp');if(!root)return;
   const sz=e.target.closest('#gSize button');if(sz){document.querySelectorAll('#gSize button').forEach(x=>x.classList.toggle('on',x===sz));return;}
   const md=e.target.closest('#gMode button');if(md){document.querySelectorAll('#gMode button').forEach(x=>x.classList.toggle('on',x===md));$('#gPw').hidden=md.dataset.m!=='p';return;}
@@ -2002,6 +2011,8 @@ document.addEventListener('click',async e=>{
   const qb=e.target.closest('[data-q]');if(qb){sendChat(qb.dataset.q,true);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const id=a.dataset.id;
   try{switch(a.dataset.act){
+   case'gnew':showHome('new');break;
+   case'gcode':showHome('code');break;
    case'create':{const n=+document.querySelector('#gSize .on').dataset.n,m=document.querySelector('#gMode .on').dataset.m;await createGroup({max:n,mode:m,pw:$('#gPw').value.trim(),sim:$('#gSim').checked});break;}
    case'join':{const mode=a.dataset.mode;const pw=mode==='p'?($('#gJoinPw').value||'').trim():'';await joinGroup({code:a.dataset.code,mode,pw});break;}
    case'joinlink':{try{const u=new URL($('#gJoinIn').value.trim());const c=u.searchParams.get('g');if(!c)throw 0;history.replaceState(null,'','?g='+encodeURIComponent(c)+'&m='+(u.searchParams.get('m')==='p'?'p':'a'));showHome();}catch(_){toast('Tautan tidak valid.');}break;}
@@ -2152,6 +2163,14 @@ var css=''+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
 'html.jn #grp,html.jn #urgent{bottom:var(--jnh)}'+
+'html.jn #grp{top:0;left:0;right:0;width:100%;height:auto;border:none;border-radius:0;box-shadow:none;transform:none;visibility:hidden;transition:none;z-index:12}'+
+'html.jn #grp.open{visibility:visible}'+
+'html.jn #grp .ugrip{display:none}'+
+'html.jn #grp .uh{padding-top:calc(10px + env(safe-area-inset-top,0px))}'+
+'html.jn #grp>*{zoom:1}'+
+'html.jn #gBody{padding:16px 16px 28px}'+
+'.gem{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 8px 8px}.gem h3{margin:6px 0 0;font-size:20px;text-transform:none;letter-spacing:0;color:var(--fg,inherit)}.gem p{margin:0 0 10px;color:var(--muted,#667);font-size:14px;max-width:280px}.gemi{width:84px;height:84px;border-radius:50%;background:rgba(31,95,181,.12);color:#1F5FB5;display:flex;align-items:center;justify-content:center}'+
+'.gbig{width:100%;padding:14px;font-size:15px;border-radius:12px;margin-top:8px}.gem .gbig{max-width:320px;margin-top:0}'+
 'html.jn #navbar{z-index:13}'+
 '#jnav{position:fixed;left:0;right:0;bottom:0;z-index:13;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);height:var(--jnh)}'+
 '#jnav button{flex:1;border:0;background:none;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:700;margin:6px 4px;border-radius:8px;position:relative}'+
@@ -2185,6 +2204,7 @@ var css=''+
 '.jemg a small{font-size:12px;font-weight:700;opacity:.92}'+
 '.jmap{position:relative;flex:none;width:100%;height:min(46vh,340px);background:var(--surface-2);overflow:hidden}'+
 '.jrcb{position:absolute;left:8px;bottom:8px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}'+
+'.jsc.unav .jmap{flex:1 1 auto;height:auto}.jsc.unav #jlist{display:none}.jme.red{background:#D8262B;box-shadow:0 0 0 8px rgba(216,38,43,.28)}'+
 '.jmap .rad{position:absolute;right:8px;bottom:8px;z-index:3;background:var(--surface);color:var(--ink-2);font-weight:800;font-size:11.5px;padding:3px 8px;border-radius:5px}'+
 '.jpin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:var(--btn);color:var(--btn-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}'+
 '.jpin.sel{background:var(--jred);color:#fff;width:38px;height:38px;position:relative;animation:jblk 1s ease-in-out infinite}'+
@@ -2339,6 +2359,7 @@ async function openUgo(c){
     var J=window.__jc;
     U.map=new maplibregl.Map({container:el,style:'https://tiles.openfreemap.org/styles/liberty',center:[106.86,-6.22],zoom:12,interactive:true,dragRotate:false,pitchWithRotate:false,touchPitch:false,attributionControl:false,fadeDuration:0,pixelRatio:Math.min(window.devicePixelRatio||1,1.5)});
     trackMap(U.map);
+    U.map.on('dragstart',function(){if(U.nav)U.follow=false;});
     U.map.on('load',function(){
       U.map.addSource('jr',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
       U.map.addSource('jc2',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
@@ -2360,18 +2381,18 @@ async function openUgo(c){
     U.tmr=setInterval(tick,10000);
   })();
 }
-function stopUgo(){stopPulse();U.revealing=false;clearInterval(U.tmr);U.tmr=null;if(U.map){try{maps.splice(maps.indexOf(U.map),1);U.map.remove();}catch(e){}U.map=null;U.ready=false;}U.mks=[];U.me=null;U.c=null;}
+function stopUgo(){stopUNav();stopPulse();U.revealing=false;clearInterval(U.tmr);U.tmr=null;if(U.map){try{maps.splice(maps.indexOf(U.map),1);U.map.remove();}catch(e){}U.map=null;U.ready=false;}U.mks=[];U.me=null;U.c=null;}
 async function tick(){
   if(!U.all||vUgo.hidden)return;
   var p=curPos();if(!p||!U.shown)return;
   if(hav(p,U.shown)<20)return;
   U.shown=p;U.items=nearby(p);
-  if(U.guide&&U.pick!==null){var t=U.items.filter(function(x){return x.i===U.pick;})[0];if(t){if(t.d<30){U.guide=false;U.route=null;toast('Kamu sudah sampai');}else fetchRoute(t);}}
+  if(U.guide&&U.pick!==null&&!U.nav){var t=U.items.filter(function(x){return x.i===U.pick;})[0];if(t){if(t.d<30){U.guide=false;U.route=null;toast('Kamu sudah sampai');}else fetchRoute(t);}}
   drawUgo();
 }
 async function fetchRoute(t){
   var J=window.__jc,p=U.shown,seq=++U.busy;
-  try{var v=await J.valhalla(p,{lat:t.lat,lon:t.lon},'pedestrian');if(seq===U.busy&&v&&v.coords&&v.coords.length){var first=!U.route;U.route=v.coords;if(first){U.needFit=true;U.needReveal=true;}drawUgo();}}catch(e){}
+  try{var v=await J.valhalla(p,{lat:t.lat,lon:t.lon},'pedestrian');if(seq===U.busy&&v&&v.coords&&v.coords.length){var first=!U.route;U.route=v.coords;if(first){if(!U.nav)U.needFit=true;U.needReveal=true;}drawUgo();}}catch(e){}
 }
 function zoomFor(lat){var m=U.map.getContainer();var px=Math.min(m.clientWidth,m.clientHeight)/2-8;if(px<40)px=100;return Math.log2(156543.03*Math.cos(lat*Math.PI/180)*px/2000);}
 function circle(p){var pts=[];for(var i=0;i<=64;i++){var a=i/64*2*Math.PI;pts.push([p.lon+2000*Math.sin(a)/(111320*Math.cos(p.lat*Math.PI/180)),p.lat+2000*Math.cos(a)/110540]);}return {type:'Feature',geometry:{type:'LineString',coordinates:pts}};}
@@ -2401,6 +2422,68 @@ function startPulse(){
   })(t0);
 }
 function stopPulse(){U.pulseOn=false;}
+
+/* ---------- navigasi Urgent (Mulai) ---------- */
+function curFix(){var J=window.__jc;if(!J)return null;var f=J.S.fix||J.S.gps;return f?{lat:f.lat,lon:f.lon}:null;}
+function projRoute(co,p){
+  var k=[Math.cos(p.lat*Math.PI/180)*111320,110540],best=1e12,bi=0,bu=0,bb=0,cum=[0],i,tot=0;
+  for(i=1;i<co.length;i++){var sl=Math.hypot((co[i][0]-co[i-1][0])*k[0],(co[i][1]-co[i-1][1])*k[1]);tot+=sl;cum.push(tot);}
+  for(i=1;i<co.length;i++){
+    var ax=(co[i-1][0]-p.lon)*k[0],ay=(co[i-1][1]-p.lat)*k[1],bx=(co[i][0]-p.lon)*k[0],by=(co[i][1]-p.lat)*k[1],dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+    var u=l2?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/l2)):0,d=Math.hypot(ax+u*dx,ay+u*dy);
+    if(d<best){best=d;bi=i;bu=u;bb=(Math.atan2(dx,dy)*180/Math.PI+360)%360;}
+  }
+  var seg=cum[bi]-cum[bi-1]||0,along=cum[bi-1]+bu*seg;
+  var pt=[co[bi-1][0]+(co[bi][0]-co[bi-1][0])*bu,co[bi-1][1]+(co[bi][1]-co[bi-1][1])*bu];
+  return {d:best,rem:Math.max(0,tot-along),brg:bb,trim:[pt].concat(co.slice(bi))};
+}
+function uCompassH(a,b,g){if(a==null||b==null||g==null)return null;if(Math.abs(b)<35)return (360-a)%360;var r=Math.PI/180;a*=r;b*=r;g*=r;var cA=Math.cos(a),sA=Math.sin(a),cB=Math.cos(b),sB=Math.sin(b),cG=Math.cos(g),sG=Math.sin(g);var rA=-cA*sG-sA*sB*cG,rB=-sA*sG+cA*sB*cG,h=Math.atan2(rA,rB);if(h<0)h+=2*Math.PI;return h*180/Math.PI;}
+function uOri(e){
+  if(!U.nav)return;var h=null;
+  if(typeof e.webkitCompassHeading==='number')h=e.webkitCompassHeading;
+  else if(e.absolute||e.type==='deviceorientationabsolute')h=uCompassH(e.alpha,e.beta,e.gamma);
+  if(h==null||isNaN(h))return;
+  if(U.hd==null)U.hd=h;else{var d=((h-U.hd+540)%360)-180;U.hd=(U.hd+d*.25+360)%360;}
+  var now=performance.now();
+  if(U.follow&&U.map&&now-(U.hdT||0)>180){var cur=U.map.getBearing(),dd=Math.abs(((U.hd-cur+540)%360)-180);if(dd>3){U.hdT=now;U.map.easeTo({bearing:U.hd,duration:200,easing:function(x){return x;}});}}
+}
+async function uCompassOn(){
+  if(U.cmp)return;U.cmp=true;U.hd=null;
+  try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){var pm=await DeviceOrientationEvent.requestPermission();if(pm!=='granted'){U.cmp=false;return;}}}catch(e){}
+  window.addEventListener('deviceorientationabsolute',uOri,true);window.addEventListener('deviceorientation',uOri,true);
+}
+function uCompassOff(){U.cmp=false;U.hd=null;window.removeEventListener('deviceorientationabsolute',uOri,true);window.removeEventListener('deviceorientation',uOri,true);}
+function startUNav(){
+  var sel=U.items.filter(function(x){return x.i===U.pick;})[0];if(!sel||!U.guide||!U.map)return;
+  var J=window.__jc;if(J&&J.locate)J.locate(function(){});
+  U.nav=true;U.follow=true;U.off=0;U.rem=sel.d;U.trim=null;U.lastRe=0;
+  vUgo.classList.add('unav');uCompassOn();
+  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(w){U.wl=w;}).catch(function(){});}catch(e){}
+  setTimeout(function(){try{U.map.resize();}catch(e){}uNavTick(true);},120);
+  clearInterval(U.nvTmr);U.nvTmr=setInterval(function(){uNavTick(false);},1000);
+  drawUgo();
+}
+function stopUNav(){
+  if(!U.nav&&!U.nvTmr)return;
+  U.nav=false;clearInterval(U.nvTmr);U.nvTmr=null;uCompassOff();U.trim=null;U.rem=null;
+  try{U.wl&&U.wl.release();}catch(e){}U.wl=null;
+  vUgo.classList.remove('unav');
+  if(U.map){try{U.map.resize();U.map.easeTo({pitch:0,bearing:0,duration:500});}catch(e){}}
+}
+function uNavTick(first){
+  if(!U.nav||!U.map||!U.ready)return;
+  var p=curFix(),sel=U.items.filter(function(x){return x.i===U.pick;})[0];if(!p||!sel)return;
+  U.shown=p;
+  var co=(U.route&&U.route.length>1)?U.route:[[p.lon,p.lat],[sel.lon,sel.lat]],r=projRoute(co,p);
+  U.rem=r.rem;U.trim=r.trim;
+  if(U.me)U.me.setLngLat([p.lon,p.lat]);
+  var g=document.getElementById('jgbt');if(g)g.textContent=sel.name+' · '+fdist(r.rem)+' · '+wmin(r.rem)+' mnt jalan';
+  if(!U.revealing)setRoute(r.trim);
+  if(r.rem<30&&hav(p,{lat:sel.lat,lon:sel.lon})<40){toast('Kamu sudah sampai');stopUNav();U.guide=false;U.route=null;drawUgo();return;}
+  U.off=(U.route&&r.d>50)?U.off+1:0;
+  if(U.off>=2&&Date.now()-U.lastRe>8000){U.lastRe=Date.now();U.off=0;toast('Rute diperbarui');U.route=null;U.needReveal=false;fetchRoute({lat:sel.lat,lon:sel.lon});}
+  if(U.follow)U.map.easeTo({center:[p.lon,p.lat],zoom:17,bearing:(U.hd!=null?U.hd:r.brg),pitch:50,duration:first?600:900,padding:{top:40,bottom:80,left:0,right:0}});
+}
 function drawUgo(){
   var cat=ucat(U.c),p=U.shown;if(!cat)return;
   var L=$('#jlist');if(!L)return;
@@ -2408,11 +2491,12 @@ function drawUgo(){
   var items=U.items,sel=items.filter(function(x){return x.i===U.pick;})[0]||null;
   if(U.pick!==null&&!sel){U.pick=null;U.guide=false;U.route=null;}
   var gb=$('#jgb');
-  gb.innerHTML=(U.guide&&sel)?'<div class="jgb"><span>'+esc(sel.name)+' · '+fdist(sel.d)+' · '+wmin(sel.d)+' mnt jalan</span><button type="button" data-a="gend">Selesai</button></div>':'';
+  if(!U.guide&&U.nav)stopUNav();
+  gb.innerHTML=(U.guide&&sel)?'<div class="jgb"><span id="jgbt">'+esc(sel.name)+' · '+(U.nav&&U.rem!=null?fdist(U.rem)+' · '+wmin(U.rem):fdist(sel.d)+' · '+wmin(sel.d))+' mnt jalan</span><button type="button" data-a="gend">Selesai</button></div>':'';
   L.innerHTML=items.length?items.map(function(x){
     var on=x.i===U.pick;
     return '<button type="button" class="jpl" data-i="'+x.i+'" aria-pressed="'+on+'">'+(x.tag?'<span class="jbd" style="background:'+esc(x.col)+'">'+esc(x.tag)+'</span>':'')+'<span class="t">'+esc(x.name)+'</span><span class="d">'+fdist(x.d)+'</span></button>'+
-    (on?'<div class="jact"><button type="button" class="p" data-a="guide">'+ic('nav',16)+' '+(U.guide?'Berhenti arahkan':'Arahkan ke sini')+'</button></div>':'');
+    (on?'<div class="jact">'+(!U.guide?'<button type="button" class="p" data-a="guide">'+ic('nav',16)+' Arahkan ke sini</button>':'<button type="button" class="p" data-a="start">'+ic('nav',16)+' Mulai</button><button type="button" data-a="guide">Berhenti arahkan</button>')+'</div>':'');
   }).join(''):'<div class="jempty">Tidak ada dalam 2 km</div>';
   if(!U.map||!U.ready)return;
   var m=U.map;
@@ -2422,25 +2506,27 @@ function drawUgo(){
     var co=(U.route&&U.route.length>1)?U.route:[[p.lon,p.lat],[sel.lon,sel.lat]];
     if(U.needFit){U.needFit=false;fitRoute(co,p);}
     if(U.needReveal){U.needReveal=false;revealRoute(co);}
-    else if(!U.revealing)setRoute(co);
+    else if(!U.revealing)setRoute(U.nav&&U.trim?U.trim:co);
     startPulse();
   }else{stopPulse();U.revealing=false;setRoute(null);}
   U.mks.forEach(function(k){k.remove();});U.mks=[];
   items.forEach(function(x){
     var e=document.createElement('button');e.type='button';e.className='jpin'+(x.i===U.pick?' sel':'');e.setAttribute('aria-label',x.name);e.innerHTML=ic(cat[2],x.i===U.pick?18:15);e.style.padding='0';e.style.cursor='pointer';
-    e.addEventListener('click',function(ev){ev.stopPropagation();U.pick=x.i;U.guide=false;U.route=null;drawUgo();});
+    e.addEventListener('click',function(ev){ev.stopPropagation();stopUNav();U.pick=x.i;U.guide=false;U.route=null;drawUgo();});
     U.mks.push(new maplibregl.Marker({element:e}).setLngLat([x.lon,x.lat]).addTo(m));
   });
-  if(!U.me){var me=document.createElement('div');me.className='jme';U.me=new maplibregl.Marker({element:me}).setLngLat([p.lon,p.lat]).addTo(m);}else U.me.setLngLat([p.lon,p.lat]);
+  if(!U.me){var me=document.createElement('div');me.className='jme';U.me=new maplibregl.Marker({element:me}).setLngLat([p.lon,p.lat]).addTo(m);}else if(!U.nav)U.me.setLngLat([p.lon,p.lat]);
+  U.me.getElement().classList.toggle('red',!!U.guide);
 }
 vUgo.addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
   if(b.dataset.a==='back'){stopUgo();vUgo.hidden=true;renderUrg();vUrg.hidden=false;return;}
-  if(b.dataset.a==='gend'){U.guide=false;U.route=null;drawUgo();return;}
+  if(b.dataset.a==='gend'){stopUNav();U.guide=false;U.route=null;drawUgo();return;}
+  if(b.dataset.a==='start'){startUNav();return;}
   var sel=U.items.filter(function(x){return x.i===U.pick;})[0];
-  if(b.dataset.a==='guide'&&sel){U.guide=!U.guide;U.route=null;if(U.guide){U.needFit=true;fetchRoute(sel);}drawUgo();return;}
-  if(b.dataset.a==='rc'){var pp=U.shown||curPos();if(pp&&U.map)U.map.easeTo({center:[pp.lon,pp.lat],zoom:Math.max(U.map.getZoom(),15.5),duration:500});return;}
-  if(b.dataset.i!==undefined){U.pick=+b.dataset.i;U.guide=false;U.route=null;drawUgo();}
+  if(b.dataset.a==='guide'&&sel){if(U.guide)stopUNav();U.guide=!U.guide;U.route=null;if(U.guide){U.needFit=true;fetchRoute(sel);}drawUgo();return;}
+  if(b.dataset.a==='rc'){var pp=(U.nav?curFix():null)||U.shown||curPos();if(pp&&U.map){if(U.nav){U.follow=true;U.map.easeTo({center:[pp.lon,pp.lat],zoom:17,pitch:50,bearing:U.hd!=null?U.hd:U.map.getBearing(),duration:500});}else U.map.easeTo({center:[pp.lon,pp.lat],zoom:Math.max(U.map.getZoom(),15.5),duration:500});}return;}
+  if(b.dataset.i!==undefined){stopUNav();U.pick=+b.dataset.i;U.guide=false;U.route=null;drawUgo();}
 });
 
 /* ---------- mulai ---------- */
