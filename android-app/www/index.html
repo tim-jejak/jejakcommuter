@@ -166,6 +166,9 @@ button.chip{font:inherit;font-size:13px;font-weight:700;color:inherit;cursor:poi
 .lrow{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#1F5FB5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(31,95,181,.35)}
 .maplibregl-popup-content{font-family:var(--f-body);font-size:13.5px;color:#14202B;padding:10px 12px}
+.maplibregl-popup-content .btn,.maplibregl-popup-content button:not(.maplibregl-popup-close-button){background:#F3F5F7;color:#14202B;border:1px solid #CFD6DD}
+.maplibregl-popup-content .btn.pri{background:#14202B;color:#fff;border-color:#14202B}
+.maplibregl-popup-content .small{color:#4C5A68}
 @media (max-width:760px){
   body{font-size:16px}
   #left{display:contents}
@@ -583,7 +586,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 20.21 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 21.03 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -2109,8 +2112,13 @@ function darkify(m,on){
     });
   }catch(e){}
 }
+function fixMaps(){maps.forEach(function(m){try{m.resize();m.triggerRepaint();}catch(e){}});}
+function fixSoon(){[100,500,1200].forEach(function(d){setTimeout(fixMaps,d);});}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)fixSoon();});
+window.addEventListener('pageshow',fixSoon);window.addEventListener('focus',fixSoon);window.addEventListener('orientationchange',fixSoon);
 function trackMap(m){
   maps.push(m);
+  try{if(window.ResizeObserver)new ResizeObserver(function(){try{m.resize();}catch(e){}}).observe(m.getContainer());m.getCanvas().addEventListener('webglcontextrestored',function(){m.triggerRepaint();});}catch(e){}
   var go=function(){darkify(m,mapDarkOn());};
   if(m.loaded&&m.loaded())go();else m.once('load',go);
 }
@@ -2176,6 +2184,7 @@ var css=''+
 '.jemg a{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--jred);color:#fff;border-radius:10px;padding:13px 4px;font-weight:800;font-size:13px;text-decoration:none}'+
 '.jemg a small{font-size:12px;font-weight:700;opacity:.92}'+
 '.jmap{position:relative;flex:none;width:100%;height:min(46vh,340px);background:var(--surface-2);overflow:hidden}'+
+'.jrcb{position:absolute;left:8px;bottom:8px;z-index:3;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--ink);box-shadow:0 1px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}'+
 '.jmap .rad{position:absolute;right:8px;bottom:8px;z-index:3;background:var(--surface);color:var(--ink-2);font-weight:800;font-size:11.5px;padding:3px 8px;border-radius:5px}'+
 '.jpin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:var(--btn);color:var(--btn-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}'+
 '.jpin.sel{background:var(--jred);color:#fff;width:38px;height:38px;position:relative;animation:jblk 1s ease-in-out infinite}'+
@@ -2321,20 +2330,21 @@ function nearby(p){
   return U.all.map(function(x,i){return {i:i,name:x.name,lat:x.lat,lon:x.lon,tag:x.tag,col:x.col,d:hav(p,x)};}).filter(function(x){return x.d<=2000;}).sort(function(a,b){return a.d-b.d;}).slice(0,30);
 }
 async function openUgo(c){
-  U.c=c;U.pick=null;U.guide=false;U.route=null;U.pos=null;U.shown=null;U.all=null;U.items=[];
+  U.c=c;U.fit=true;U.pick=null;U.guide=false;U.route=null;U.pos=null;U.shown=null;U.all=null;U.items=[];stopPulse();
   var cat=ucat(c);
   vUrg.hidden=true;vUgo.hidden=false;
-  vUgo.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+cat[1]+'</h2></div><div id="jgb"></div><div class="jmap"><div id="jmapc" style="position:absolute;inset:0"></div><span class="rad">2 km</span></div><div class="jscr" id="jlist" style="padding:0"></div>';
+  vUgo.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+cat[1]+'</h2></div><div id="jgb"></div><div class="jmap"><div id="jmapc" style="position:absolute;inset:0"></div><button type="button" class="jrcb" data-a="rc" aria-label="Lokasi saya">'+ic('nav',18)+'</button><span class="rad">2 km</span></div><div class="jscr" id="jlist" style="padding:0"></div>';
   var el=$('#jmapc');
   if(window.maplibregl){
     var J=window.__jc;
-    U.map=new maplibregl.Map({container:el,style:'https://tiles.openfreemap.org/styles/liberty',center:[106.86,-6.22],zoom:12,interactive:false,attributionControl:false,fadeDuration:0,pixelRatio:Math.min(window.devicePixelRatio||1,1.5)});
+    U.map=new maplibregl.Map({container:el,style:'https://tiles.openfreemap.org/styles/liberty',center:[106.86,-6.22],zoom:12,interactive:true,dragRotate:false,pitchWithRotate:false,touchPitch:false,attributionControl:false,fadeDuration:0,pixelRatio:Math.min(window.devicePixelRatio||1,1.5)});
     trackMap(U.map);
     U.map.on('load',function(){
       U.map.addSource('jr',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
       U.map.addSource('jc2',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
       U.map.addLayer({id:'jc2l',type:'line',source:'jc2',paint:{'line-color':'#6b7a89','line-width':1.5,'line-dasharray':[2,2]}});
-      U.map.addLayer({id:'jrl',type:'line',source:'jr',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#D8262B','line-width':4,'line-dasharray':[1.5,1.5]}});
+      U.map.addLayer({id:'jrc',type:'line',source:'jr',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#fff','line-width':9,'line-opacity':.9}});
+      U.map.addLayer({id:'jrl',type:'line',source:'jr',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#D8262B','line-width':5.5}});
       U.ready=true;drawUgo();
     });
   }
@@ -2350,7 +2360,7 @@ async function openUgo(c){
     U.tmr=setInterval(tick,10000);
   })();
 }
-function stopUgo(){clearInterval(U.tmr);U.tmr=null;if(U.map){try{maps.splice(maps.indexOf(U.map),1);U.map.remove();}catch(e){}U.map=null;U.ready=false;}U.mks=[];U.me=null;U.c=null;}
+function stopUgo(){stopPulse();U.revealing=false;clearInterval(U.tmr);U.tmr=null;if(U.map){try{maps.splice(maps.indexOf(U.map),1);U.map.remove();}catch(e){}U.map=null;U.ready=false;}U.mks=[];U.me=null;U.c=null;}
 async function tick(){
   if(!U.all||vUgo.hidden)return;
   var p=curPos();if(!p||!U.shown)return;
@@ -2361,10 +2371,36 @@ async function tick(){
 }
 async function fetchRoute(t){
   var J=window.__jc,p=U.shown,seq=++U.busy;
-  try{var v=await J.valhalla(p,{lat:t.lat,lon:t.lon},'pedestrian');if(seq===U.busy&&v&&v.coords&&v.coords.length){U.route=v.coords;drawUgo();}}catch(e){}
+  try{var v=await J.valhalla(p,{lat:t.lat,lon:t.lon},'pedestrian');if(seq===U.busy&&v&&v.coords&&v.coords.length){var first=!U.route;U.route=v.coords;if(first){U.needFit=true;U.needReveal=true;}drawUgo();}}catch(e){}
 }
 function zoomFor(lat){var m=U.map.getContainer();var px=Math.min(m.clientWidth,m.clientHeight)/2-8;if(px<40)px=100;return Math.log2(156543.03*Math.cos(lat*Math.PI/180)*px/2000);}
 function circle(p){var pts=[];for(var i=0;i<=64;i++){var a=i/64*2*Math.PI;pts.push([p.lon+2000*Math.sin(a)/(111320*Math.cos(p.lat*Math.PI/180)),p.lat+2000*Math.cos(a)/110540]);}return {type:'Feature',geometry:{type:'LineString',coordinates:pts}};}
+function setRoute(co){if(!U.map||!U.ready)return;U.map.getSource('jr').setData({type:'FeatureCollection',features:co?[{type:'Feature',geometry:{type:'LineString',coordinates:co}}]:[]});}
+function fitRoute(co,p){if(!U.map)return;var b=new maplibregl.LngLatBounds([p.lon,p.lat],[p.lon,p.lat]);co.forEach(function(c){b.extend(c);});U.map.fitBounds(b,{padding:{top:50,bottom:50,left:50,right:50},maxZoom:17.5,duration:800});}
+function revealRoute(co){
+  var seq=U.rev=(U.rev||0)+1,cum=[0],i;
+  for(i=1;i<co.length;i++)cum.push(cum[i-1]+Math.hypot(co[i][0]-co[i-1][0],(co[i][1]-co[i-1][1])));
+  var tot=cum[cum.length-1]||1,t0=performance.now(),D=1100;U.revealing=true;
+  (function f(t){
+    if(seq!==U.rev||!U.map)return;
+    var k=Math.min(1,(t-t0)/D),target=tot*(1-Math.pow(1-k,3)),out=[co[0]],j=1;
+    while(j<co.length&&cum[j]<=target){out.push(co[j]);j++;}
+    if(j<co.length){var r=(target-cum[j-1])/((cum[j]-cum[j-1])||1);out.push([co[j-1][0]+(co[j][0]-co[j-1][0])*r,co[j-1][1]+(co[j][1]-co[j-1][1])*r]);}
+    setRoute(out.length>1?out:null);
+    if(k<1)requestAnimationFrame(f);else{U.revealing=false;setRoute(co);}
+  })(t0);
+}
+function mixHex(a,b,k){var pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16),o=0,sh;for(sh=16;sh>=0;sh-=8){var x=(pa>>sh)&255,y=(pb>>sh)&255;o=(o<<8)|Math.round(x+(y-x)*k);}return '#'+('000000'+o.toString(16)).slice(-6);}
+function startPulse(){
+  if(U.pulseOn)return;U.pulseOn=true;var t0=performance.now();
+  (function f(t){
+    if(!U.pulseOn||!U.map||!U.ready){U.pulseOn=false;return;}
+    var k=(Math.sin((t-t0)/1000*2*Math.PI*.9)+1)/2;
+    try{U.map.setPaintProperty('jrl','line-color',mixHex('#6A0E12','#FF5A5F',k));}catch(e){}
+    requestAnimationFrame(f);
+  })(t0);
+}
+function stopPulse(){U.pulseOn=false;}
 function drawUgo(){
   var cat=ucat(U.c),p=U.shown;if(!cat)return;
   var L=$('#jlist');if(!L)return;
@@ -2376,15 +2412,19 @@ function drawUgo(){
   L.innerHTML=items.length?items.map(function(x){
     var on=x.i===U.pick;
     return '<button type="button" class="jpl" data-i="'+x.i+'" aria-pressed="'+on+'">'+(x.tag?'<span class="jbd" style="background:'+esc(x.col)+'">'+esc(x.tag)+'</span>':'')+'<span class="t">'+esc(x.name)+'</span><span class="d">'+fdist(x.d)+'</span></button>'+
-    (on?'<div class="jact"><button type="button" class="p" data-a="guide">'+ic('nav',16)+' '+(U.guide?'Berhenti arahkan':'Arahkan ke sini')+'</button><button type="button" data-a="gmaps">Google Maps</button></div>':'');
+    (on?'<div class="jact"><button type="button" class="p" data-a="guide">'+ic('nav',16)+' '+(U.guide?'Berhenti arahkan':'Arahkan ke sini')+'</button></div>':'');
   }).join(''):'<div class="jempty">Tidak ada dalam 2 km</div>';
   if(!U.map||!U.ready)return;
   var m=U.map;
-  m.jumpTo({center:[p.lon,p.lat],zoom:zoomFor(p.lat)});
+  if(U.fit){m.jumpTo({center:[p.lon,p.lat],zoom:zoomFor(p.lat)});U.fit=false;}
   m.getSource('jc2').setData({type:'FeatureCollection',features:[circle(p)]});
-  var feats=[];
-  if(U.guide&&sel){feats.push({type:'Feature',geometry:{type:'LineString',coordinates:(U.route&&U.route.length>1)?U.route:[[p.lon,p.lat],[sel.lon,sel.lat]]}});}
-  m.getSource('jr').setData({type:'FeatureCollection',features:feats});
+  if(U.guide&&sel){
+    var co=(U.route&&U.route.length>1)?U.route:[[p.lon,p.lat],[sel.lon,sel.lat]];
+    if(U.needFit){U.needFit=false;fitRoute(co,p);}
+    if(U.needReveal){U.needReveal=false;revealRoute(co);}
+    else if(!U.revealing)setRoute(co);
+    startPulse();
+  }else{stopPulse();U.revealing=false;setRoute(null);}
   U.mks.forEach(function(k){k.remove();});U.mks=[];
   items.forEach(function(x){
     var e=document.createElement('button');e.type='button';e.className='jpin'+(x.i===U.pick?' sel':'');e.setAttribute('aria-label',x.name);e.innerHTML=ic(cat[2],x.i===U.pick?18:15);e.style.padding='0';e.style.cursor='pointer';
@@ -2398,8 +2438,8 @@ vUgo.addEventListener('click',function(e){
   if(b.dataset.a==='back'){stopUgo();vUgo.hidden=true;renderUrg();vUrg.hidden=false;return;}
   if(b.dataset.a==='gend'){U.guide=false;U.route=null;drawUgo();return;}
   var sel=U.items.filter(function(x){return x.i===U.pick;})[0];
-  if(b.dataset.a==='guide'&&sel){U.guide=!U.guide;U.route=null;if(U.guide)fetchRoute(sel);drawUgo();return;}
-  if(b.dataset.a==='gmaps'&&sel){window.open('https://www.google.com/maps/dir/?api=1&destination='+sel.lat+','+sel.lon+'&travelmode=walking','_blank','noopener');return;}
+  if(b.dataset.a==='guide'&&sel){U.guide=!U.guide;U.route=null;if(U.guide){U.needFit=true;fetchRoute(sel);}drawUgo();return;}
+  if(b.dataset.a==='rc'){var pp=U.shown||curPos();if(pp&&U.map)U.map.easeTo({center:[pp.lon,pp.lat],zoom:Math.max(U.map.getZoom(),15.5),duration:500});return;}
   if(b.dataset.i!==undefined){U.pick=+b.dataset.i;U.guide=false;U.route=null;drawUgo();}
 });
 
