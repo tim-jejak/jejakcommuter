@@ -161,6 +161,7 @@ button.chip{font:inherit;font-size:13px;font-weight:700;color:inherit;cursor:poi
 .call:active{background:var(--surface-2)}
 #sheet,.modal{position:fixed;inset:0;z-index:20;background:rgba(10,15,20,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px}
 #sheet[hidden],.modal[hidden]{display:none}
+@media (min-width:761px){#sheet.dock{position:static;inset:auto;display:block;background:none;padding:0;z-index:auto}#sheet.dock[hidden]{display:none}#sheet.dock .sheet-in{width:100%;max-height:none;overflow:visible;margin-top:10px;border-color:var(--line)}}
 .sheet-in{width:min(520px,100%);max-height:86%;overflow:auto;background:var(--surface);border:1px solid var(--ink);border-radius:5px;padding:12px}
 .lrow{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#1F5FB5;border:3px solid #fff;box-shadow:0 0 0 2px rgba(31,95,181,.35)}
@@ -582,7 +583,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3>Ukuran tampilan</h3>
     <div id="uiSize" role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 20.10 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 03-11 20.21 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -1412,6 +1413,8 @@ $('#sheet').addEventListener('click',e=>{const g=e.target.closest('[data-mode],[
 $('#sheet').addEventListener('input',e=>{if(e.target.id==='schQ'){SCH.q=e.target.value;const pos=e.target.selectionStart;renderSheet();const n=$('#schQ');if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}}}});
 setInterval(()=>{if(!$('#sheet').hidden&&SCH.v==='mrtst'&&!SCH.mall)renderSheet();},20000);
 $('#bannerBtn').onclick=()=>{SCH={v:'modes',mode:'',line:-1,q:'',tj:'',day:''};$('#sheet').hidden=false;renderSheet();};
+(function(){const sh=$('#sheet'),rb=$('#rbody'),mq=window.matchMedia('(min-width:761px)');function place(){if(mq.matches){rb.appendChild(sh);sh.classList.add('dock');}else{document.body.appendChild(sh);sh.classList.remove('dock');}}place();if(mq.addEventListener)mq.addEventListener('change',place);})();
+const openSch=$('#bannerBtn').onclick;$('#bannerBtn').onclick=()=>{openSch();if($('#sheet').classList.contains('dock'))$('#sheet').scrollIntoView({block:'nearest'});};
 $('#schOpen').onclick=$('#bannerBtn').onclick;$('#shClose').onclick=()=>$('#sheet').hidden=true;
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true;});
 const WMO={0:'Cerah',1:'Cerah Berawan',2:'Berawan',3:'Mendung',45:'Berkabut',48:'Berkabut',51:'Gerimis',53:'Gerimis',55:'Gerimis',56:'Gerimis',57:'Gerimis',61:'Hujan Ringan',63:'Hujan Sedang',65:'Hujan Lebat',66:'Hujan',67:'Hujan',80:'Hujan Ringan',81:'Hujan Sedang',82:'Hujan Lebat',95:'Petir',96:'Petir',99:'Petir'};
