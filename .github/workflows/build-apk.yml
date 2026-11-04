@@ -32,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Isi nomor versi
-        run: sed -i "s/__APPBUILD__/${{ github.run_number }}/" www/index.html
+        run: sed -i "s/__APPBUILD__/${{ github.run_number }}/" www/js/konfigurasi.js
 
       - name: Buat proyek Android
         run: |
