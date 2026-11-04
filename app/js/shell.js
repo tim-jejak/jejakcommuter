@@ -194,6 +194,14 @@ window.addEventListener('popstate',function(){
   else{try{history.back();}catch(e){}}
 });
 setTimeout(guardPush,300);
+document.addEventListener('pointerdown',guardPush,true);
+(function(){var A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App,t=0;
+  if(!A||!A.addListener)return;
+  A.addListener('backButton',function(){
+    var r=onBack();if(r==='ok'){t=0;return;}
+    var n=Date.now();if(n-t<2000){try{A.exitApp();}catch(e){}return;}
+    t=n;toast('Tekan sekali lagi untuk keluar');});
+})();
 var cfT=null,cfLast=null;
 function chatFollow(on){clearInterval(cfT);cfT=null;cfLast=null;if(!on)return;var J=window.__jc;if(!J||!J.map)return;var n=0;
   function step(){if(TAB!=='chat')return;if(!(J.NAV&&J.NAV.on)){var g=J.S.gps;if(g&&(!cfLast||hav(cfLast,g)>4)){cfLast={lat:g.lat,lon:g.lon};J.map.easeTo({center:[g.lon,g.lat],zoom:Math.max(J.map.getZoom(),16),duration:900});}}
