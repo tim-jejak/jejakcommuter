@@ -145,7 +145,9 @@ async function setUser(u){
  var old=X.uid;X.user=u;X.uid=u?u.id:null;X.prof=null;
  if(u){
   var sb=await getSB();var r=await sb.from('profiles').select('id,name,tier,friend_code,created_at').eq('id',u.id).single();
-  X.prof=r.data||null;if(X.prof)X.names[u.id]={id:u.id,name:X.prof.name,tier:X.prof.tier};
+  X.prof=r.data||null;if(X.prof){X.names[u.id]={id:u.id,name:X.prof.name,tier:X.prof.tier};
+   var ln='';try{ln=JSON.parse(localStorage.getItem('jc_name')||'""')||'';}catch(e){}
+   if(!ln&&window.__setName)window.__setName(String(X.prof.name||'').slice(0,16));else if(ln&&ln!==X.prof.name&&window.__syncName)window.__syncName(ln,1);}
  }
  if(old!==X.uid){X.my={};if(X.ready){loadVotes().then(function(){draw();});}}
  draw();if(window.__jshell&&window.__jshell.refreshProf)window.__jshell.refreshProf();
@@ -265,6 +267,8 @@ function drawMsgs(toBottom){
 }
 
 /* ---------- aksi ---------- */
+var snT=null;
+window.__syncName=function(v,now){clearTimeout(snT);if(!X.uid||!v)return;snT=setTimeout(async function(){try{var sb=await getSB();var r=await sb.from('profiles').update({name:v}).eq('id',X.uid);if(r.error)throw r.error;if(X.prof)X.prof.name=v;X.names[X.uid]={id:X.uid,name:v,tier:X.prof?X.prof.tier:''};}catch(e){}},now?0:1000);};
 function need(){if(!X.uid){sheet('login');return false;}if(newLeft()){toast('Akun baru. Terbuka '+newLeft()+' hari lagi');return false;}return true;}
 async function send(){
  if(!need())return;
@@ -426,7 +430,8 @@ var TN={bronze:'Bronze',silver:'Silver',gold:'Gold',diamond:'Diamond'};
 function acctHTML(){
  if(!X.uid)return '<button class="jrow" data-ja="login"><span class="g">Masuk dengan Google</span></button>';
  var p=X.prof||{name:'…',tier:'',friend_code:''};
- return '<button class="jrow" data-ja="name"><span class="g">'+esc(p.name)+'</span><span class="v">Ubah</span></button>'+
+ var um=(X.user&&X.user.user_metadata)||{},gn=um.full_name||um.name||'',em=(X.user&&X.user.email)||'';
+ return '<div class="jrow" style="cursor:default"><span class="g">Akun Google</span><span class="v" style="text-align:right">'+esc(gn)+(gn&&em?'<br>':'')+esc(em)+'</span></div>'+
  '<div class="jrow" style="cursor:default"><span class="g">Level</span><span class="v">'+(TN[p.tier]||'Belum ada')+'</span></div>'+
  '<button class="jrow" data-ja="code"><span class="g">Kode teman</span><span class="v">'+esc(p.friend_code||'')+'</span></button>'+
  '<button class="jrow" data-ja="out"><span class="g">Keluar</span></button>'+
@@ -439,7 +444,7 @@ document.addEventListener('click',function(e){
  else if(a==='name')sheet('name');
  else if(a==='del')sheet('del');
  else if(a==='out'){getSB().then(function(sb){return sb.auth.signOut();}).then(function(){toast('Keluar');}).catch(function(){});}
- else if(a==='code'){try{navigator.clipboard.writeText((X.prof||{}).friend_code||'');toast('Kode disalin');}catch(er){}}
+ else if(a==='code'){try{navigator.clipboard.writeText((X.prof||{}).friend_code||'');if(!(window.__sysCopy&&window.__sysCopy()))toast('Kode disalin');}catch(er){}}
 });
 
 /* ---------- siklus ---------- */

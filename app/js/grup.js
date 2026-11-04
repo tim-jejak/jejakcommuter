@@ -38,7 +38,8 @@ function profileHTML(){return '<div class="pf"><label class="gl" for="pfName">Na
   '<div class="gl">Warna rute</div><div class="sws">'+swatches('color')+'</div>'+
   '<div class="gl">Warna titik lokasi</div><div class="sws">'+swatches('dot')+'</div></div>';}
 function refreshProfileUI(){document.querySelectorAll('.pfbox').forEach(b=>{const f=b.querySelector('.pfName');const keep=document.activeElement===f;const v=f?f.value:'';b.innerHTML=profileHTML();const nf=b.querySelector('.pfName');if(keep&&nf){nf.value=v;nf.focus();}});}
-document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pfName')){P.name=e.target.value.trim().slice(0,16);st.set('jc_name',P.name);applyProfile();}});
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pfName')){P.name=e.target.value.trim().slice(0,16);st.set('jc_name',P.name);applyProfile();if(window.__syncName)window.__syncName(P.name);}});
+window.__setName=function(v){P.name=v;st.set('jc_name',v);applyProfile();refreshProfileUI();};
 document.addEventListener('input',e=>{if(e.target.id==='gJoinIn'){const v=e.target.value;if(!/^h/i.test(v)&&v!==v.toUpperCase())e.target.value=v.toUpperCase();}});
 document.addEventListener('input',e=>{const t=e.target;if(!t.classList||!t.classList.contains('cphex'))return;let v=t.value.trim();if(v&&v[0]!=='#')v='#'+v;if(!/^#[0-9a-fA-F]{6}$/.test(v))return;v=v.toUpperCase();const k=t.dataset.sw;P[k]=v;st.set(k==='color'?'jc_color':'jc_dot',v);applyProfile();if(G)updMembers();
   document.querySelectorAll('.sw[data-sw="'+k+'"]').forEach(s=>{const on=s.classList.contains('cus');s.classList.toggle('on',on);if(on)s.style.background=v;});});
@@ -414,13 +415,13 @@ document.addEventListener('click',async e=>{
    case'create':{const n=+document.querySelector('#gSize .on').dataset.n,m=document.querySelector('#gMode .on').dataset.m;await createGroup({max:n,mode:m,pw:$('#gPw').value.trim(),sim:$('#gSim').checked});break;}
    case'join':{const mode=a.dataset.mode;const pw=mode==='p'?($('#gJoinPw').value||'').trim():'';await joinGroup({code:a.dataset.code,mode,pw});break;}
    case'joinlink':{const r=parseJoin($('#gJoinIn').value);if(!r){toast('Kode atau tautan tidak valid.');break;}JN=r;showHome('join');break;}
-   case'copy':{try{await navigator.clipboard.writeText(link());toast('Tautan disalin');}catch(_){prompt&&0;toast(link(),9000);}break;}
+   case'copy':{try{await navigator.clipboard.writeText(link());if(!(window.__sysCopy&&window.__sysCopy()))toast('Tautan disalin');}catch(_){prompt&&0;toast(link(),9000);}break;}
    case'share':{const url=link(),text=G.mode==='v'?P.name+' membagikan perjalanannya.':shareTxt(),title=G.mode==='v'?'Perjalanan saya':'Grup jejakcommuter';
     try{const CS=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Share;
       if(CS&&CS.share)await CS.share({title,text,url,dialogTitle:'Bagikan lewat'});
       else if(navigator.share)await navigator.share({title,text,url});
       else{await navigator.clipboard.writeText(text+'\n'+url);toast('Tautan disalin');}}catch(_){}break;}
-   case'copycode':{try{await navigator.clipboard.writeText(G.code);toast('Kode disalin');}catch(_){toast(G.code,9000);}break;}
+   case'copycode':{try{await navigator.clipboard.writeText(G.code);if(!(window.__sysCopy&&window.__sysCopy()))toast('Kode disalin');}catch(_){toast(G.code,9000);}break;}
    case'leave':await stopGroup();break;
    case'ok':await approve(id);break;case'no':deny(id);break;
    case'kick':await kick(id);break;
