@@ -136,7 +136,8 @@ async function subscribe(){
  }).subscribe();
 }
 async function loadAuth(){
- var sb=await getSB();if(!sb)return;
+ if(X.authOn)return;X.authOn=true;
+ var sb=await getSB();if(!sb){X.authOn=false;return;}
  var s=await sb.auth.getSession();
  await setUser(s&&s.data&&s.data.session?s.data.session.user:null);
  sb.auth.onAuthStateChange(function(ev,sess){setUser(sess?sess.user:null);});
@@ -367,7 +368,7 @@ var SH=null;
 function isNat(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
 var GSIP=null,gsiOn=false;
 function loadGSI(){if(GSIP)return GSIP;GSIP=new Promise(function(res,rej){if(window.google&&google.accounts&&google.accounts.id)return res();var s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=function(){res();};s.onerror=function(){GSIP=null;rej(new Error('gsi'));};document.head.appendChild(s);setTimeout(function(){if(!(window.google&&google.accounts&&google.accounts.id)){GSIP=null;rej(new Error('gsi'));}},8000);});return GSIP;}
-async function gsiReady(){if(!CFG.gweb)throw new Error('gsi');await loadGSI();if(!gsiOn){google.accounts.id.initialize({client_id:CFG.gweb,ux_mode:'popup',auto_select:false,context:'signin',itp_support:true,callback:async function(r){try{var sb=await getSB();var o=await sb.auth.signInWithIdToken({provider:'google',token:r.credential});if(o.error)throw o.error;closeSheet();toast('Berhasil masuk');}catch(er){toast(errMsg(er));}}});gsiOn=true;}}
+async function gsiReady(){if(!CFG.gweb)throw new Error('gsi');await loadGSI();if(!gsiOn){google.accounts.id.initialize({client_id:CFG.gweb,ux_mode:'popup',auto_select:false,context:'signin',itp_support:true,callback:async function(r){try{var sb=await getSB();var o=await sb.auth.signInWithIdToken({provider:'google',token:r.credential});if(o.error)throw o.error;if(o.data&&o.data.user)await setUser(o.data.user);closeSheet();toast('Berhasil masuk');}catch(er){toast(errMsg(er));}}});gsiOn=true;}}
 function gsiButton(el){gsiReady().then(function(){el.innerHTML='';google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',text:'continue_with',shape:'pill',logo_alignment:'left',locale:'id',width:Math.max(220,Math.min(320,el.clientWidth||300))});}).catch(function(){el.innerHTML='<button class="jb pri" data-s="google" style="width:100%">Lanjut dengan Google</button>';});}
 function closeSheet(){if(SH){SH.remove();SH=null;}}
 function sheet(kind,arg){
@@ -399,7 +400,7 @@ async function nativeGoogle(){
  var r=await SL.login({provider:'google',options:{}});
  var tok=r&&r.result&&r.result.idToken;if(!tok)throw new Error('google');
  var sb=await getSB();var o=await sb.auth.signInWithIdToken({provider:'google',token:tok});
- if(o.error)throw o.error;return true;
+ if(o.error)throw o.error;if(o.data&&o.data.user)await setUser(o.data.user);return true;
 }
 async function googleLogin(){
  if(!isNat()){sheet('login');if(CFG.gweb)gsiReady().then(function(){try{google.accounts.id.prompt();}catch(e){}}).catch(function(){});return;}
@@ -477,4 +478,6 @@ window.__jchat={
  rpc:rpc,errMsg:errMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
  state:X
 };
+/* status login dibaca saat aplikasi dibuka, tidak menunggu tab Chat */
+setTimeout(function(){loadAuth().catch(function(){X.authOn=false;});},400);
 })();
