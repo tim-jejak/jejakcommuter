@@ -394,6 +394,10 @@ async function nativeGoogle(){
  var sb=await getSB();var o=await sb.auth.signInWithIdToken({provider:'google',token:tok});
  if(o.error)throw o.error;return true;
 }
+async function googleLogin(){
+ var done=false;try{done=await nativeGoogle();}catch(er){var em=String((er&&(er.message||er.code))||er||'').replace(/\s+/g,' ').slice(0,110);toast('Login Google gagal'+(em?': '+em:''));return;}
+ if(!done){var sb=await getSB();if(!sb){toast('Server belum diatur');return;}var red=/^https?:/.test(location.protocol)?location.origin+location.pathname:'https://jejakcommuter.com/app/';await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:red}});}
+}
 async function sheetClick(e){
  if(e.target.classList.contains('jxb')){closeSheet();return;}
  var b=e.target.closest('[data-s]');if(!b)return;
@@ -462,7 +466,7 @@ window.__jchat={
  mount:function(root){if(X.mounted)return;X.mounted=true;mount(root);loadAuth().catch(function(){});loadAll();X.tmr=setInterval(tick,10000);setInterval(refreshVotes,20000);},
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
- rpc:rpc,errMsg:errMsg,uid:function(){return X.uid;},
+ rpc:rpc,errMsg:errMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
  state:X
 };
 })();

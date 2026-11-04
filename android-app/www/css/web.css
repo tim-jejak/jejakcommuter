@@ -37,6 +37,7 @@
 
   /* tombol akun kanan atas */
   #jaccChip{display:flex;align-items:center;gap:8px;font-weight:700}
-  #jaccChip i{width:24px;height:24px;border-radius:50%;background:#2F5FB5;color:#fff;font-style:normal;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  #jaccChip.av{width:38px;height:38px;padding:0!important;border-radius:50%;justify-content:center}
+  #jaccChip i{width:30px;height:30px;border-radius:50%;background:#2F5FB5;color:#fff;font-style:normal;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
 }
 @media (max-width:760px){#jaccChip{display:none!important}}

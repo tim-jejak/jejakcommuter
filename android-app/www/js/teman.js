@@ -69,9 +69,9 @@ function ensureChip(){if($('#frChip'))return;const lc=$('#locChip');if(!lc)retur
 ensureChip();
 /* tombol akun di kanan atas (khusus web) */
 function accChip(){const ch=$('#chips');if(!ch)return;let b=$('#jaccChip');
- if(!b){b=document.createElement('button');b.type='button';b.className='chip';b.id='jaccChip';b.addEventListener('click',()=>{if(window.__jshell)window.__jshell.setTab('profil');});ch.appendChild(b);}
+ if(!b){b=document.createElement('button');b.type='button';b.className='chip';b.id='jaccChip';b.addEventListener('click',()=>{if(uid()){if(window.__jshell)window.__jshell.setTab('profil');}else if(C()&&C().googleLogin)C().googleLogin();});ch.appendChild(b);}
  let nm='';try{nm=JSON.parse(localStorage.getItem('jc_name')||'""')||'';}catch(e){}
- const h=uid()?'<i>'+esc((nm||'J').charAt(0).toUpperCase())+'</i>'+esc(nm||'Profil'):'Masuk';if(b.innerHTML!==h)b.innerHTML=h;}
+ const h=uid()?'<i>'+esc((nm||'J').charAt(0).toUpperCase())+'</i>':'Masuk';if(b.innerHTML!==h)b.innerHTML=h;b.classList.toggle('av',!!uid());b.title=uid()?'Profil':'Masuk dengan Google';b.setAttribute('aria-label',b.title);}
 setInterval(accChip,1500);
 if(innerWidth>760){const ly=$('#layers');if(ly)ly.open=false;}
 
