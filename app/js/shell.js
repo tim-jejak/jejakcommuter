@@ -177,6 +177,7 @@ function guardPush(){if(HD===0){try{history.pushState({jc:1},'');HD=1;}catch(e){
 window.__sysCopy=function(){var m=/Android (\d+)/.exec(navigator.userAgent||'');return isNative()&&m&&+m[1]>=13;};
 function isNative(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
 function onBack(){
+  if(window.__jtemanBack&&window.__jtemanBack())return 'ok';
   var grp=document.getElementById('grp');
   if(grp&&grp.classList.contains('open')){var gc=document.getElementById('gClose');if(gc)gc.click();return 'ok';}
   if(!vUgo.hidden){var b=vUgo.querySelector('[data-a=back]');if(b)b.click();return 'ok';}
@@ -209,7 +210,7 @@ function chatFollow(on){clearInterval(cfT);cfT=null;cfLast=null;if(!on)return;va
     if(n++%10===0&&J.locate)J.locate(function(){});}
   step();cfT=setInterval(step,1000);}
 function setTab(t){
-  TAB=t;document.documentElement.classList.toggle('tchat',t==='chat');
+  TAB=t;document.documentElement.classList.toggle('tchat',t==='chat');document.documentElement.dataset.tab=t;
   nav.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-current',String(b.dataset.t===t));});
   [vProf,vTamp,vUrg,vUgo,vChat].forEach(function(v){v.hidden=true;});
   stopUgo();chatFollow(t==='chat');
@@ -258,12 +259,14 @@ function renderProf(){
   var keep=pm&&pm.parentNode&&pm.closest('#jprof');
   vProf.innerHTML='<div class="jscr" style="padding-top:12px"><div class="jhd"><div class="jav" style="background:'+col+';color:'+(lum(col)<.4?'#fff':'#14202B')+'">'+esc(ini)+'</div><div style="font-size:18px;font-weight:800">'+esc(name||'Jecom')+'</div></div>'+
   '<div class="jcrd" id="jpfbox" style="padding:12px 14px"></div>'+
+  '<div class="jlbl">Teman</div><div class="jcrd" id="jteman" style="padding:0 14px"></div>'+
   '<div class="jlbl">Akun</div><div class="jcrd" id="jacct">'+(window.__jchat?window.__jchat.acct():'')+'</div>'+
   '<div class="jlbl">Pengaturan</div><div class="jcrd">'+
   '<button class="jrow" data-a="tamp">'+ic('sliders')+'<span class="g">Tampilan</span>'+ic('chev',18)+'</button>'+
   '<button class="jrow" data-a="about">'+ic('info')+'<span class="g">Tentang</span>'+ic('chev',18)+'</button></div></div>';
   var box=vProf.querySelector('#jpfbox');
   if(pm){box.appendChild(pm);pm.hidden=false;}
+  var jt=vProf.querySelector('#jteman');if(jt&&window.__jteman)window.__jteman.mount(jt);
 }
 vProf.addEventListener('click',function(e){
   var b=e.target.closest('[data-a]');if(!b)return;

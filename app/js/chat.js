@@ -462,6 +462,7 @@ window.__jchat={
  mount:function(root){if(X.mounted)return;X.mounted=true;mount(root);loadAuth().catch(function(){});loadAll();X.tmr=setInterval(tick,10000);setInterval(refreshVotes,20000);},
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
+ rpc:rpc,errMsg:errMsg,uid:function(){return X.uid;},
  state:X
 };
 })();

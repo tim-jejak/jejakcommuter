@@ -477,6 +477,6 @@ function boot(){window.__toast=toast;mountSettings();applyProfile();chatApply();
   const q=new URLSearchParams(location.search);if(q.get('g')){openPanel(true);showHome();}
   else if(q.get('v')){const hm=/k=([A-Za-z0-9_-]+)/.exec(location.hash||'');if(hm){const iv2=setInterval(()=>{if(window.__jc){clearInterval(iv2);safe(()=>joinTrip(q.get('v'),hm[1]));}},300);}else toast('Tautan perjalanan tidak lengkap.');}
   const iv=setInterval(()=>{if(window.__jc){clearInterval(iv);applyProfile();}},300);
-  window.__grp={get G(){return G;},P,startTrip,joinTrip,createGroup,joinGroup,approve,sendChat,kick,stopGroup,decim,enc,dec,pwKey,sealTo,openSeal,ecKP};}
+  window.__grp={get G(){return G;},P,startTrip,joinTrip,createGroup,joinGroup,approve,sendChat,kick,stopGroup,decim,buildRoute,enc,dec,pwKey,sealTo,openSeal,ecKP};}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
