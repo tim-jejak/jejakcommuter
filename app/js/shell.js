@@ -3,7 +3,7 @@
 var $=function(s){return document.querySelector(s);};
 var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
 var LK='jc_look';
-var LOOK={app:'auto',map:'app',scr:'90'};
+var LOOK={app:'auto',map:'app',scr:'90',gaya:'plain'};
 try{Object.assign(LOOK,JSON.parse(localStorage.getItem(LK)||'{}'));}catch(e){}
 var mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function appDark(){return LOOK.app==='dark'||(LOOK.app==='auto'&&!!(mq&&mq.matches));}
@@ -15,6 +15,7 @@ function applyTheme(){
   var r=document.documentElement;
   if(LOOK.app==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',LOOK.app);
   maps.forEach(function(m){darkify(m,mapDarkOn());});
+  try{var J=window.__jc;if(J&&J.map&&maps.indexOf(J.map)<0)darkify(J.map,mapDarkOn());}catch(e){}
   var d=$('#jprof'); if(d&&!d.hidden)renderProf();
 }
 function saveLook(){try{localStorage.setItem(LK,JSON.stringify(LOOK));}catch(e){}}
@@ -23,24 +24,7 @@ if(mq&&mq.addEventListener)mq.addEventListener('change',function(){if(LOOK.app==
 /* ---------- peta gelap ---------- */
 function isBase(m,l){if(l.type==='background')return true;if(!l.source)return false;var s=m.getSource(l.source);return !!s&&s.type==='vector';}
 function darkify(m,on){
-  try{
-    if(!m||!m.getStyle||!m.isStyleLoaded&&!m.getStyle())return;
-    var ls=(m.getStyle()||{}).layers||[];
-    m.__o=m.__o||{};
-    ls.forEach(function(l){
-      if(!isBase(m,l))return;
-      var set=function(p,v){
-        if(on){ if(!(l.id+p in m.__o)){var cur=m.getPaintProperty(l.id,p);m.__o[l.id+p]=cur===undefined?null:cur;} m.setPaintProperty(l.id,p,v); }
-        else if(l.id+p in m.__o){ m.setPaintProperty(l.id,p,m.__o[l.id+p]); delete m.__o[l.id+p]; }
-      };
-      var id=l.id;
-      if(l.type==='background')set('background-color','#0e151c');
-      else if(l.type==='fill'){ set('fill-color',/water/i.test(id)?'#0a1b2a':'#152029'); }
-      else if(l.type==='fill-extrusion')set('fill-extrusion-color','#1e2a35');
-      else if(l.type==='line'){ set('line-color',/water/i.test(id)?'#0a1b2a':/casing/i.test(id)?'#0e151c':/boundary/i.test(id)?'#3a4856':'#2d3a46'); }
-      else if(l.type==='symbol'&&l.layout&&l.layout['text-field']){ set('text-color','#9fb0bf'); set('text-halo-color','#0e151c'); }
-    });
-  }catch(e){}
+  try{if(!m||!m.getStyle||!m.getStyle())return;if(window.JTEMA)window.JTEMA.apply(m,LOOK.gaya==='liberty'?'liberty':'plain',!!on);}catch(e){}
 }
 function fixMaps(){maps.forEach(function(m){try{m.resize();m.triggerRepaint();}catch(e){}});}
 function fixSoon(){[100,500,1200].forEach(function(d){setTimeout(fixMaps,d);});}
@@ -278,7 +262,8 @@ function renderTamp(){
   var th='dark',op=85;try{var c=JSON.parse(localStorage.getItem('jc_chat_v1')||'{}');th=c.th||'dark';op=c.op||85;}catch(e){}
   vTamp.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>Tampilan</h2></div><div class="jscr">'+
   '<div class="jlbl">Tampilan aplikasi</div>'+seg('app',[['light','Terang'],['dark','Gelap'],['auto','Ikuti HP']],LOOK.app)+
-  '<div class="jlbl">Tampilan peta</div>'+seg('map',[['light','Putih'],['dark','Gelap'],['app','Ikuti aplikasi']],LOOK.map)+
+  '<div class="jlbl">Tampilan peta</div>'+seg('map',[['light','Terang'],['dark','Gelap'],['app','Ikuti aplikasi']],LOOK.map)+
+  '<div class="jlbl">Gaya peta</div>'+seg('gaya',[['liberty','Liberty'],['plain','Plain']],LOOK.gaya)+
   '<div class="jlbl">Transparan chat</div><div style="display:flex;align-items:center;gap:12px;margin:0 0 14px"><input type="range" id="jop" min="20" max="100" step="5" value="'+Math.round(getOp()*100)+'" style="flex:1"><span style="font-weight:800;font-size:13px;min-width:38px;text-align:right">'+Math.round((1-getOp())*100)+'%</span></div>'+
   '<div class="jlbl">Ukuran tampilan</div>'+seg('ui',[['1','Kecil'],['2','Sedang'],['3','Besar']],ui)+
   (window.JcInsets&&window.JcInsets.mode?'<div class="jlbl">Layar</div>'+seg('scr',[['90','90%'],['full','Penuh']],LOOK.scr):'')+'</div>';
@@ -289,6 +274,7 @@ vTamp.addEventListener('click',function(e){
   var k=b.dataset.k,v=b.dataset.v;if(!k)return;
   if(k==='app'){LOOK.app=v;saveLook();applyTheme();}
   else if(k==='map'){LOOK.map=v;saveLook();applyTheme();}
+  else if(k==='gaya'){LOOK.gaya=v;saveLook();applyTheme();}
   else if(k==='scr'){LOOK.scr=v;saveLook();if(window.__applyScr)window.__applyScr();}
   else if(k==='cth'){var t=document.querySelector('#chTh [data-th="'+v+'"]');if(t)t.click();}
   else if(k==='ui'){var u=document.querySelector('#uiSize [data-u="'+v+'"]');if(u)u.click();}
