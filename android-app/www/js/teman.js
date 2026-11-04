@@ -67,6 +67,13 @@ function reqPos(){const r2=$('#row2')||$('#search');if(r2)req.style.top=Math.rou
 
 function ensureChip(){if($('#frChip'))return;const lc=$('#locChip');if(!lc)return;const b=document.createElement('button');b.type='button';b.className='chip';b.id='frChip';b.textContent='Rute teman';lc.parentNode.insertBefore(b,lc.nextSibling);b.addEventListener('click',cycle);}
 ensureChip();
+/* tombol akun di kanan atas (khusus web) */
+function accChip(){const ch=$('#chips');if(!ch)return;let b=$('#jaccChip');
+ if(!b){b=document.createElement('button');b.type='button';b.className='chip';b.id='jaccChip';b.addEventListener('click',()=>{if(window.__jshell)window.__jshell.setTab('profil');});ch.appendChild(b);}
+ let nm='';try{nm=JSON.parse(localStorage.getItem('jc_name')||'""')||'';}catch(e){}
+ const h=uid()?'<i>'+esc((nm||'J').charAt(0).toUpperCase())+'</i>'+esc(nm||'Profil'):'Masuk';if(b.innerHTML!==h)b.innerHTML=h;}
+setInterval(accChip,1500);
+if(innerWidth>760){const ly=$('#layers');if(ly)ly.open=false;}
 
 /* ---------- data ---------- */
 const friends=()=>T.st?T.st.friends:[];

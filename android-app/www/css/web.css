@@ -1,0 +1,42 @@
+/* ===== Tata letak web (layar lebar) ala Google Maps: panel kiri mengambang, peta selalu tampil ===== */
+@media (min-width:761px){
+  html.jn{--pw:400px;--pg:12px;--nvh:58px;--ptop:calc(var(--pg) + var(--nvh) + 8px)}
+
+  /* tab Peta / Chat / Urgent / Profil di atas panel */
+  html.jn body #jnav{top:var(--pg);left:var(--pg);bottom:auto;right:auto;width:var(--pw);height:var(--nvh);transform:none;padding:4px;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.18);gap:4px;visibility:visible}
+  html.jn body #jnav button{flex-direction:row;gap:7px;margin:0;font-size:13.5px;border-radius:12px}
+  html.jn body #jnav button svg{width:19px;height:19px}
+
+  /* isi tab Peta */
+  html.jn body #left{top:var(--ptop);left:var(--pg);width:var(--pw);max-height:calc(100% - var(--ptop) - var(--pg))}
+
+  /* isi tab Chat / Urgent / Profil / Tampilan: di dalam panel, peta tetap terlihat */
+  html.jn body .jsc{left:var(--pg);top:var(--ptop);bottom:var(--pg);right:auto;width:var(--pw);padding-top:0;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.18);overflow:hidden}
+  html.jn body .jsc .jscr{padding:12px 14px 16px}
+  html.jn body #jchat.jsc{background:var(--surface)}
+  html.jn.chatopen body #jnav{visibility:visible}
+
+  /* panel Grup */
+  html.jn body #grp{left:var(--pg);top:var(--ptop);bottom:var(--pg);right:auto;width:var(--pw);height:auto;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.18);overflow:hidden;z-index:13}
+
+  /* kartu jalur (list stasiun) di dalam area panel */
+  html.jn body #jcard{left:var(--pg)!important;right:auto!important;width:var(--pw);bottom:var(--pg)!important;border-radius:16px!important;max-height:min(55vh,560px)!important;border:1px solid var(--line)}
+
+  /* tombol kanan atas & Lapisan: tidak bertumpuk dengan tombol lokasi dan zoom */
+  html.jn body #chips{max-width:calc(100% - var(--pw) - 48px)}
+  html.jn body #layers{top:calc(var(--pg) + 50px);bottom:auto;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  html.jn body #jfab{right:10px;bottom:118px;width:40px;height:40px}
+  html.jn body .maplibregl-ctrl-bottom-right{margin-bottom:12px}
+
+  /* notifikasi berbagi rute: di atas peta, sebelah panel */
+  html.jn body #jfreq{left:calc(var(--pw) + var(--pg) * 2);right:auto;width:min(420px,calc(100% - var(--pw) - 48px));top:calc(var(--pg) + 50px)!important}
+
+  /* pop-up tampil di tengah */
+  html.jn body #jtm{align-items:center}
+  html.jn body #jtm .in{border-radius:20px;max-width:440px}
+
+  /* tombol akun kanan atas */
+  #jaccChip{display:flex;align-items:center;gap:8px;font-weight:700}
+  #jaccChip i{width:24px;height:24px;border-radius:50%;background:#2F5FB5;color:#fff;font-style:normal;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+}
+@media (max-width:760px){#jaccChip{display:none!important}}

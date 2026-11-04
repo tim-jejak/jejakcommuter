@@ -201,7 +201,7 @@ function setTab(t){
   var grp=$('#grp');
   if(grp&&grp.classList.contains('open')&&window.__closeGrp&&(t!=='chat'||window.__jchat))window.__closeGrp();
   if(window.__closeUrgent&&window.__jc&&window.__jc.S.urgentOn)window.__closeUrgent();
-  if(t==='chat'){try{if(!localStorage.getItem('jc_tune_hint')){localStorage.setItem('jc_tune_hint','1');setTimeout(function(){toast('Tahan menu Chat 2 detik untuk atur transparan');},600);}}catch(e){}if(window.__jchat){vChat.hidden=false;window.__jchat.mount(vChat);window.__jchat.show();}else if(grp&&!grp.classList.contains('open')){var b=$('#grpBtn');if(b)b.click();}}
+  if(t==='chat'){try{if(innerWidth<=760&&!localStorage.getItem('jc_tune_hint')){localStorage.setItem('jc_tune_hint','1');setTimeout(function(){toast('Tahan menu Chat 2 detik untuk atur transparan');},600);}}catch(e){}if(window.__jchat){vChat.hidden=false;window.__jchat.mount(vChat);window.__jchat.show();}else if(grp&&!grp.classList.contains('open')){var b=$('#grpBtn');if(b)b.click();}}
   else if(t==='profil'){renderProf();vProf.hidden=false;}
   else if(t==='urgent'){renderUrg();vUrg.hidden=false;}
 }
