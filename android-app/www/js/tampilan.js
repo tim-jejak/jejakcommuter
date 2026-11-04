@@ -3,7 +3,7 @@ const $=s=>document.querySelector(s),mq=matchMedia('(max-width:760px)');
 const R=$('#results'),H=$('#rhandle'),SE=$('#search'),out=$('#out'),sum=$('#sumbar');
 const probe=document.createElement('div');probe.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px);visibility:hidden';document.body.appendChild(probe);
 let state='peek';
-const heights=()=>({peek:Math.round(H.getBoundingClientRect().height+1+(parseFloat(getComputedStyle(probe).paddingBottom)||0)),half:Math.round(innerHeight*.46),full:Math.max(240,Math.round(innerHeight-(window.__topH||120)-14))});
+const heights=()=>({peek:Math.round(H.getBoundingClientRect().height+1+(parseFloat(getComputedStyle(probe).paddingBottom)||0)),half:Math.round(innerHeight*.46),full:Math.max(240,Math.round(innerHeight-Math.max(window.__topH||0,SE.getBoundingClientRect().bottom+10)))});
 function setSh(v){R.style.setProperty('--sh',v);document.documentElement.style.setProperty('--shpx',v);}
 function setSheet(s){state=s;R.classList.remove('drag');R.dataset.state=s;document.documentElement.dataset.sheet=s;setSh(heights()[s]+'px');}
 window.__setSheet=s=>setSheet(s);

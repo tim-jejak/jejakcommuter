@@ -153,7 +153,7 @@ async function setUser(u){
 
 /* ---------- tampilan ---------- */
 function newLeft(){
- if(!X.prof)return 0;var d=3*864e5-(Date.now()-new Date(X.prof.created_at).getTime());return d>0?Math.ceil(d/864e5):0;
+ if(!X.prof)return 0;var d=1*864e5-(Date.now()-new Date(X.prof.created_at).getTime());return d>0?Math.ceil(d/864e5):0;
 }
 function roomMsgs(r){return X.msgs.filter(function(m){return m.room===r;});}
 function roomStat(r){
