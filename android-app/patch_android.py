@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import androidx.core.graphics.Insets;
@@ -58,11 +59,14 @@ public class MainActivity extends BridgeActivity {
     WindowCompat.setDecorFitsSystemWindows(w, !full);
     WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, dv);
     if (full) {
+      c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+      c.hide(WindowInsetsCompat.Type.statusBars());
       w.setStatusBarColor(SCRIM_FULL);
       w.setNavigationBarColor(Color.TRANSPARENT);
       c.setAppearanceLightStatusBars(false);
       c.setAppearanceLightNavigationBars(!dark);
     } else {
+      c.show(WindowInsetsCompat.Type.statusBars());
       w.setStatusBarColor(BAR_90);
       w.setNavigationBarColor(BAR_90);
       c.setAppearanceLightStatusBars(false);
@@ -85,6 +89,7 @@ public class MainActivity extends BridgeActivity {
     super.onCreate(savedInstanceState);
     Window w = getWindow();
     if (Build.VERSION.SDK_INT >= 29) { w.setStatusBarContrastEnforced(false); w.setNavigationBarContrastEnforced(false); }
+    if (Build.VERSION.SDK_INT >= 28) { WindowManager.LayoutParams lp = w.getAttributes(); lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES; w.setAttributes(lp); }
     full = getSharedPreferences("jc", MODE_PRIVATE).getBoolean("full", false);
     dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     final WebView wv = bridge.getWebView();
@@ -104,6 +109,12 @@ public class MainActivity extends BridgeActivity {
 
   @Override
   public void onResume() { super.onResume(); push(); }
+
+  @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && full) applyMode();
+  }
 }
 ''')
 print('edge-to-edge ok')
