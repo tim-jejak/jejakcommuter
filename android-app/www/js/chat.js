@@ -74,7 +74,7 @@ async function getSB(){
  return X.sb;
 }
 var ERR={
- belum_login:'Masuk dulu',akun_baru:'Akun baru. Menulis dan vote terbuka 3 hari setelah daftar',terlalu_cepat:'Tunggu sebentar',
+ belum_login:'Masuk dulu',akun_baru:'Akun baru. Menulis dan vote terbuka 1 hari setelah daftar',terlalu_cepat:'Tunggu sebentar',
  cooldown_laporan:'Satu laporan per jalur tiap 10 menit',gps_belum_akurat:'Lokasi belum akurat. Tunggu GPS',bukan_di_jalur:'Kamu belum berada di jalur ini',
  rute_belum_ada:'Rute jalur ini belum tersedia',pesan_ditolak:'Pesan ditolak: tautan, nomor, ajakan ke aplikasi lain, atau kata terlarang',
  terlalu_panjang:'Maksimal '+MAXC+' karakter',kosong:'Tulis pesan dulu',laporan_sendiri:'Tidak bisa vote laporan sendiri',laporan_kadaluarsa:'Laporan sudah kedaluwarsa',

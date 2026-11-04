@@ -50,20 +50,20 @@ function mkRoad(kind,rs){const car=kind==='mobil',t0=Math.floor(S.t),ex=trafficE
   const arr=rs.map(r=>{const base=(car||r.est)?r.min:r.min*MOTOR_CAL;return Object.assign({base},r);}).sort((a,b)=>a.base-b.base);
   const pick=[];arr.forEach(r=>{if(pick.length<2&&!pick.some(p=>Math.abs(p.base-r.base)<1&&Math.abs(p.m-r.m)/p.m<.03))pick.push(r);});
   return pick.map((r,i)=>{const total=r.base+mid,lbl=car?'Mobil pribadi':'Motor pribadi';
-    const traffic=mid?('+'+ex[0]+'–'+ex[1]+' mnt, '+ex[2]):'jalan lancar';
+    const via1=r.via.length?' · '+r.via[0]:'';
     return {key:kind+i,acc:1e9,score:total+(car?25:20)+i*2,title:lbl+' · jalur '+(i+1),total,
-      sub:km1(r.m)+' · '+traffic+(r.est?' · garis lurus (server rute tidak terjangkau)':'')+(r.via.length?' · lewat '+r.via.slice(0,2).join(', '):''),
+      sub:km1(r.m)+(r.est?' · garis lurus':'')+via1,
       modes:[kind],features:[{kind:'motor',color:'#14202B',coords:r.coords}],
-      steps:[{k:'motor',title:(car?'Mobil':'Motor')+' sampai tujuan (jalur '+(i+1)+')',detail:km1(r.m)+' · lancar ±'+Math.round(r.base)+' mnt'+(mid?' + '+ex[0]+'–'+ex[1]+' mnt ('+ex[2]+')':'')+(r.via.length?' · lewat '+r.via.join(', '):'')}],
-      notes:[(mid?'Perkiraan: waktu lancar dari rute, ditambah aturan jam sibuk ('+traffic+'). ':'Perkiraan: waktu lancar dari rute. ')+'Bukan data lalu lintas langsung.'+(car?' Parkir di tujuan belum dihitung.':'')],last:null};});}
+      steps:[{k:'motor',title:(car?'Mobil':'Motor')+' sampai tujuan (jalur '+(i+1)+')',detail:km1(r.m)+via1}],
+      notes:['Perkiraan'],last:null};});}
 function mkWalk(v){return {key:'walk',score:v.min,acc:S.from&&S.to&&hav(S.from,S.to)<=1500?0:1e8,title:'Jalan kaki',total:v.min,sub:km1(v.m),modes:['walk'],features:[{kind:'walk',color:'#4C5A68',coords:v.coords}],
-  steps:[{k:'walk',title:'Jalan kaki sampai tujuan',detail:km1(v.m)+' · '+mnt(v.min)+(v.via.length?' · lewat '+v.via.join(', '):'')}],notes:[],last:null};}
+  steps:[{k:'walk',title:'Jalan kaki sampai tujuan',detail:km1(v.m)+' · '+mnt(v.min)}],notes:[],last:null};}
 const nm=s=>(s.g==='tj'?'halte ':'stasiun ')+s.name;
 function arah(L,i,j){return j>i?cleanName(L.s[L.n-1][0]):cleanName(L.s[0][0]);}
 function mkTransit(x){
   const {c,fs,ls,acc,egr,am,em}=x,legs=c.legs,steps=[],feats=[],notes=[],modes=new Set();
   const park=am==='motor_scooter'?3:0;const pins=[{lat:fs.lat,lon:fs.lon,name:nm(fs).replace(/^./,m=>m.toUpperCase())}];
-  steps.push({k:am==='pedestrian'?'walk':'motor',title:(am==='pedestrian'?'Jalan kaki ke ':'Motor atau ojol ke ')+nm(fs),detail:km1(acc.m)+' · '+mnt(acc.min)+(park?' + parkir '+park+' mnt':'')+(acc.via.length?' · lewat '+acc.via.join(', '):'')});
+  steps.push({k:am==='pedestrian'?'walk':'motor',title:(am==='pedestrian'?'Jalan kaki ke ':'Motor atau ojol ke ')+nm(fs),detail:km1(acc.m)+' · '+mnt(acc.min)+(am==='pedestrian'||!acc.via.length?'':' · '+acc.via[0])});
   feats.push({kind:am==='pedestrian'?'walk':'motor',color:'#14202B',coords:acc.coords});modes.add(am==='pedestrian'?'walk':'motor');
   let lastStart=Infinity,off=acc.min+park,rideNo=0;
   legs.forEach((l,i)=>{
@@ -73,24 +73,23 @@ function mkTransit(x){
       const a=Math.min(L.s[lo][3],L.pts.length-1),b=Math.min(L.s[hi][3],L.pts.length-1);
       feats.push({kind:'ride',color:L.col,coords:(l.toIdx<l.fromIdx?L.pts.slice(a,b+1).reverse():L.pts.slice(a,b+1))});pins.push({lat:ST[l.toSid].lat,lon:ST[l.toSid].lon,name:nm(ST[l.toSid]).replace(/^./,m=>m.toUpperCase())});
       const dir=l.toIdx>=l.fromIdx?1:-1,sl=[];for(let q=l.fromIdx;q!==l.toIdx+dir;q+=dir){const ss=ST[L.sid[q]];sl.push({lat:ss.lat,lon:ss.lon,name:ss.name});}
-      steps.push({k:'line',col:L.col,L,title:L.label+': '+nm(ST[l.fromSid]).replace(/^./,m=>m.toUpperCase())+' → '+nm(ST[l.toSid]),detail:'arah '+arah(L,l.fromIdx,l.toIdx)+' · '+l.stops+' pemberhentian · '+mnt(l.min)+' · tunggu ±'+Math.round(l.wait)+' mnt',stops:sl,min:l.min,n:l.stops,grp:L.M.group,lbl:L.label,dirTxt:arah(L,l.fromIdx,l.toIdx)});
+      steps.push({k:'line',col:L.col,L,title:L.label+': '+nm(ST[l.fromSid]).replace(/^./,m=>m.toUpperCase())+' → '+nm(ST[l.toSid]),detail:mnt(l.min),stops:sl,min:l.min,n:l.stops,grp:L.M.group,lbl:L.label,dirTxt:arah(L,l.fromIdx,l.toIdx)});
       lastStart=Math.min(lastStart,L.end-(off+l.t0)-Math.floor(S.t));
     } else {
       const f=ST[l.from],tt=ST[l.to];
       const prev=legs.slice(0,i).reverse().find(z=>z.kind==='ride'),next=legs.slice(i+1).find(z=>z.kind==='ride');
       if(prev&&next){const PL=LINES[prev.line],NL=LINES[next.line];
-        steps.push({k:'walk',title:'Transit di '+tt.name,detail:'pindah dari '+PL.label+' ke '+NL.label+', jalan kaki '+mnt(l.min)});
-        notes.push('Saran transit: turun di '+ST[prev.toSid].name+', lanjut '+NL.label+' arah '+arah(NL,next.fromIdx,next.toIdx)+'.');}
+        steps.push({k:'walk',title:'Transit di '+tt.name,detail:mnt(l.min)});}
       else steps.push({k:'walk',title:'Jalan kaki '+mnt(l.min)+' ke '+nm(tt),detail:''});
       feats.push({kind:'walk',color:'#4C5A68',coords:[[f.lon,f.lat],[tt.lon,tt.lat]]});
     }
   });
   const walkEst=hav(ls,S.to)*1.3/75;
-  steps.push({k:em==='pedestrian'?'walk':'motor',title:(em==='pedestrian'?'Jalan kaki dari ':'Ojol atau ojek dari ')+nm(ls)+' ke tujuan',detail:km1(egr.m)+' · '+mnt(egr.min)+(egr.via.length?' · lewat '+egr.via.join(', '):'')+(em==='motor_scooter'&&hav(ls,S.to)<2500?' · atau jalan kaki ±'+Math.round(walkEst)+' mnt':'')});
+  steps.push({k:em==='pedestrian'?'walk':'motor',title:(em==='pedestrian'?'Jalan kaki dari ':'Ojol atau ojek dari ')+nm(ls)+' ke tujuan',detail:km1(egr.m)+' · '+mnt(egr.min)+(em==='pedestrian'||!egr.via.length?'':' · '+egr.via[0])});
   feats.push({kind:em==='pedestrian'?'walk':'motor',color:'#14202B',coords:egr.coords});modes.add(em==='pedestrian'?'walk':'motor');
   const total=acc.min+park+c.transit+egr.min;
   const rideLines=legs.filter(l=>l.kind==='ride').map(l=>LINES[l.line]);
-  if(am==='motor_scooter')notes.push('Motor diparkir di '+nm(fs)+'. Cek ketersediaan parkir.');
+  if(am==='motor_scooter')notes.push('Motor diparkir di '+nm(fs));
   return {key:'tr'+c.sig,sigAB:rideLines.map(L=>L.idx).join('>')+'@'+c.A.sid,score:total+5*Math.max(0,rideLines.length-1)+(am==='motor_scooter'?3:0),acc:hav(S.from,fs),near:c.near,nearest:c.nearest,pins,fromName:fs.name,title:rideLines.map(L=>L.M.label).filter((v,i,a)=>a.indexOf(v)===i).join(' + ')+(am==='motor_scooter'?' (motor ke stasiun)':'')+' · naik di '+fs.name,total,sub:rideLines.length>1?(rideLines.length-1)+' kali pindah':'tanpa pindah',
     rideLines,modes:[...modes],features:feats,steps,notes:[...new Set(notes)],last:isFinite(lastStart)?lastStart:null,est:acc.est||egr.est};
 }
