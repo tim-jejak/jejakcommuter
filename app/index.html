@@ -389,7 +389,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 #jchat .q{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 11px;font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
 #jchat .q i{width:8px;height:8px;border-radius:50%;background:var(--rc);display:block}
 #jchat .q:disabled{opacity:.45}
-#jchat .msgs{flex:1;overflow:auto;min-height:0;padding:12px 0 6px;background-color:var(--bg)}
+#jchat .msgs{flex:1;overflow:auto;min-height:0;padding:12px 0 6px;background-color:transparent}
 #jchat .xmsg{display:flex;gap:8px;padding:0 12px;margin-bottom:10px;align-items:flex-end}
 #jchat .xmsg.mine{justify-content:flex-end}
 #jchat .av{width:30px;height:30px;border-radius:8px;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
@@ -547,6 +547,8 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 #jchat .rln2{height:26px;min-height:26px;box-sizing:border-box;overflow:hidden}
 #jchat .ddw.fl .ddb.stat{width:100%;flex:none}#jchat .mn .rt{display:inline;font-weight:600}
 
+#jchat .empty{background:color-mix(in srgb,var(--surface) 82%,transparent);border-radius:12px;margin:24px 16px;padding:20px 16px}
+
 </style>
 </head>
 <body>
@@ -586,7 +588,7 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
     <div class="row" style="justify-content:space-between;align-items:center"><b id="abT" style="font-size:18px">Pengaturan</b><button type="button" class="btn" id="abClose">Tutup</button></div>
     <h3 hidden>Ukuran tampilan</h3>
     <div id="uiSize" hidden role="group" aria-label="Ukuran tampilan"><button type="button" data-u="1" aria-pressed="true">1 Kecil</button><button type="button" data-u="2" aria-pressed="false">2 Sedang</button><button type="button" data-u="3" aria-pressed="false">3 Besar</button></div>
-    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 04-11 01.12 WIB</p>
+    <h3>Profil dan warna</h3><div id="pfMount"></div><p class="small" id="verTag">Versi 04-11 09.24 WIB</p>
     <div id="infoBox" style="margin-top:16px;padding:12px;border-radius:12px;background:rgba(31,95,181,.1);border:1px solid rgba(31,95,181,.35);display:grid;gap:8px;font-size:13.5px;line-height:1.5">
       <p style="margin:0"><b>Tanpa akun.</b> Data kamu tidak disimpan di server, semua disimpan di perangkat kamu.</p>
       <p style="margin:0">Jejak Commuter ini masih fase awal dan fase pengembangan, mungkin ada beberapa hal yang kurang cocok atau tidak sesuai ekspektasi kamu. Silakan email ke alamat berikut:</p>
@@ -2264,7 +2266,7 @@ var css=''+
 '#jtune .tin{width:calc(100% - 28px);display:grid;gap:6px}#jtune .tl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:800;color:var(--ink-2)}#jtune .tl b{color:var(--ink);font-size:13px;font-variant-numeric:tabular-nums}'+
 '#jtune .trk{position:relative;height:26px}#jtune .trk::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:var(--line)}'+
 '#jtune .fill{position:absolute;left:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:var(--jacc,#1F5FB5)}#jtune .thumb{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--surface);border:3px solid var(--jacc,#1F5FB5);box-shadow:0 1px 4px rgba(0,0,0,.3)}'+
-'#jnav button[data-t=chat]{touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}#jnav .hold{position:absolute;left:14%;right:14%;bottom:3px;height:3px;border-radius:2px;background:var(--jacc,#1F5FB5);transform:scaleX(0);transform-origin:left}#jnav button.holding .hold{transform:scaleX(1);transition:transform 3s linear}'+
+'#jnav button[data-t=chat]{touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}#jnav .hold{position:absolute;left:14%;right:14%;bottom:3px;height:3px;border-radius:2px;background:var(--jacc,#1F5FB5);transform:scaleX(0);transform-origin:left}#jnav button.holding .hold{transform:scaleX(1);transition:transform 2s linear}'+
 '.jfld{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;min-height:44px;padding:0 12px}';
 var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
 
@@ -2279,15 +2281,20 @@ function toast(t){var e=$('.jtoast');if(e)e.remove();e=document.createElement('d
 document.documentElement.classList.add('jn');
 
 var TAB='peta';
+var cfT=null,cfLast=null;
+function chatFollow(on){clearInterval(cfT);cfT=null;cfLast=null;if(!on)return;var J=window.__jc;if(!J||!J.map)return;var n=0;
+  function step(){if(TAB!=='chat')return;if(!(J.NAV&&J.NAV.on)){var g=J.S.gps;if(g&&(!cfLast||hav(cfLast,g)>4)){cfLast={lat:g.lat,lon:g.lon};J.map.easeTo({center:[g.lon,g.lat],zoom:Math.max(J.map.getZoom(),16),duration:900});}}
+    if(n++%10===0&&J.locate)J.locate(function(){});}
+  step();cfT=setInterval(step,1000);}
 function setTab(t){
   TAB=t;document.documentElement.classList.toggle('tchat',t==='chat');
   nav.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-current',String(b.dataset.t===t));});
   [vProf,vTamp,vUrg,vUgo,vChat].forEach(function(v){v.hidden=true;});
-  stopUgo();
+  stopUgo();chatFollow(t==='chat');
   var grp=$('#grp');
   if(grp&&grp.classList.contains('open')&&window.__closeGrp&&(t!=='chat'||window.__jchat))window.__closeGrp();
   if(window.__closeUrgent&&window.__jc&&window.__jc.S.urgentOn)window.__closeUrgent();
-  if(t==='chat'){try{if(!localStorage.getItem('jc_tune_hint')){localStorage.setItem('jc_tune_hint','1');setTimeout(function(){toast('Tahan menu Chat 3 detik untuk atur transparan');},600);}}catch(e){}if(window.__jchat){vChat.hidden=false;window.__jchat.mount(vChat);window.__jchat.show();}else if(grp&&!grp.classList.contains('open')){var b=$('#grpBtn');if(b)b.click();}}
+  if(t==='chat'){try{if(!localStorage.getItem('jc_tune_hint')){localStorage.setItem('jc_tune_hint','1');setTimeout(function(){toast('Tahan menu Chat 2 detik untuk atur transparan');},600);}}catch(e){}if(window.__jchat){vChat.hidden=false;window.__jchat.mount(vChat);window.__jchat.show();}else if(grp&&!grp.classList.contains('open')){var b=$('#grpBtn');if(b)b.click();}}
   else if(t==='profil'){renderProf();vProf.hidden=false;}
   else if(t==='urgent'){renderUrg();vUrg.hidden=false;}
 }
@@ -2309,7 +2316,7 @@ function tClose(){if(!tOn)return;tOn=false;tune.classList.remove('on');setOp(tLv
 tb.addEventListener('pointerdown',function(e){window.__tuneSwallow=false;tPtr=e.pointerId;try{tb.setPointerCapture(e.pointerId);}catch(_){}tSx=e.clientX;tLx=e.clientX;clearTimeout(tIdle);
   if(tOn){tSl=tLv;return;}
   tb.classList.remove('holding');void tb.offsetWidth;tb.classList.add('holding');
-  tHold=setTimeout(function(){tEnd();window.__tuneSwallow=true;tOpen();},3000);});
+  tHold=setTimeout(function(){tEnd();window.__tuneSwallow=true;tOpen();},2000);});
 tb.addEventListener('pointermove',function(e){tLx=e.clientX;if(!tOn||e.pointerId!==tPtr)return;
   var dx=e.clientX-tSx,r;if(dx<0){r=Math.min(1,-dx/Math.max(40,tSx-tLb));tLv=tSl-r*(tSl-OPMIN);}else{r=Math.min(1,dx/Math.max(40,tRb-tSx));tLv=tSl+r*(1-tSl);}
   setOp(tLv,false);tPaint();});
