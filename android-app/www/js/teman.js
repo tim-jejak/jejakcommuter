@@ -158,20 +158,25 @@ function closeM(){M.hidden=true;M.innerHTML='';}
 window.__jtemanBack=()=>{if(!M.hidden){closeM();return true;}return false;};
 
 /* bagikan rute: dari tombol Bagikan rute dan Mulai */
-let shareSel=new Set(),shareStart=false;
-function openShare(start){shareStart=start;shareSel=new Set(myShares().route);drawShare();}
-function drawShare(){const f=okF(),max=lim('route');
+let shareSel=new Set(),shareStart=false,grpSel=null;
+const GL=()=>{try{return window.__grp?window.__grp.list().filter(g=>g.joined!==false):[];}catch(e){return [];}};
+function openShare(start){shareStart=start;shareSel=new Set(T.uid&&T.st?myShares().route:[]);const sg=GL().find(g=>g.sharing);grpSel=sg?sg.code:null;drawShare();}
+function drawShare(){const f=T.uid&&T.st?okF():[],max=T.uid&&T.st?lim('route'):5,gl=GL();
+ const grows=gl.map(g=>{const on=grpSel===g.code,dis=!g.ar||(!on&&grpSel);return '<label class="o'+(dis?' dis':'')+'"><input type="checkbox" data-g="'+esc(g.code)+'"'+(on?' checked':'')+(dis?' disabled':'')+'> '+esc(g.name)+(!g.ar?'<small>rute tidak diizinkan</small>':dis?'<small>belum tersedia</small>':'')+'</label>';}).join('');
  const rows=f.map(x=>{const on=shareSel.has(x.id),dis=!on&&shareSel.size>=max;return '<label class="o'+(dis?' dis':'')+'"><input type="checkbox" data-f="'+esc(x.id)+'"'+(on?' checked':'')+(dis?' disabled':'')+'> '+esc(x.name)+(dis?'<small>belum tersedia</small>':'')+'</label>';}).join('');
  openM('<h3>'+(shareStart?'Mulai dan bagikan rute ke':'Bagikan rute')+'</h3>'+
-  '<div class="jtlb">TEMAN · maks '+max+'</div>'+(rows||'<div class="jtfoot" style="padding:4px 2px">Belum ada teman. Tambah teman di Profil.</div>')+
+  (T.uid&&T.st?'<div class="jtlb">TEMAN · maks '+max+'</div>'+(rows||'<div class="jtfoot" style="padding:4px 2px">Belum ada teman. Tambah teman di Profil.</div>'):'')+
+  (grows?'<div class="jtlb">GRUP · maks 1</div>'+grows:'')+
   (shareStart?'':'<div class="jtlb">LAINNYA</div><button type="button" class="jtb" data-m="link">Bagikan lewat tautan</button>')+
   '<button type="button" class="jtb p" data-m="ok" style="margin-top:6px">'+(shareStart?'Mulai':'Bagikan')+'</button><button type="button" class="jtb" data-m="x">Batal</button>');}
-M.addEventListener('change',e=>{const t=e.target;if(t.dataset.f){t.checked?shareSel.add(t.dataset.f):shareSel.delete(t.dataset.f);drawShare();}});
+M.addEventListener('change',e=>{const t=e.target;if(t.dataset.g){grpSel=t.checked?t.dataset.g:null;drawShare();return;}if(t.dataset.f){t.checked?shareSel.add(t.dataset.f):shareSel.delete(t.dataset.f);drawShare();}});
 M.addEventListener('click',async e=>{const b=e.target.closest('[data-m]');if(!b)return;const m=b.dataset.m;
  if(m==='x'){closeM();return;}
  if(m==='link'){closeM();bypass=true;$('#rShare').click();bypass=false;return;}
- if(m==='ok'){const ids=[...shareSel],start=shareStart;closeM();
+ if(m==='ok'){const ids=[...shareSel],start=shareStart,gs=grpSel,gl=GL();closeM();
   if(start){bypass=true;$('#rStart').click();bypass=false;}
+  if(gl.length&&window.__grp){const was=(gl.find(g=>g.sharing)||{}).code||null;if(gs!==was){window.__grp.shareTo(gs);if(gs)toast('Rute dibagikan ke '+(gl.find(g=>g.code===gs)||{}).name);}}
+  if(!(T.uid&&T.st))return;
   const prev=myShares().route;if(!ids.length&&!prev.length)return;
   try{if(!ids.length){await rpc('route_share_stop');T.push.sig='';toast('Berhenti berbagi rute');}
    else{await rpc('route_share_set',{p_viewers:ids});T.push.sig='';const n=ids.map(i=>(okF().find(f=>f.id===i)||{}).name).filter(Boolean);toast('Rute dibagikan ke '+n.join(', '));}
@@ -182,9 +187,9 @@ M.addEventListener('click',async e=>{const b=e.target.closest('[data-m]');if(!b)
  if(m==='del'){const id=b.dataset.id;closeM();try{await rpc('friend_remove',{p_other:id});T.open={};await poll(true);toast('Teman dihapus');}catch(er){toast(em(er));}return;}
 });
 let bypass=false;
-document.addEventListener('click',e=>{if(bypass||!T.uid||!T.st)return;
- if(e.target.closest('#rShare')){e.stopPropagation();e.preventDefault();openShare(false);return;}
- if(e.target.closest('#rStart')&&okF().length){e.stopPropagation();e.preventDefault();openShare(true);}},true);
+document.addEventListener('click',e=>{if(bypass)return;const li=!!(T.uid&&T.st),hg=GL().length>0;if(!li&&!hg)return;
+ if(e.target.closest('#rShare')){if(!li)return;e.stopPropagation();e.preventDefault();openShare(false);return;}
+ if(e.target.closest('#rStart')&&((li&&okF().length)||hg)){e.stopPropagation();e.preventDefault();openShare(true);}},true);
 
 /* durasi lokasi */
 let durFor=null,durSel=1;
