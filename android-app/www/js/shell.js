@@ -174,6 +174,7 @@ document.documentElement.classList.add('jn');
 var TAB='peta';
 var HD=0,exitArm=0;
 function guardPush(){if(HD===0){try{history.pushState({jc:1},'');HD=1;}catch(e){}}}
+window.__sysCopy=function(){var m=/Android (\d+)/.exec(navigator.userAgent||'');return isNative()&&m&&+m[1]>=13;};
 function isNative(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
 function onBack(){
   var grp=document.getElementById('grp');
