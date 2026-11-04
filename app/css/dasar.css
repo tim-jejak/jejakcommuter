@@ -351,3 +351,9 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 .rcd b{font-weight:600}
 .rcd small{opacity:.75}
 .rca{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.msg{align-items:flex-start}.msg.me{align-items:flex-end}
+.msg .tx{width:auto;max-width:min(85%,24ch);overflow-wrap:anywhere;white-space:pre-wrap}
+.msg .rcd{max-width:85%}
+#chH .btn.ico{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px}
+#chPend:empty{display:none}#chPend{padding:6px 12px 0}
+#chPend .pend{padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12);margin-bottom:6px}

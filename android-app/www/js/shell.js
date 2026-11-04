@@ -308,7 +308,7 @@ async function fetchRS(p){
   var key='jc_rs_'+p.lat.toFixed(2)+'_'+p.lon.toFixed(2),c=null;
   try{c=JSON.parse(localStorage.getItem(key)||'null');}catch(e){}
   if(c&&Date.now()-c.t<14*864e5)return c.d;
-  var q='[out:json][timeout:25];nwr[amenity=hospital](around:3000,'+p.lat+','+p.lon+');out center 60;';
+  var q='[out:json][timeout:25];nwr[amenity=hospital](around:4000,'+p.lat+','+p.lon+');out center 60;';
   var ctl=new AbortController(),to=setTimeout(function(){ctl.abort();},20000);
   try{
     var r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ctl.signal});
@@ -327,15 +327,17 @@ async function dataFor(c,p){
   if(c==='rs'){var P=await loadPOI();var arr=(P&&P.rs)?P.rs:await fetchRS(p);return arr.map(function(r){return {lat:r[0],lon:r[1],name:r[2]};});}
   var P2=await loadPOI();var arr2=(P2&&P2[c])||[];return arr2.map(function(r){return {lat:r[0],lon:r[1],name:r[2]};});
 }
+function radC(){return U.c==='rs'?3500:2000;}
+function radT(){return U.c==='rs'?'3,5 km':'2 km';}
 function ucat(c){return UC.filter(function(x){return x[0]===c;})[0];}
 function nearby(p){
-  return U.all.map(function(x,i){return {i:i,name:x.name,lat:x.lat,lon:x.lon,tag:x.tag,col:x.col,d:hav(p,x)};}).filter(function(x){return x.d<=2000;}).sort(function(a,b){return a.d-b.d;}).slice(0,30);
+  return U.all.map(function(x,i){return {i:i,name:x.name,lat:x.lat,lon:x.lon,tag:x.tag,col:x.col,d:hav(p,x)};}).filter(function(x){return x.d<=radC();}).sort(function(a,b){return a.d-b.d;}).slice(0,30);
 }
 async function openUgo(c){
   U.c=c;U.fit=true;U.pick=null;U.guide=false;U.route=null;U.pos=null;U.shown=null;U.all=null;U.items=[];stopPulse();
   var cat=ucat(c);
   vUrg.hidden=true;vUgo.hidden=false;
-  vUgo.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+cat[1]+'</h2></div><div id="jgb"></div><div class="jmap"><div id="jmapc" style="position:absolute;inset:0"></div><button type="button" class="jrcb" data-a="rc" aria-label="Lokasi saya">'+ic('nav',18)+'</button><span class="rad">2 km</span></div><div class="jscr" id="jlist" style="padding:0"></div>';
+  vUgo.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+cat[1]+'</h2></div><div id="jgb"></div><div class="jmap"><div id="jmapc" style="position:absolute;inset:0"></div><button type="button" class="jrcb" data-a="rc" aria-label="Lokasi saya">'+ic('nav',18)+'</button><span class="rad">'+radT()+'</span></div><div class="jscr" id="jlist" style="padding:0"></div>';
   var el=$('#jmapc');
   if(window.maplibregl){
     var J=window.__jc;
@@ -376,8 +378,8 @@ async function fetchRoute(t){
   var J=window.__jc,p=U.shown,seq=++U.busy;
   try{var v=await J.valhalla(p,{lat:t.lat,lon:t.lon},'pedestrian');if(seq===U.busy&&v&&v.coords&&v.coords.length){var first=!U.route;U.route=v.coords;if(first){if(!U.nav)U.needFit=true;U.needReveal=true;}drawUgo();}}catch(e){}
 }
-function zoomFor(lat){var m=U.map.getContainer();var px=Math.min(m.clientWidth,m.clientHeight)/2-8;if(px<40)px=100;return Math.log2(156543.03*Math.cos(lat*Math.PI/180)*px/2000);}
-function circle(p){var pts=[];for(var i=0;i<=64;i++){var a=i/64*2*Math.PI;pts.push([p.lon+2000*Math.sin(a)/(111320*Math.cos(p.lat*Math.PI/180)),p.lat+2000*Math.cos(a)/110540]);}return {type:'Feature',geometry:{type:'LineString',coordinates:pts}};}
+function zoomFor(lat){var m=U.map.getContainer();var px=Math.min(m.clientWidth,m.clientHeight)/2-8;if(px<40)px=100;return Math.log2(156543.03*Math.cos(lat*Math.PI/180)*px/radC());}
+function circle(p){var pts=[];for(var i=0;i<=64;i++){var a=i/64*2*Math.PI;var R=radC();pts.push([p.lon+R*Math.sin(a)/(111320*Math.cos(p.lat*Math.PI/180)),p.lat+R*Math.cos(a)/110540]);}return {type:'Feature',geometry:{type:'LineString',coordinates:pts}};}
 function setRoute(co){if(!U.map||!U.ready)return;U.map.getSource('jr').setData({type:'FeatureCollection',features:co?[{type:'Feature',geometry:{type:'LineString',coordinates:co}}]:[]});}
 function fitRoute(co,p){if(!U.map)return;var b=new maplibregl.LngLatBounds([p.lon,p.lat],[p.lon,p.lat]);co.forEach(function(c){b.extend(c);});U.map.fitBounds(b,{padding:{top:50,bottom:50,left:50,right:50},maxZoom:17.5,duration:800});}
 function revealRoute(co){
@@ -479,7 +481,7 @@ function drawUgo(){
     var on=x.i===U.pick;
     return '<button type="button" class="jpl" data-i="'+x.i+'" aria-pressed="'+on+'">'+(x.tag?'<span class="jbd" style="background:'+esc(x.col)+'">'+esc(x.tag)+'</span>':'')+'<span class="t">'+esc(x.name)+'</span><span class="d">'+fdist(x.d)+'</span></button>'+
     (on?'<div class="jact">'+(!U.guide?'<button type="button" class="p" data-a="guide">'+ic('nav',16)+' Arahkan ke sini</button>':'<button type="button" class="p" data-a="start">'+ic('nav',16)+' Mulai</button><button type="button" data-a="guide">Berhenti arahkan</button>')+'</div>':'');
-  }).join(''):'<div class="jempty">Tidak ada dalam 2 km</div>';
+  }).join(''):'<div class="jempty">Tidak ada dalam '+radT()+'</div>';
   if(!U.map||!U.ready)return;
   var m=U.map;
   if(U.fit){m.jumpTo({center:[p.lon,p.lat],zoom:zoomFor(p.lat)});U.fit=false;}
