@@ -3,7 +3,7 @@
 var $=function(s){return document.querySelector(s);};
 var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
 var LK='jc_look';
-var LOOK={app:'auto',map:'app'};
+var LOOK={app:'auto',map:'app',scr:'90'};
 try{Object.assign(LOOK,JSON.parse(localStorage.getItem(LK)||'{}'));}catch(e){}
 var mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function appDark(){return LOOK.app==='dark'||(LOOK.app==='auto'&&!!(mq&&mq.matches));}
@@ -280,7 +280,8 @@ function renderTamp(){
   '<div class="jlbl">Tampilan aplikasi</div>'+seg('app',[['light','Terang'],['dark','Gelap'],['auto','Ikuti HP']],LOOK.app)+
   '<div class="jlbl">Tampilan peta</div>'+seg('map',[['light','Putih'],['dark','Gelap'],['app','Ikuti aplikasi']],LOOK.map)+
   '<div class="jlbl">Transparan chat</div><div style="display:flex;align-items:center;gap:12px;margin:0 0 14px"><input type="range" id="jop" min="20" max="100" step="5" value="'+Math.round(getOp()*100)+'" style="flex:1"><span style="font-weight:800;font-size:13px;min-width:38px;text-align:right">'+Math.round((1-getOp())*100)+'%</span></div>'+
-  '<div class="jlbl">Ukuran tampilan</div>'+seg('ui',[['1','Kecil'],['2','Sedang'],['3','Besar']],ui)+'</div>';
+  '<div class="jlbl">Ukuran tampilan</div>'+seg('ui',[['1','Kecil'],['2','Sedang'],['3','Besar']],ui)+
+  (window.JcInsets&&window.JcInsets.mode?'<div class="jlbl">Layar</div>'+seg('scr',[['90','90%'],['full','Penuh']],LOOK.scr):'')+'</div>';
 }
 vTamp.addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
@@ -288,6 +289,7 @@ vTamp.addEventListener('click',function(e){
   var k=b.dataset.k,v=b.dataset.v;if(!k)return;
   if(k==='app'){LOOK.app=v;saveLook();applyTheme();}
   else if(k==='map'){LOOK.map=v;saveLook();applyTheme();}
+  else if(k==='scr'){LOOK.scr=v;saveLook();if(window.__applyScr)window.__applyScr();}
   else if(k==='cth'){var t=document.querySelector('#chTh [data-th="'+v+'"]');if(t)t.click();}
   else if(k==='ui'){var u=document.querySelector('#uiSize [data-u="'+v+'"]');if(u)u.click();}
   renderTamp();
@@ -526,9 +528,10 @@ vUgo.addEventListener('click',function(e){
 /* ---------- mulai ---------- */
 /* layar penuh di Android: jarak status bar & navigasi HP dari aplikasi native */
 (function(){var R=document.documentElement;
-  function ins(){try{if(!window.JcInsets)return;var a=String(window.JcInsets.get()).split(',');if(+a[0]||+a[1]){R.style.setProperty('--sat',(+a[0])+'px');R.style.setProperty('--sab',(+a[1])+'px');}}catch(e){}}
+  function ins(){try{if(!window.JcInsets)return;var a=String(window.JcInsets.get()).split(',');R.style.setProperty('--sat',(+a[0]||0)+'px');R.style.setProperty('--sab',(+a[1]||0)+'px');}catch(e){}}
+  window.__applyScr=function(){try{if(window.JcInsets&&window.JcInsets.mode)window.JcInsets.mode(LOOK.scr==='full'?'full':'90');}catch(e){}setTimeout(ins,150);setTimeout(ins,600);dk();};
   function dk(){try{if(!window.JcInsets)return;var t=R.getAttribute('data-theme');var d=t?t==='dark':!!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);window.JcInsets.dark(d);}catch(e){}}
-  ins();dk();setTimeout(ins,600);setTimeout(ins,2500);
+  window.__applyScr();setTimeout(ins,2500);
   try{new MutationObserver(dk).observe(R,{attributes:true,attributeFilter:['data-theme']});}catch(e){}
 })();
 function init(){

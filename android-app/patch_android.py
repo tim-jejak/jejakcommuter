@@ -20,10 +20,12 @@ ma=glob.glob('android/app/src/main/java/**/MainActivity.java',recursive=True)
 assert ma, 'MainActivity tidak ditemukan'
 open(ma[0],'w',encoding='utf-8').write('''package id.jejak.commuter;
 
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -36,23 +38,45 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
   private volatile int insTop = 0, insBot = 0;
+  private volatile boolean full = false, dark = false;
+  private static final int BAR_90 = 0xFF2E3236;   // abu-abu tua (mode 90%)
+  private static final int SCRIM_FULL = 0x59000000; // abu-abu transparan di atas (mode Penuh)
 
   public class JcInsets {
-    @JavascriptInterface public String get() { return insTop + "," + insBot; }
-    @JavascriptInterface public void dark(final boolean d) { runOnUiThread(() -> setIcons(d)); }
+    @JavascriptInterface public String get() { return full ? insTop + "," + insBot : "0,0"; }
+    @JavascriptInterface public void dark(final boolean d) { dark = d; runOnUiThread(() -> applyMode()); }
+    @JavascriptInterface public void mode(final String m) {
+      full = "full".equals(m);
+      getSharedPreferences("jc", MODE_PRIVATE).edit().putBoolean("full", full).apply();
+      runOnUiThread(() -> applyMode());
+    }
   }
 
-  private void setIcons(boolean dark) {
+  private void applyMode() {
     Window w = getWindow();
-    WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, w.getDecorView());
-    c.setAppearanceLightStatusBars(!dark);
-    c.setAppearanceLightNavigationBars(!dark);
+    View dv = w.getDecorView();
+    WindowCompat.setDecorFitsSystemWindows(w, !full);
+    WindowInsetsControllerCompat c = WindowCompat.getInsetsController(w, dv);
+    if (full) {
+      w.setStatusBarColor(SCRIM_FULL);
+      w.setNavigationBarColor(Color.TRANSPARENT);
+      c.setAppearanceLightStatusBars(false);
+      c.setAppearanceLightNavigationBars(!dark);
+    } else {
+      w.setStatusBarColor(BAR_90);
+      w.setNavigationBarColor(BAR_90);
+      c.setAppearanceLightStatusBars(false);
+      c.setAppearanceLightNavigationBars(false);
+    }
+    ViewCompat.requestApplyInsets(dv);
+    push();
   }
 
   private void push() {
     final WebView wv = bridge == null ? null : bridge.getWebView();
     if (wv == null) return;
-    final String js = "(function(){var r=document.documentElement;r.style.setProperty('--sat','" + insTop + "px');r.style.setProperty('--sab','" + insBot + "px');window.dispatchEvent(new Event('resize'));})()";
+    final int t = full ? insTop : 0, b = full ? insBot : 0;
+    final String js = "(function(){var r=document.documentElement;r.style.setProperty('--sat','" + t + "px');r.style.setProperty('--sab','" + b + "px');window.dispatchEvent(new Event('resize'));})()";
     wv.post(() -> wv.evaluateJavascript(js, null));
   }
 
@@ -60,12 +84,9 @@ public class MainActivity extends BridgeActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Window w = getWindow();
-    WindowCompat.setDecorFitsSystemWindows(w, false);
-    w.setStatusBarColor(Color.TRANSPARENT);
-    w.setNavigationBarColor(Color.TRANSPARENT);
     if (Build.VERSION.SDK_INT >= 29) { w.setStatusBarContrastEnforced(false); w.setNavigationBarContrastEnforced(false); }
-    boolean night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-    setIcons(night);
+    full = getSharedPreferences("jc", MODE_PRIVATE).getBoolean("full", false);
+    dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     final WebView wv = bridge.getWebView();
     wv.addJavascriptInterface(new JcInsets(), "JcInsets");
     ViewCompat.setOnApplyWindowInsetsListener(w.getDecorView(), (v, ins) -> {
@@ -76,6 +97,7 @@ public class MainActivity extends BridgeActivity {
       push();
       return ViewCompat.onApplyWindowInsets(v, ins);
     });
+    applyMode();
     wv.postDelayed(this::push, 1500);
     wv.postDelayed(this::push, 4000);
   }

@@ -29,7 +29,7 @@ const css=document.createElement('style');css.textContent=
 'html:not([data-tab="peta"]) #jfab,html.nav #jfab,html.chatopen #jfab{display:none}'+
 '#jfreq{position:fixed;left:12px;right:12px;z-index:13;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:14px}'+
 '#jfreq[hidden]{display:none}'+
-'html:not([data-tab="peta"]) #jfreq{display:none}'+
+'html:not([data-tab="peta"]) #jfreq,html:not([data-tab="peta"]) #jcard{display:none!important}'+
 '#jfreq .g{flex:1;min-width:0}'+
 '.jtb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}'+
 '.jtb.p{background:#2F5FB5;border-color:#2F5FB5;color:#fff}'+
