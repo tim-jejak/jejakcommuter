@@ -77,7 +77,7 @@ function ic(n,sz){sz=sz||22;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 
 /* ---------- CSS ---------- */
 var css=''+
-':root{--jnh:calc(60px + env(safe-area-inset-bottom,0px));--jred:#D8262B}'+
+':root{--jnh:calc(60px + var(--sab,env(safe-area-inset-bottom,0px)));--jred:#D8262B}'+
 'html.jn .acct,html.jn #urgentBtn,html.jn #grpBtn,html.jn #chatBtn{display:none!important}'+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
@@ -85,20 +85,20 @@ var css=''+
 'html.jn #grp{top:0;left:0;right:0;width:100%;height:auto;border:none;border-radius:0;box-shadow:none;transform:none;visibility:hidden;transition:none;z-index:12}'+
 'html.jn #grp.open{visibility:visible}'+
 'html.jn #grp .ugrip{display:none}'+
-'html.jn #grp .uh{padding-top:calc(10px + env(safe-area-inset-top,0px))}'+
+'html.jn #grp .uh{padding-top:calc(10px + var(--sat,env(safe-area-inset-top,0px)))}'+
 'html.jn #grp>*{zoom:1}'+
 'html.jn #gBody{padding:16px 16px 28px}'+
 '.gem{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 8px 8px}.gem h3{margin:6px 0 0;font-size:20px;text-transform:none;letter-spacing:0;color:var(--fg,inherit)}.gem p{margin:0 0 10px;color:var(--muted,#667);font-size:14px;max-width:280px}.gemi{width:84px;height:84px;border-radius:50%;background:rgba(31,95,181,.12);color:#1F5FB5;display:flex;align-items:center;justify-content:center}'+
 '.gbig{width:100%;padding:14px;font-size:15px;border-radius:12px;margin-top:8px}.gem .gbig{max-width:320px;margin-top:0}'+
 'html.jn #navbar{z-index:13}'+
-'#jnav{position:fixed;left:0;right:0;bottom:0;z-index:13;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);height:var(--jnh)}'+
+'#jnav{position:fixed;left:0;right:0;bottom:0;z-index:13;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--sab,env(safe-area-inset-bottom,0px));height:var(--jnh)}'+
 '#jnav button{flex:1;border:0;background:none;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:700;margin:6px 4px;border-radius:8px;position:relative}'+
 '#jnav button[aria-current="true"]{color:var(--ink);background:var(--surface-2)}'+
 '#jnav button.urg{color:var(--jred)}'+
 '#jnav button.urg[aria-current="true"]{background:rgba(216,38,43,.12)}'+
 'html.chatopen #jnav{visibility:hidden}'+
 '@media(min-width:761px){#jnav{left:50%;right:auto;width:min(480px,100%);transform:translateX(-50%);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0}}'+
-'.jsc{position:fixed;left:0;right:0;top:0;bottom:var(--jnh);z-index:12;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}'+
+'.jsc{position:fixed;left:0;right:0;top:0;bottom:var(--jnh);z-index:12;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding-top:var(--sat,env(safe-area-inset-top,0px))}'+
 '.jsc[hidden]{display:none}'+
 '.jsc .jtop{display:flex;align-items:center;gap:6px;min-height:52px;padding:0 8px;flex:none}'+
 '.jsc .jtop h2{margin:0;font-size:17px;font-weight:800;flex:1;min-width:0}'+
@@ -524,6 +524,13 @@ vUgo.addEventListener('click',function(e){
 });
 
 /* ---------- mulai ---------- */
+/* layar penuh di Android: jarak status bar & navigasi HP dari aplikasi native */
+(function(){var R=document.documentElement;
+  function ins(){try{if(!window.JcInsets)return;var a=String(window.JcInsets.get()).split(',');if(+a[0]||+a[1]){R.style.setProperty('--sat',(+a[0])+'px');R.style.setProperty('--sab',(+a[1])+'px');}}catch(e){}}
+  function dk(){try{if(!window.JcInsets)return;var t=R.getAttribute('data-theme');var d=t?t==='dark':!!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);window.JcInsets.dark(d);}catch(e){}}
+  ins();dk();setTimeout(ins,600);setTimeout(ins,2500);
+  try{new MutationObserver(dk).observe(R,{attributes:true,attributeFilter:['data-theme']});}catch(e){}
+})();
 function init(){
   applyTheme();
   var ab=$('#about');if(ab){var t=ab.querySelector('#abT');if(t)t.textContent='Tentang';ab.querySelectorAll('h3').forEach(function(h){if(/^(Ukuran tampilan|Profil dan warna)$/.test(h.textContent.trim()))h.hidden=true;});var us=$('#uiSize');if(us)us.hidden=true;}

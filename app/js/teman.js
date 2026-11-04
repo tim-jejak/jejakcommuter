@@ -43,7 +43,7 @@ const css=document.createElement('style');css.textContent=
 '.jtx{padding:0 0 12px 44px;display:flex;gap:8px}'+
 '#jtm{position:fixed;inset:0;z-index:40;background:rgba(10,15,20,.55);display:flex;align-items:flex-end;justify-content:center}'+
 '#jtm[hidden]{display:none}'+
-'#jtm .in{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:8px;font-size:14.5px}'+
+'#jtm .in{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + var(--sab,env(safe-area-inset-bottom,0px)));max-height:85vh;overflow:auto;display:flex;flex-direction:column;gap:8px;font-size:14.5px}'+
 '#jtm h3{margin:0 0 4px;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink)}'+
 '#jtm .jtlb{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--ink-2);margin-top:6px}'+
 '#jtm label.o{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}'+

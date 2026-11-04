@@ -15,7 +15,7 @@
 #jchat .sd3{width:7px;height:7px;border-radius:50%;display:inline-block}
 #jxs{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;font-family:var(--f-body)}
 #jxs .jxb{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-#jxs .jxc{position:relative;width:min(480px,100%);background:var(--surface);color:var(--ink);border-radius:16px 16px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+#jxs .jxc{position:relative;width:min(480px,100%);background:var(--surface);color:var(--ink);border-radius:16px 16px 0 0;padding:18px 16px calc(16px + var(--sab,env(safe-area-inset-bottom,0px)));display:flex;flex-direction:column;gap:10px}
 #jxs .jxc b{font-size:17px;font-weight:800}
 #jxs .jxc p{margin:0;color:var(--ink-2);font-size:14px;line-height:1.45}
 #jxs .jxc p.sm{font-size:12.5px}
