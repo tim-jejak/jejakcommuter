@@ -357,3 +357,6 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 #chH .btn.ico{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px}
 #chPend:empty{display:none}#chPend{padding:6px 12px 0}
 #chPend .pend{padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.12);margin-bottom:6px}
+.gd.hasav{color:transparent!important;background-size:cover;background-position:center}
+.msg .who{display:flex;align-items:center;gap:6px}
+.msg .wav{width:18px;height:18px;border-radius:50%;background-size:cover;background-position:center;flex:none}

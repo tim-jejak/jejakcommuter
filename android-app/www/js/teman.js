@@ -9,13 +9,48 @@ const uid=()=>{const c=C();return c&&c.uid?c.uid():null;};
 const rpc=(n,a)=>C().rpc(n,a);
 const ERR={kode_tidak_ada:'Kode tidak ditemukan',kode_sendiri:'Itu kode kamu sendiri',sudah_teman:'Sudah berteman',sudah_diminta:'Permintaan sudah dikirim',
  teman_penuh:'Jumlah teman sudah penuh',terlalu_banyak:'Terlalu banyak permintaan hari ini',batas_lokasi:'Lebih dari 5 teman belum tersedia',
- batas_rute:'Lebih dari 5 teman belum tersedia',bukan_teman:'Belum berteman',belum_login:'Masuk dulu',durasi_salah:'Durasi tidak valid',rute_terlalu_besar:'Rute terlalu panjang untuk dibagikan'};
+ batas_rute:'Lebih dari 5 teman belum tersedia',bukan_teman:'Belum berteman',belum_login:'Masuk dulu',durasi_salah:'Durasi tidak valid',rute_terlalu_besar:'Rute terlalu panjang untuk dibagikan',foto_tidak_valid:'Foto tidak bisa dipakai. Coba foto lain'};
 function em(e){const m=(e&&e.message)||'';for(const k in ERR)if(m.indexOf(k)>-1)return ERR[k];return C()&&C().errMsg?C().errMsg(e):'Gagal. Coba lagi';}
 const PAL=['#D64545','#2E9E6E','#8E55C9','#D0861E','#1E88C7','#C2185B','#00897B','#6D4C41'];
 function colOf(id){let s=0;for(let i=0;i<id.length;i++)s=(s*31+id.charCodeAt(i))>>>0;return PAL[s%PAL.length];}
 const DUR=[[1,'1 jam'],[2,'2 jam'],[8,'8 jam'],[24,'24 jam'],[0,'Sampai dimatikan']];
 
 const T={st:null,uid:null,mode:'all',busy:false,asked:{},frSeen:{},push:{at:0,pos:null,sig:'',route:false},mk:new Map(),mount:null,open:{},polling:false,lastPoll:0};
+
+
+/* ---------- foto profil (hanya terlihat oleh teman) ---------- */
+const AV={u:null,m:{},at:0,busy:false};
+try{const o=JSON.parse(localStorage.getItem('jc_av')||'{}');if(o&&o.u){AV.u=o.u;AV.m=o.m||{};}}catch(e){}
+function avSave(){try{localStorage.setItem('jc_av',JSON.stringify({u:AV.u,m:AV.m}));}catch(e){}}
+function avImg(id){if(!id||!T.uid||AV.u!==T.uid)return null;if(id!==T.uid&&!(T.st&&okF().some(f=>f.id===id)))return null;const a=AV.m[id];return a&&a.img||null;}
+function avPaint(){try{render();}catch(e){}decoProf();try{if(window.__grpAv)window.__grpAv();}catch(e){}}
+async function avSync(force){if(!T.uid||!T.st||AV.busy)return;if(!force&&Date.now()-AV.at<60000)return;AV.busy=true;AV.at=Date.now();
+ try{if(AV.u!==T.uid){AV.u=T.uid;AV.m={};}
+  const ids=[T.uid,...okF().map(f=>f.id)];const v=(await rpc('avatar_vers',{p_ids:ids}))||{};let ch=false;
+  Object.keys(AV.m).forEach(k=>{if(!v[k]){delete AV.m[k];ch=true;}});
+  const need=ids.filter(i=>v[i]&&(!AV.m[i]||AV.m[i].ver!==v[i]));
+  for(let k=0;k<need.length;k+=20){const r=(await rpc('avatars_get',{p_ids:need.slice(k,k+20)}))||[];r.forEach(x=>{AV.m[x.id]={ver:x.ver,img:x.img};});ch=true;}
+  if(ch){avSave();avPaint();}}catch(e){}finally{AV.busy=false;}}
+async function shrink(f){const url=URL.createObjectURL(f);
+ try{const im=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=rej;x.src=url;});
+  const s=Math.min(im.naturalWidth,im.naturalHeight),S=192,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,S,S);
+  g.drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/2,s,s,0,0,S,S);
+  let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>55000&&q>.3){q-=.12;d=c.toDataURL('image/jpeg',q);}
+  if(d.length>55000||d.indexOf('data:image/jpeg;base64,')!==0)throw new Error('foto_tidak_valid');return d;}
+ catch(e){throw new Error('foto_tidak_valid');}finally{URL.revokeObjectURL(url);}}
+async function avUpload(f){try{const d=await shrink(f);const v=await rpc('avatar_set',{p_img:d});AV.u=T.uid;AV.m[T.uid]={ver:v,img:d};avSave();avPaint();toast('Foto profil diperbarui');}catch(e){toast(em(e));}}
+function pickAv(){if(!T.uid){toast('Masuk dengan Google dulu untuk memasang foto');return;}
+ const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
+ i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)avUpload(f);};i.click();}
+function decoProf(){const a=document.querySelector('.jhd .jav');if(!a)return;const im=avImg(T.uid);
+ a.style.backgroundImage=im?'url("'+im+'")':'';a.style.backgroundSize='cover';a.style.backgroundPosition='center';a.classList.toggle('hasimg',!!im);a.style.cursor='pointer';a.dataset.av='pick';a.setAttribute('role','button');a.setAttribute('aria-label','Ubah foto profil');
+ const h=a.parentNode;let x=h.querySelector('.javx');if(!x){x=document.createElement('div');x.className='javx';h.appendChild(x);}
+ x.innerHTML='<button type="button" data-av="pick">'+(im?'Ganti foto':'Pasang foto')+'</button>'+(im?'<button type="button" data-av="del">Hapus</button>':'');}
+window.__jtemanDeco=decoProf;
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-av]');if(!b||!b.closest('.jhd'))return;
+ if(b.dataset.av==='pick'){pickAv();return;}
+ if(b.dataset.av==='del'){try{await rpc('avatar_del');delete AV.m[T.uid];avSave();avPaint();toast('Foto profil dihapus');}catch(er){toast(em(er));}}});
+window.__jav={img:avImg,sync:avSync,upload:avUpload};
 
 /* ---------- gaya ---------- */
 const css=document.createElement('style');css.textContent=
@@ -35,6 +70,7 @@ const css=document.createElement('style');css.textContent=
 '.jtb.p{background:#2F5FB5;border-color:#2F5FB5;color:#fff}'+
 '.jtb:disabled{opacity:.5}'+
 '.jtrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.jtrow:last-child{border-bottom:0}'+
+'.jhd .jav.hasimg{color:transparent!important}.javx{margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end}.javx button{border:1px solid var(--line,#ccd);background:transparent;color:inherit;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}'+
 '.jtav{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}'+
 '.jtn{flex:1;min-width:0}.jtn b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jtn span{font-size:12.5px;color:var(--ink-2)}'+
 '.jttg{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;border:0;flex:none;padding:0;cursor:pointer}.jttg:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}.jttg.on{background:#2F5FB5}.jttg.on:after{left:21px}'+
@@ -81,14 +117,14 @@ const okF=()=>friends().filter(f=>f.status==='ok');
 const sharers=()=>okF().filter(f=>f.their_route==='ok'&&f.route);
 const lim=k=>(T.st&&T.st.lim&&T.st.lim[k])||5;
 async function poll(force){
- const u=uid();if(u!==T.uid){T.uid=u;T.st=null;T.mode='all';T.asked={};if(!u){draw();render();showReq();return;}}
+ const u=uid();if(u!==T.uid){T.uid=u;T.st=null;T.mode='all';T.asked={};AV.at=0;if(!u){draw();render();showReq();decoProf();return;}}
  if(!u||T.polling)return;if(!force&&document.hidden)return;
  T.polling=true;
  try{T.st=await rpc('social_state');T.lastPoll=Date.now();}catch(e){T.polling=false;return;}
  T.polling=false;
  okF().forEach(f=>{});
  friends().forEach(f=>{if(f.incoming&&!T.frSeen[f.id]){T.frSeen[f.id]=1;if(T.lastPoll&&T.boot)toast(f.name+' ingin berteman. Buka Profil untuk menerima.');}});
- T.boot=true;
+ T.boot=true;avSync(false);
  if(T.mode!=='all'&&T.mode!=='me'&&!sharers().some(f=>f.id===T.mode))T.mode='all';
  label();draw();showReq();render();
 }
@@ -207,7 +243,7 @@ function render(){const el=T.mount;if(!el||!document.body.contains(el))return;
  const fs=friends();
  if(!T.st)h+='<div class="jtfoot" style="padding:12px 2px">Memuat…</div>';
  else if(!fs.length)h+='<div class="jtfoot" style="padding:12px 2px">Belum ada teman. Bagikan kode temanmu, atau masukkan kode teman.</div>';
- fs.forEach(f=>{const c=colOf(f.id),av='<div class="jtav" style="background:'+c+'22;color:'+c+'">'+esc((f.name||'?').charAt(0).toUpperCase())+'</div>';
+ fs.forEach(f=>{const c=colOf(f.id),im=f.status==='ok'?avImg(f.id):null,av=im?'<div class="jtav" style="background:center/cover url('+esc(im)+')"></div>':'<div class="jtav" style="background:'+c+'22;color:'+c+'">'+esc((f.name||'?').charAt(0).toUpperCase())+'</div>';
   if(f.status==='pending'&&f.incoming){h+='<div class="jtrow">'+av+'<div class="jtn"><b>'+esc(f.name)+'</b><span>ingin berteman</span></div><button type="button" class="jtb p" data-t="acc" data-id="'+f.id+'">Terima</button><button type="button" class="jtb" data-t="rej" data-id="'+f.id+'">Tolak</button></div>';return;}
   if(f.status==='pending'){h+='<div class="jtrow">'+av+'<div class="jtn"><b>'+esc(f.name)+'</b><span>menunggu diterima</span></div><button type="button" class="jtb" data-t="cancel" data-id="'+f.id+'">Batal</button></div>';return;}
   const sub=f.my_loc?'Melihat lokasimu · '+fmtUntil(f.my_loc):'Tidak melihat lokasimu';
@@ -228,6 +264,6 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#jteman [d
   durFor=id;durSel=1;drawDur();}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='jtCode'){const b=document.querySelector('#jteman [data-t=add]');if(b)b.click();}});
 
-window.__jteman={mount(el){T.mount=el;render();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
+window.__jteman={mount(el){T.mount=el;render();decoProf();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
 (function w(n){if(window.__jc&&window.__jc.map&&window.__jchat){ensureChip();poll(true);return;}if(n<300)setTimeout(()=>w(n+1),200);})(0);
 })();

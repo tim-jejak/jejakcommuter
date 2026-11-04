@@ -128,6 +128,9 @@ async function sendRoute(force){if(!G||!G.key)return;const me=G.roster.get(G.me)
   await sendE({t:'route',id:G.me,r},true);}
 
 /* ---------- pesan masuk ---------- */
+const myUid=()=>{try{return (window.__jchat&&window.__jchat.uid&&window.__jchat.uid())||null;}catch(e){return null;}};
+const uidOf=m=>m?(m.id===(G&&G.me)?myUid():(m.uid||null)):null;
+const avOf=m=>{try{const u=uidOf(m);return u&&window.__jav?window.__jav.img(u):null;}catch(e){return null;}};
 function upsert(m){const old=G.roster.get(m.id)||{};const n=Object.assign({},old,m);G.roster.set(m.id,n);return n;}
 async function onMessage(p){
   if(!G||p.from===G.me)return;
@@ -147,7 +150,7 @@ async function onMessage(p){
   switch(m.t){
    case'hello':{ const isNew=!G.roster.has(m.id);
       if(G.owner&&isNew&&G.roster.size>=G.max){await sendE({t:'full',to:m.id});return;}
-      G.pubs[m.id]=m.pub||G.pubs[m.id];upsert({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:false,seen:now,joined:true});
+      G.pubs[m.id]=m.pub||G.pubs[m.id];upsert({id:m.id,uid:m.uid||null,name:m.name,color:m.color,dot:m.dot,owner:false,seen:now,joined:true});
       if(G.owner){fixColors();await sendRoster();}
       updMembers();drawGroup();listRefresh();if(isNew)toast(m.name+' bergabung ke '+gName());await sendHB();sendRoute(true);return;}
    case'full':{ if(m.to===G.me)endLocal('Grup sudah penuh.');return;}
@@ -172,7 +175,7 @@ function mergeChat(msgs){const ids=new Set(G.chat.map(c=>c.id));msgs.forEach(c=>
 
 /* ---------- roster / pemilik ---------- */
 function fixColors(){const seen=new Set();[...G.roster.values()].forEach(m=>{if(seen.has(m.color)){const f=AUTO.find(([,h])=>!seen.has(h)&&![...G.roster.values()].some(z=>z.color===h));if(f){m.color=f[1];if(m.id===G.me)toast('Warna sama dengan anggota lain, dialihkan ke '+f[0]+' di grup ini.');}}seen.add(m.color);});}
-async function sendRoster(){fixColors();await sendE({t:'roster',gname:G.name||'',ar:G.ar!==false,max:G.max,exp:G.exp,mode:G.mode,list:[...G.roster.values()].map(m=>({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:!!m.owner}))},true);}
+async function sendRoster(){fixColors();await sendE({t:'roster',gname:G.name||'',ar:G.ar!==false,max:G.max,exp:G.exp,mode:G.mode,list:[...G.roster.values()].map(m=>({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:!!m.owner,uid:m.id===G.me?myUid():(m.uid||null)}))},true);}
 async function approve(id){const i=G.pend.findIndex(x=>x.id===id);if(i<0)return;const r=G.pend[i];
   if(G.roster.size>=G.max){toast('Grup sudah penuh ('+G.max+' orang).');return;}
   G.pend.splice(i,1);
@@ -192,7 +195,7 @@ function denyHistory(id){G.hreq=(G.hreq||[]).filter(x=>x!==id);updPending();}
 
 /* ---------- siklus hidup ---------- */
 async function afterKey(){G.joined=true;const me=G.roster.get(G.me);
-  const hello=async()=>{if(!G||G.confirmed)return;await sendE({t:'hello',id:G.me,name:me.name,color:me.color,dot:me.dot,pub:await expPub(G.kp.publicKey)},true);};
+  const hello=async()=>{if(!G||G.confirmed)return;await sendE({t:'hello',id:G.me,uid:myUid(),name:me.name,color:me.color,dot:me.dot,pub:await expPub(G.kp.publicKey)},true);};
   await hello();const iv=setInterval(()=>{if(!G||G.confirmed){clearInterval(iv);return;}hello();},3000);
   G.waitT=setTimeout(()=>{clearInterval(iv);if(G&&!G.confirmed)endLocal(G.mode==='p'?'Tidak ada respons. Password salah atau grup sudah berakhir.':'Tidak ada respons dari grup.');},15000);}
 function startTimers(){clearInterval(hbT);clearInterval(tickT);hbT=setInterval(sendHB,5000);tickT=setInterval(tick,1000);
@@ -333,7 +336,8 @@ function updMembers(){if(!vis())return;if(G&&G.viewer){updViewer();fitViewer();}
   e.innerHTML='<div class="gl">Anggota ('+G.roster.size+'/'+G.max+')</div>'+[...G.roster.values()].map(m=>{
     const on=m.id===G.me||now-(m.seen||0)<15000;const hasR=!!(m.route||(m.id===G.me&&G.share.route&&J()&&J().S.opts[J().S.sel]));
     const c=m.id===G.me?myColorEff():m.color;
-    return '<div class="mem"><span class="gd sm" style="background:'+(m.id===G.me?(P.dot||c):(m.dot||c))+';border-color:'+caseFor(m.dot||c)+';color:'+(caseFor(m.dot||c)==='#FFFFFF'?'#fff':'#14202B')+'">'+esc(initial(m.name))+'</span>'+
+    const av=avOf(m);
+    return '<div class="mem"><span class="gd sm'+(av?' hasav':'')+'" style="'+(av?'background-image:url('+esc(av)+');':'')+'background-color:'+(m.id===G.me?(P.dot||c):(m.dot||c))+';border-color:'+caseFor(m.dot||c)+';color:'+(caseFor(m.dot||c)==='#FFFFFF'?'#fff':'#14202B')+'">'+esc(initial(m.name))+'</span>'+
      '<div class="mi"><b>'+esc(m.name)+(m.id===G.me?' (kamu)':'')+'</b>'+(m.owner?' <span class="tg">pemilik</span>':'')+'<div class="small">'+(on?'online':(m.bg?'HP dikunci atau aplikasi di latar sejak '+hhmm(m.bg)+' · terakhir terlihat '+ago(now-(m.seen||m.bg))+' lalu':'terakhir terlihat '+(m.seen?ago(now-m.seen)+' lalu':'belum bergabung')))+(hasR&&m.route&&m.route.f?' · '+esc(m.route.f)+' → '+esc(m.route.t):'')+'</div></div>'+
      '<span class="rc" style="background:'+c+';border-color:'+caseFor(c)+'" title="Warna rute"></span>'+
      (G.owner&&m.id!==G.me?'<button type="button" class="btn sm" data-act="kick" data-id="'+m.id+'">Keluarkan</button>':'')+'</div>';}).join('');}
@@ -349,7 +353,8 @@ function updChat(){if(!vis())return;const e=$('#gLog');if(!e||!G)return;const at
   e.innerHTML=G.chat.map(c=>{const m=G.roster.get(c.from);const mine=c.from===G.me;const col=m?m.color:'#888';
     const d=new Date(c.ts||Date.now()),hm=String(d.getHours()).padStart(2,'0')+'.'+String(d.getMinutes()).padStart(2,'0');
     const wc=!appDark()?(lum(col)>.8?'#555':col):(lum(col)<.25?'#cfd8e0':col);
-    return '<div class="msg'+(mine?' me':'')+'"><span class="who"><span style="color:'+wc+'">'+esc(m?m.name:'?')+'</span><span class="tm">'+hm+'</span></span>'+(c.rc?rcHTML(c):'<span class="tx">'+esc(c.text)+'</span>')+'</div>';}).join('')||'<p class="small">Belum ada pesan.</p>';
+    const av=!mine&&m?avOf(m):null;
+    return '<div class="msg'+(mine?' me':'')+'"><span class="who">'+(av?'<span class="wav" style="background-image:url('+esc(av)+')"></span>':'')+'<span style="color:'+wc+'">'+esc(m?m.name:'?')+'</span><span class="tm">'+hm+'</span></span>'+(c.rc?rcHTML(c):'<span class="tx">'+esc(c.text)+'</span>')+'</div>';}).join('')||'<p class="small">Belum ada pesan.</p>';
   if(atEnd||chatOpen())e.scrollTop=e.scrollHeight;}
 async function sendChat(text,q){text=String(text||'').trim().slice(0,500);if(!text||!G||!G.key)return;
   const now=Date.now();if(G.lastSend&&now-G.lastSend<700)return;G.lastSend=now;
@@ -589,6 +594,7 @@ document.addEventListener('input',e=>{if(e.target.id==='chOp'){CH.op=+e.target.v
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='gMsg'&&VIEW){e.preventDefault();VIEW.sendChat(e.target.value,false);e.target.value='';}});
 document.addEventListener('change',e=>{if(VIEW&&(e.target.id==='gShLoc'||e.target.id==='gShRt'))VIEW.onChange(e.target);});
 document.addEventListener('visibilitychange',()=>{ENG.slice().forEach(x=>{try{x.onVis();}catch(e){}});});
+window.__grpAv=()=>{ENG.forEach(x=>{try{x.updMembers();x.updChat();}catch(e){}});};
 window.__grpFix=()=>{ENG.forEach(x=>{try{x.fix();}catch(e){}});};
 
 /* ---------- pengaturan ---------- */
