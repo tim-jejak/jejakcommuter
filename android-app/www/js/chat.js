@@ -363,12 +363,18 @@ function onInput(e){
 
 /* ---------- sheet ---------- */
 var SH=null;
+/* login Google di web: tombol resmi Google (tampil "Lanjutkan ke jejakcommuter.com") */
+function isNat(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
+var GSIP=null,gsiOn=false;
+function loadGSI(){if(GSIP)return GSIP;GSIP=new Promise(function(res,rej){if(window.google&&google.accounts&&google.accounts.id)return res();var s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=function(){res();};s.onerror=function(){GSIP=null;rej(new Error('gsi'));};document.head.appendChild(s);setTimeout(function(){if(!(window.google&&google.accounts&&google.accounts.id)){GSIP=null;rej(new Error('gsi'));}},8000);});return GSIP;}
+async function gsiReady(){if(!CFG.gweb)throw new Error('gsi');await loadGSI();if(!gsiOn){google.accounts.id.initialize({client_id:CFG.gweb,ux_mode:'popup',auto_select:false,context:'signin',itp_support:true,callback:async function(r){try{var sb=await getSB();var o=await sb.auth.signInWithIdToken({provider:'google',token:r.credential});if(o.error)throw o.error;closeSheet();toast('Berhasil masuk');}catch(er){toast(errMsg(er));}}});gsiOn=true;}}
+function gsiButton(el){gsiReady().then(function(){el.innerHTML='';google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',text:'continue_with',shape:'pill',logo_alignment:'left',locale:'id',width:Math.max(220,Math.min(320,el.clientWidth||300))});}).catch(function(){el.innerHTML='<button class="jb pri" data-s="google" style="width:100%">Lanjut dengan Google</button>';});}
 function closeSheet(){if(SH){SH.remove();SH=null;}}
 function sheet(kind,arg){
  closeSheet();
  var h='';
  if(kind==='login'){
-  h='<b>Masuk ke Jecom</b><p>Untuk menulis, melapor, dan vote. Membaca chat tidak perlu masuk.</p><button class="jb pri" data-s="google">Lanjut dengan Google</button><p class="sm">Dengan masuk, kamu setuju dengan <a href="https://jejakcommuter.com/syarat/" target="_blank" rel="noopener">Syarat</a> dan <a href="https://jejakcommuter.com/privasi/" target="_blank" rel="noopener">Privasi</a>.</p><button class="jb" data-s="x">Batal</button>';
+  h='<b>Masuk ke Jecom</b><p>Untuk menulis, melapor, dan vote. Membaca chat tidak perlu masuk.</p>'+(isNat()?'<button class="jb pri" data-s="google">Lanjut dengan Google</button>':'<div id="jxgsi" style="display:flex;justify-content:center;min-height:44px;margin:4px 0"></div>')+'<p class="sm">Dengan masuk, kamu setuju dengan <a href="https://jejakcommuter.com/syarat/" target="_blank" rel="noopener">Syarat</a> dan <a href="https://jejakcommuter.com/privasi/" target="_blank" rel="noopener">Privasi</a>.</p><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='msg'){
   var m=X.msgs.filter(function(x){return x.id==arg;})[0];var nm=m?((X.names[m.user_id]||{}).name||'Pengguna'):'';
   h='<b>'+esc(nm)+'</b><button class="jb" data-s="rpt" data-i="'+arg+'">Laporkan pesan</button><button class="jb dng" data-s="blk" data-i="'+arg+'">Blokir pengguna</button><button class="jb" data-s="x">Batal</button>';
@@ -383,6 +389,7 @@ function sheet(kind,arg){
  SH=document.createElement('div');SH.id='jxs';SH.innerHTML='<div class="jxb"></div><div class="jxc" role="dialog" aria-modal="true">'+h+'</div>';
  document.body.appendChild(SH);
  SH.addEventListener('click',sheetClick);
+ var gb=SH.querySelector('#jxgsi');if(gb)gsiButton(gb);
 }
 async function nativeGoogle(){
  var C=window.Capacitor;
@@ -395,6 +402,7 @@ async function nativeGoogle(){
  if(o.error)throw o.error;return true;
 }
 async function googleLogin(){
+ if(!isNat()){sheet('login');if(CFG.gweb)gsiReady().then(function(){try{google.accounts.id.prompt();}catch(e){}}).catch(function(){});return;}
  var done=false;try{done=await nativeGoogle();}catch(er){var em=String((er&&(er.message||er.code))||er||'').replace(/\s+/g,' ').slice(0,110);toast('Login Google gagal'+(em?': '+em:''));return;}
  if(!done){var sb=await getSB();if(!sb){toast('Server belum diatur');return;}var red=/^https?:/.test(location.protocol)?location.origin+location.pathname:'https://jejakcommuter.com/app/';await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:red}});}
 }
