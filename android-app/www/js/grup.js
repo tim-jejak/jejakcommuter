@@ -85,7 +85,7 @@ const myColorEff=()=>{if(!G)return P.color||COLORS[2][1];return G.roster.get(G.m
 function pickColor(){const used=new Set([...G.roster.values()].filter(m=>m.id!==G.me).map(m=>m.color));
   if(P.color&&!used.has(P.color))return P.color;const f=AUTO.find(([,h])=>!used.has(h));return f?f[1]:COLORS[0][1];}
 
-function newG(o){return Object.assign({code:'',mode:'a',owner:false,me:rand(8),raw:null,key:null,kp:null,max:5,exp:0,roster:new Map(),pend:[],chat:[],pubs:{},tx:null,online:false,q:[],joined:false,fail:0,waitT:null,share:{loc:true,route:true},routeSig:'',sim:false,bots:[]},o);}
+function newG(o){return Object.assign({code:'',mode:'a',owner:false,me:rand(8),raw:null,key:null,kp:null,max:5,exp:0,roster:new Map(),pend:[],chat:[],pubs:{},tx:null,online:false,q:[],joined:false,fail:0,waitT:null,share:{loc:true,route:true},routeSig:'',sim:false,bots:[],name:''},o);}
 
 async function connect(){
   const onMsg=p=>{onMessage(p).catch(e=>console.log('GERR',e&&e.message));};
@@ -134,7 +134,7 @@ async function onMessage(p){
       if(G.owner){fixColors();await sendRoster();}
       updMembers();drawGroup();if(isNew)toast(m.name+' bergabung');await sendHB();sendRoute(true);return;}
    case'full':{ if(m.to===G.me)endLocal('Grup sudah penuh.');return;}
-   case'roster':{ if(G.owner)return;G.max=m.max;G.exp=m.exp;G.mode=m.mode;const ids=new Set(m.list.map(x=>x.id));
+   case'roster':{ if(G.owner)return;if(m.gname)G.name=String(m.gname).slice(0,30);G.max=m.max;G.exp=m.exp;G.mode=m.mode;const ids=new Set(m.list.map(x=>x.id));
       m.list.forEach(x=>{if(x.id!==G.me||!G.roster.has(G.me))upsert(Object.assign({},x,{joined:true}));else upsert({id:x.id,owner:x.owner,color:x.color});});
       [...G.roster.keys()].forEach(id=>{if(!ids.has(id))G.roster.delete(id);});
       if(!G.confirmed){G.confirmed=true;clearTimeout(G.waitT);if(G.viewer)showViewer();else showIn();}
@@ -155,7 +155,7 @@ function mergeChat(msgs){const ids=new Set(G.chat.map(c=>c.id));msgs.forEach(c=>
 
 /* ---------- roster / pemilik ---------- */
 function fixColors(){const seen=new Set();[...G.roster.values()].forEach(m=>{if(seen.has(m.color)){const f=AUTO.find(([,h])=>!seen.has(h)&&![...G.roster.values()].some(z=>z.color===h));if(f){m.color=f[1];if(m.id===G.me)toast('Warna sama dengan anggota lain, dialihkan ke '+f[0]+' di grup ini.');}}seen.add(m.color);});}
-async function sendRoster(){fixColors();await sendE({t:'roster',max:G.max,exp:G.exp,mode:G.mode,list:[...G.roster.values()].map(m=>({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:!!m.owner}))},true);}
+async function sendRoster(){fixColors();await sendE({t:'roster',gname:G.name||'',max:G.max,exp:G.exp,mode:G.mode,list:[...G.roster.values()].map(m=>({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:!!m.owner}))},true);}
 async function approve(id){const i=G.pend.findIndex(x=>x.id===id);if(i<0)return;const r=G.pend[i];
   if(G.roster.size>=G.max){toast('Grup sudah penuh ('+G.max+' orang).');return;}
   G.pend.splice(i,1);
@@ -190,7 +190,7 @@ async function sendHB(){if(!G||!G.key||!G.joined)return;G.lastHB=Date.now();cons
   const g=J()&&J().S.gps;let loc;if(G.share.loc&&g){loc={lat:+g.lat.toFixed(6),lon:+g.lon.toFixed(6),acc:Math.round(g.acc||0),ts:Date.now()};me.loc=loc;}else if(!G.share.loc){me.loc=null;}
   if(loc){G.trail=G.trail||[];const lt=G.trail[G.trail.length-1];if(trailOk(lt,loc)){G.trail.push([loc.lon,loc.lat]);if(G.trail.length>600)G.trail.shift();}}
   await sendE({t:'hb',id:G.me,loc});drawGroup();}
-function tick(){if(!G)return;const nw=Date.now();if(G.owner&&G.mode==='v'){if(nw-(G.lastRos||0)>10000){G.lastRos=nw;sendRoster();}if(nw-(G.lastRt||0)>20000){G.lastRt=nw;sendRoute(true);}updViews();}if(Date.now()>=G.exp){if(G.owner)sendE({t:'end'});endLocal('Grup berakhir (batas 2 jam).');return;}
+function tick(){if(!G)return;if($('#gBody')&&$('#gBody').dataset.view==='home')updList();const gu=$('#gUnread');if(gu){gu.textContent=unread;gu.hidden=!unread;}const nw=Date.now();if(G.owner&&G.mode==='v'){if(nw-(G.lastRos||0)>10000){G.lastRos=nw;sendRoster();}if(nw-(G.lastRt||0)>20000){G.lastRt=nw;sendRoute(true);}updViews();}if(Date.now()>=G.exp){if(G.owner)sendE({t:'end'});endLocal('Grup berakhir (batas 2 jam).');return;}
   updHead();if(nw-(G.lastDr||0)>10000){G.lastDr=nw;try{drawGroup();updMembers();}catch(e){}}if(G.owner||true){sendRoute(false);}}
 function leaveClean(){clearInterval(hbT);clearInterval(tickT);clearInterval(botT);clearTimeout(G&&G.waitT);try{G.tx&&G.tx.leave();}catch(e){}try{wake&&wake.release();}catch(e){}wake=null;}
 async function stopGroup(){if(!G)return;if(G.owner){await sendE({t:'end'});}else if(!G.viewer){await sendE({t:'bye',id:G.me});}await new Promise(r=>setTimeout(r,150));endLocal(G.mode==='v'?(G.owner?'Berbagi perjalanan dihentikan.':'Berhenti melihat perjalanan.'):(G.owner?'Grup dihentikan.':'Kamu keluar dari grup.'));}
@@ -202,6 +202,7 @@ async function createGroup(o){
   const code=mkCode(o.mode);G=newG({code,mode:o.mode,owner:true,max:o.max,exp:Date.now()+MAXH,sim:o.sim,confirmed:true});
   G.kp=await ecKP();G.raw=o.mode==='p'?await pwKey(o.pw,code):crypto.getRandomValues(new Uint8Array(32));G.key=await aesFrom(G.raw);G.joined=true;
   G.roster.set(G.me,{id:G.me,name:P.name,color:P.color||COLORS[2][1],dot:P.dot,owner:true,seen:Date.now(),joined:true});
+  G.name=String(o.name||('Grup '+(P.name||'Saya'))).trim().slice(0,30);
   G.pw=o.pw||'';await connect();startTimers();showIn();tab='mem';
   if(o.sim)startBots();
 }
@@ -327,19 +328,25 @@ function chatDrag(){const H=$('#chH'),C=$('#chat'),Sh=$('#chSheet');if(!H)return
   H.addEventListener('pointermove',e=>{if(!dr)return;const r=C.getBoundingClientRect();const f=Math.max(.3,Math.min(1,(r.bottom-e.clientY+18)/r.height));C.style.setProperty('--chf',f);dr.f=f;});
   const end=()=>{if(!dr)return;const f=dr.f==null?(parseFloat(C.style.getPropertyValue('--chf'))||1):dr.f;dr=null;Sh.classList.remove('drag');C.style.setProperty('--chf',[1,.62,.38].reduce((a,b)=>Math.abs(a-f)<Math.abs(b-f)?a:b));};
   H.addEventListener('pointerup',end);H.addEventListener('pointercancel',end);}
+function listRow(){if(!G)return '';const n=[...G.roster.values()].filter(m=>m.joined!==false).length,me=G.roster.get(G.me)||{};const col=me.color||'#2F5FB5';
+  return '<button type="button" class="grow" data-act="gopen"><span class="gav" style="background:'+esc(col)+'">'+esc((gName().replace(/^Grup\s+/i,'')||'G').charAt(0).toUpperCase())+'</span><span class="gtx"><b>'+esc(gName())+'</b><small>'+n+'/'+G.max+' anggota · sisa '+fmtT(G.exp-Date.now()).replace(/:\d\d$/,'')+(G.owner?' · pemilik':'')+'</small></span>'+(unread?'<span class="gun">'+unread+'</span>':'')+'<span class="gchev">›</span></button>';}
+function updList(){const l=$('#gList');if(l)l.innerHTML=listRow();}
 function showHome(sub){const b=$('#gBody');const q=new URLSearchParams(location.search);const lc=q.get('g'),lm=q.get('m')==='p'?'p':'a';
   const J0=JN||(lc?{code:lc,mode:lm}:null);
   sub=sub||(J0?'join':'home');const back=$('#gClose');
   const srv=useServer()?'':'<p class="note">Server berbagi belum diatur. Grup hanya berfungsi antar tab di perangkat ini (untuk uji coba).</p>';
   if(back)back.textContent=sub==='home'?'Tutup':'Kembali';
-  if(sub==='home'){$('#gTitle').textContent='Grup';
+  if(sub==='home'&&G&&!G.viewer){$('#gTitle').textContent='Grup';
+    b.innerHTML=srv+'<div class="glist" id="gList">'+listRow()+'</div>'+
+      '<div class="gacts"><button type="button" class="btn pri gbig" data-act="gnew">Buat grup</button><button type="button" class="btn gbig" data-act="gcode">Masukkan kode</button></div>';}
+  else if(sub==='home'){$('#gTitle').textContent='Grup';
     b.innerHTML=srv+'<div class="gem"><div class="gemi"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M17 14.2c2.4.1 4 1.5 4 4"/></svg></div>'+
       '<h3>Belum ada grup</h3><p>Buat grup untuk lihat posisi teman di peta selama perjalanan.</p>'+
       '<button type="button" class="btn pri gbig" data-act="gnew">Buat grup</button><button type="button" class="btn gbig" data-act="gcode">Masukkan kode</button>'+
       '<p class="small">Grup aktif maksimal 2 jam. Lokasi, rute, dan chat dienkripsi dan tidak disimpan di server.</p></div>';}
   else if(sub==='new'){$('#gTitle').textContent='Buat grup';
     b.innerHTML=srv+'<div class="gsec pfbox">'+profileHTML()+'</div>'+
-     '<div class="gsec"><div class="gl">Jumlah anggota</div><div class="seg" id="gSize"><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5" class="on">5</button></div>'+
+     '<div class="gsec"><div class="gl">Nama grup</div><input id="gName" class="gin" maxlength="30" placeholder="'+esc('Grup '+(P.name||'Saya'))+'" autocomplete="off"><div class="gl">Jumlah anggota</div><div class="seg" id="gSize"><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button><button type="button" data-n="5" class="on">5</button></div>'+
      '<div class="gl">Cara masuk</div><div class="seg" id="gMode"><button type="button" data-m="a" class="on">Persetujuan pemilik</button><button type="button" data-m="p">Password 6 angka</button></div>'+
      '<input id="gPw" class="gin" inputmode="numeric" maxlength="6" placeholder="6 angka" hidden>'+
      '<label class="chk"><input type="checkbox" id="gSim"> Tambah teman simulasi (untuk uji sendiri)</label></div>'+
@@ -351,8 +358,9 @@ function showHome(sub){const b=$('#gBody');const q=new URLSearchParams(location.
      '<p class="small">Dengan bergabung, lokasi dan rute yang kamu bagikan terlihat oleh semua anggota grup. Kamu bisa berhenti kapan saja.</p></div><button type="button" class="btn pri gbig" data-act="join" data-code="'+esc(J0.code)+'" data-mode="'+J0.mode+'">Gabung grup</button>';}
   $('#gBody').dataset.view='home';$('#gBody').dataset.sub=sub;}
 function showWait(t){$('#gTitle').textContent='Menyambung';$('#gBody').innerHTML='<div class="gsec"><p>'+esc(t)+'</p><button type="button" class="btn" data-act="leave">Batal</button></div><div id="gStat" class="small"></div>';$('#gBody').dataset.view='wait';updStat();}
-function showIn(){tab=tab||'mem';const b=$('#gBody');$('#gTitle').textContent='Grup '+G.code;const _gc=$('#gClose');if(_gc)_gc.textContent='Tutup';
-  b.innerHTML='<div id="gStat" class="small"></div><div class="ghead"><div class="small">Sisa waktu <b id="gTime"></b> · '+(G.mode==='p'?'Password':'Persetujuan')+'</div><div class="gcode" data-act="copycode" role="button"><small>Kode grup</small><b>'+esc(G.code)+'</b><span>Salin</span></div><div class="row2"><button type="button" class="btn" data-act="share">Bagikan</button><button type="button" class="btn" data-act="copy">Salin tautan</button></div></div>'+
+function gName(){return G?(G.name||('Grup '+G.code)):'Grup';}
+function showIn(){tab=tab||'mem';const b=$('#gBody');$('#gTitle').textContent=gName();const _gc=$('#gClose');if(_gc)_gc.textContent='Kembali';
+  b.innerHTML='<div id="gStat" class="small"></div><button type="button" class="btn pri gbig" data-act="gchat" style="margin:4px 0 10px">Buka chat grup<span id="gUnread" class="gun" hidden></span></button><div class="ghead"><div class="small">Sisa waktu <b id="gTime"></b> · '+(G.mode==='p'?'Password':'Persetujuan')+'</div><div class="gcode" data-act="copycode" role="button"><small>Kode grup</small><b>'+esc(G.code)+'</b><span>Salin</span></div><div class="row2"><button type="button" class="btn" data-act="share">Bagikan</button><button type="button" class="btn" data-act="copy">Salin tautan</button></div></div>'+
    '<div id="gPend"></div>'+
    '<div id="gTabMem"><div class="gsec"><label class="chk"><input type="checkbox" id="gShLoc" '+(G.share.loc?'checked':'')+'> Bagikan lokasi saya</label><label class="chk"><input type="checkbox" id="gShRt" '+(G.share.route?'checked':'')+'> Bagikan rute yang saya pilih</label></div><div id="gMembers"></div><div class="gsec pfbox">'+profileHTML()+'</div></div>'+
    '<div class="gsec"><button type="button" class="btn dng" data-act="leave">'+(G.owner?'Hentikan grup':'Keluar dari grup')+'</button></div>';
@@ -395,13 +403,14 @@ document.addEventListener('click',async e=>{
   if(e.target.closest('#rShare')){safe(startTrip);return;}
   if(e.target.closest('#chatBtn')){openChat(true);return;}
   if(e.target.closest('#chat')){
-    if(e.target.closest('#chX')){openChat(false);if(G)openPanel(true);return;}
+    if(e.target.closest('#chX')){openChat(false);if(G){if(window.__jshell&&window.__jshell.openGrp)window.__jshell.openGrp();else openPanel(true);if(!G.viewer)showIn();}return;}
     if(e.target.closest('#chSet')){const o=$('#chOpt');o.hidden=!o.hidden;return;}
     const th=e.target.closest('#chTh button');if(th){CH.th=th.dataset.th;chatApply();updChat();return;}
     const q2=e.target.closest('[data-q]');if(q2){sendChat(q2.dataset.q,true);return;}
     const a2=e.target.closest('[data-act]');if(a2){if(a2.dataset.act==='send'){const i=$('#gMsg');await sendChat(i.value,false);i.value='';}else if(a2.dataset.act==='hreq'&&G){G.histAsked=true;await sendE({t:'hreq',id:G.me},true);updPending();}}
     return;}
-  const gb=e.target.closest('#grpBtn');if(gb){if(chatOpen())openChat(false);openPanel(true);if(!G)showHome();return;}
+  const gb=e.target.closest('#grpBtn');if(gb){if(chatOpen())openChat(false);openPanel(true);const vw=$('#gBody').dataset.view;if(!G||(!G.viewer&&vw!=='wait'))showHome('home');return;}
+  if(e.target.closest('#gClose')&&G&&!G.viewer&&$('#gBody').dataset.view==='in'){showHome('home');return;}
   if(e.target.closest('#gClose')){if(!G&&$('#gBody').dataset.view==='home'&&$('#gBody').dataset.sub!=='home'){if($('#gBody').dataset.sub==='join'){JN=null;try{const u=new URL(location.href);u.searchParams.delete('g');u.searchParams.delete('m');history.replaceState(null,'',u.toString());}catch(_){}}showHome('home');return;}openPanel(false);return;}
   const root=e.target.closest('#grp');if(!root)return;
   const sz=e.target.closest('#gSize button');if(sz){document.querySelectorAll('#gSize button').forEach(x=>x.classList.toggle('on',x===sz));return;}
@@ -410,9 +419,11 @@ document.addEventListener('click',async e=>{
   const qb=e.target.closest('[data-q]');if(qb){sendChat(qb.dataset.q,true);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const id=a.dataset.id;
   try{switch(a.dataset.act){
-   case'gnew':showHome('new');break;
-   case'gcode':showHome('code');break;
-   case'create':{const n=+document.querySelector('#gSize .on').dataset.n,m=document.querySelector('#gMode .on').dataset.m;await createGroup({max:n,mode:m,pw:$('#gPw').value.trim(),sim:$('#gSim').checked});break;}
+   case'gnew':if(G&&!G.viewer){toast('Untuk sementara hanya bisa ikut 1 grup. Keluar dari grup ini dulu.');break;}showHome('new');break;
+   case'gcode':if(G&&!G.viewer){toast('Untuk sementara hanya bisa ikut 1 grup. Keluar dari grup ini dulu.');break;}showHome('code');break;
+   case'gopen':showIn();break;
+   case'gchat':openChat(true);break;
+   case'create':{const n=+document.querySelector('#gSize .on').dataset.n,m=document.querySelector('#gMode .on').dataset.m;await createGroup({max:n,mode:m,pw:$('#gPw').value.trim(),sim:$('#gSim').checked,name:($('#gName').value||'').trim()});break;}
    case'join':{const mode=a.dataset.mode;const pw=mode==='p'?($('#gJoinPw').value||'').trim():'';await joinGroup({code:a.dataset.code,mode,pw});break;}
    case'joinlink':{const r=parseJoin($('#gJoinIn').value);if(!r){toast('Kode atau tautan tidak valid.');break;}JN=r;showHome('join');break;}
    case'copy':{try{await navigator.clipboard.writeText(link());if(!(window.__sysCopy&&window.__sysCopy()))toast('Tautan disalin');}catch(_){prompt&&0;toast(link(),9000);}break;}
@@ -440,7 +451,7 @@ function mountSettings(){const a=$('#pfMount');if(a){a.className='pfbox';a.inner
 /* ---------- simpan & pulihkan sesi (rute + grup) di perangkat ini ---------- */
 const SESS='jc_sess_v1';let restored=false,hidAt=0;
 function saveSess(){if(!restored)return;try{const j=J(),s={ts:Date.now()};
-  if(G&&G.key&&G.raw&&!G.sim){s.g={code:G.code,mode:G.mode,owner:G.owner,viewer:!!G.viewer,me:G.me,raw:b64u(G.raw),max:G.max,exp:G.exp,tripUrl:G.tripUrl||null,share:G.share,old:G.old||[],cp:G.cp||null,trail:(G.trail||[]).slice(-300),chat:G.chat.slice(-100),pubs:G.pubs,
+  if(G&&G.key&&G.raw&&!G.sim){s.g={code:G.code,name:G.name||'',mode:G.mode,owner:G.owner,viewer:!!G.viewer,me:G.me,raw:b64u(G.raw),max:G.max,exp:G.exp,tripUrl:G.tripUrl||null,share:G.share,old:G.old||[],cp:G.cp||null,trail:(G.trail||[]).slice(-300),chat:G.chat.slice(-100),pubs:G.pubs,
     roster:[...G.roster.values()].map(m=>({id:m.id,name:m.name,color:m.color,dot:m.dot,owner:m.owner}))};}
   if(j&&j.S&&j.S.to&&j.S.from){const S=j.S,o=S.opts[S.sel];s.a={from:S.from,to:S.to,title:o&&o.title||'',nav:!!(j.NAV&&j.NAV.on)};}
   if(s.g||s.a)localStorage.setItem(SESS,JSON.stringify(s));else localStorage.removeItem(SESS);}catch(e){}}
@@ -451,7 +462,7 @@ async function resumeSess(){let s=null;try{s=JSON.parse(localStorage.getItem(SES
     const j=await new Promise(r=>{let n=0;const iv=setInterval(()=>{if(window.__jc||++n>100){clearInterval(iv);r(window.__jc);}},200);});
     const x=s.g;
     if(x&&x.exp>Date.now()&&!G&&j){
-      G=newG({code:x.code,mode:x.mode,owner:x.owner,viewer:x.viewer,me:x.me,max:x.max,exp:x.exp,tripUrl:x.tripUrl,share:x.share||{loc:true,route:true},confirmed:!!x.owner,joined:true});
+      G=newG({code:x.code,name:x.name||'',mode:x.mode,owner:x.owner,viewer:x.viewer,me:x.me,max:x.max,exp:x.exp,tripUrl:x.tripUrl,share:x.share||{loc:true,route:true},confirmed:!!x.owner,joined:true});
       G.raw=unb64u(x.raw);G.key=await aesFrom(G.raw);G.kp=await ecKP();G.old=x.old||[];G.cp=x.cp||null;G.trail=x.trail||[];G.chat=x.chat||[];G.pubs=x.pubs||{};
       (x.roster||[]).forEach(m=>G.roster.set(m.id,Object.assign({},m,{seen:0,joined:true})));
       if(!G.roster.has(G.me))G.roster.set(G.me,{id:G.me,name:P.name||'Saya',color:P.color||COLORS[2][1],dot:P.dot,owner:!!x.owner,seen:Date.now(),joined:true});

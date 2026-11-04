@@ -527,5 +527,5 @@ function init(){
   if(J&&J.map)trackMap(J.map);
 }
 (function w(n){if(window.__jc&&window.__jc.map)return init();if(n>200){return init();}setTimeout(function(){w(n+1);},100);})(0);
-window.__jshell={setTab:setTab,look:LOOK,toast:toast,refreshProf:function(){if(!vProf.hidden)renderProf();},openGrp:function(){var b=$('#grpBtn');if(!b)return;TAB='grup';vChat.hidden=true;b.click();}};
+window.__jshell={setTab:setTab,look:LOOK,toast:toast,refreshProf:function(){if(!vProf.hidden)renderProf();},openGrp:function(){var b=$('#grpBtn');if(!b)return;TAB='grup';document.documentElement.dataset.tab='grup';nav.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-current',String(x.dataset.t==='chat'));});vChat.hidden=true;b.click();}};
 })();

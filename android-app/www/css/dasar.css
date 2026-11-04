@@ -333,3 +333,11 @@ html.chatopen #search,html.chatopen #row2,html.chatopen #results,html.chatopen #
 html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:none!important}
 #navbar .nv2{flex-wrap:wrap}#navbar .nv2>span:last-child{flex-wrap:wrap;justify-content:flex-end;display:flex;gap:5px}
 #navbar #nvCancel.ask{background:#B3261E;color:#fff}
+
+.glist{display:flex;flex-direction:column;gap:8px;margin:4px 0 14px}
+.grow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;color:var(--ink);font:inherit;cursor:pointer}
+.gav{width:40px;height:40px;border-radius:12px;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.gtx{flex:1;min-width:0;display:flex;flex-direction:column}.gtx b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gtx small{font-size:12.5px;color:var(--ink-2)}
+.gun{min-width:20px;height:20px;border-radius:10px;background:#D32F2F;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;margin-left:8px}
+.gchev{font-size:22px;color:var(--ink-2);line-height:1}
+.gacts{display:flex;flex-direction:column;gap:8px}
