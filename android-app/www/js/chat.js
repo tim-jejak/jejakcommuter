@@ -157,11 +157,11 @@ async function subscribe(){
  X.ch=sb.channel('jx-msgs').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(p){onNew([p.new],true);})
  .subscribe(function(st){
   if(st==='SUBSCRIBED'){catchUp();return;}
-  if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){var c=X.ch;X.ch=null;try{sb.removeChannel(c);}catch(e){}clearTimeout(X.rsT);X.rsT=setTimeout(function(){subscribe();},4000);}
+  if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){var c=X.ch;X.ch=null;try{sb.removeChannel(c);}catch(e){}clearTimeout(X.rsT);X.rsT=setTimeout(function(){subscribe();},3000);}
  });
 }
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&X.ready){catchUp();if(!X.ch)subscribe();}});
-setInterval(function(){if(!document.hidden&&X.ready)catchUp();},20000);
+setInterval(function(){if(!document.hidden&&X.ready)catchUp();},10000);
 async function loadAuth(){
  if(X.authOn)return;X.authOn=true;
  var sb=await getSB();if(!sb){X.authOn=false;return;}
