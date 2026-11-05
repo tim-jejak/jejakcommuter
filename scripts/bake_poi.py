@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Unduh minimarket, SPBU, masjid, rumah sakit, klinik, dan apotek Jabodetabek dari OpenStreetMap (Overpass) lalu tulis poi.js.
+"""Unduh minimarket, SPBU, masjid, rumah sakit, klinik, dan apotek dari OpenStreetMap lalu tulis poi.js.
+Cara utama (GitHub Actions): ekstrak Pulau Jawa dari Geofabrik lalu --geojson. Cara Overpass (tanpa --geojson) hanya Jabodetabek.
 
 Dijalankan tiap bulan oleh GitHub Actions. Bisa juga dijalankan manual:
     python3 scripts/bake_poi.py                 # unduh lalu tulis poi.js
@@ -178,7 +179,7 @@ def main():
         if len(data[k]) < mn:
             raise SystemExit("Data %s terlalu sedikit (%d), poi.js tidak ditimpa" % (k, len(data[k])))
     now = datetime.now(timezone.utc) + timedelta(hours=7)
-    poi = {"v": 1, "date": now.strftime("%Y-%m-%d"), "area": "Jabodetabek", **data}
+    poi = {"v": 1, "date": now.strftime("%Y-%m-%d"), "area": "Pulau Jawa" if "--geojson" in sys.argv else "Jabodetabek", **data}
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = os.path.join(root, "poi.js")
     with open(path, "w", encoding="utf-8") as fh:
