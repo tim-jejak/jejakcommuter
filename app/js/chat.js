@@ -38,11 +38,17 @@ function ce2s(e){var s='';e.childNodes.forEach(function(n){if(n.nodeType===3)s+=
 
 var BAD=['judi','togel','gacor','maxwin','pinjol','pinjaman online','anjing','bangsat','goblok','tolol','kontol','memek','ngentot'];
 var TLD='com|co\\.id|id|net|org|io|me|xyz|info|biz|site|online|top|vip|cc|link|app|ly|my\\.id|web\\.id|ac\\.id|go\\.id|dev|store|shop|club|live|asia|tv|ai|gl';
+var NUMW={kosong:'0',nol:'0',satu:'1',dua:'2',tiga:'3',empat:'4',lima:'5',enam:'6',tujuh:'7',delapan:'8',sembilan:'9'};
+function numNorm(t){var s=t.replace(/kosong|nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan/g,function(w){return ' '+NUMW[w]+' ';});
+ for(var k=0;k<3;k++)s=s.replace(/(^|[\d\s])o(?=\s*\d)/g,'$10');
+ return s.replace(/(^|[^\d])([01]?\d|2[0-3])[.:][0-5]\d(?!\d)/g,'$1 ');}
 function filterMsg(text){
  var t=String(text).toLowerCase().normalize('NFKD').replace(/[̀-ͯ​-‏⁠﻿]/g,'');
  if(/(https?:|www\.|:\/\/)/.test(t))return 'tautan tidak boleh';
  if(new RegExp('[a-z0-9-]+\\s*(\\.|\\(dot\\)|\\sdot\\s)\\s*('+TLD+')(\\b|$)').test(t))return 'tautan tidak boleh';
- if(/\d{7,}/.test(t.replace(/[\s.\-_()]/g,''))||/[a-z]{1,6}\s*-?\s*\d{7}/.test(t))return 'kode dan nomor tidak boleh';
+ var nn=numNorm(t),cc=nn.replace(/[\s.\-_()+,]/g,'');
+ if(/jc\d{7}/.test(cc))return 'Kamu tidak bisa mengirim kode teman di chat umum';
+ if(/\d{7,}/.test(cc))return 'Kamu tidak bisa mengirim nomor di chat umum';
  if(/(^|\s)@\w{3,}/.test(t)||/\b(whatsapp|telegram|instagram)\b/.test(t))return 'ajakan ke aplikasi lain tidak boleh';
  var l=t.replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/@/g,'a').replace(/\$/g,'s');
  var words=l.replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim(),compact=l.replace(/[^a-z]/g,'');
@@ -51,7 +57,7 @@ function filterMsg(text){
 }
 
 /* ---------- state ---------- */
-var X={sb:null,uid:null,user:null,prof:null,room:'Umum',lastRoom:{KRL:'KRL Bogor',TJ:'TJ 1'},msgs:[],ids:{},names:{},votes:{},my:{},pins:{},
+var X={unr:{},sb:null,uid:null,user:null,prof:null,room:'Umum',lastRoom:{KRL:'KRL Bogor',TJ:'TJ 1'},msgs:[],ids:{},names:{},votes:{},my:{},pins:{},
  draft:{},panel:null,emPick:null,emc:{},dd:false,rdd:false,lastSend:0,ready:false,loading:false,ch:null,root:null,tmr:null,busy:false};
 try{var lr=localStorage.getItem('jx_room');if(lr)X.room=lr;}catch(e){}
 
@@ -125,11 +131,15 @@ async function loadAll(){
  }catch(e){X.err=errMsg(e);X.ready=true;}
  X.loading=false;draw();subscribe();
 }
+function viewing(){var g=document.getElementById('grp');return !!(X.root&&!X.root.hidden&&document.documentElement.dataset.tab==='chat'&&!(g&&g.classList.contains('open'))&&!document.hidden);}
+function seen(){if(viewing()){var c=catOf(X.room);if(X.unr[c]){X.unr[c]=0;try{if(window.__jcBadge)window.__jcBadge();}catch(_){}}}}
+function unrTotal(){var n=0;for(var k in X.unr){if(!(window.__mute&&window.__mute.room(k)))n+=X.unr[k]||0;}return n;}
 async function subscribe(){
  if(X.ch)return;var sb=await getSB();if(!sb||!sb.channel)return;
  X.ch=sb.channel('jx-msgs').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async function(p){
   var m=p.new;if(!m||m.hidden)return;
   if(!addMsg(m))return;
+  if(m.user_id!==X.uid&&!(viewing()&&m.room===X.room)){var uc=catOf(m.room);if(!(window.__mute&&window.__mute.room(uc))){X.unr[uc]=(X.unr[uc]||0)+1;try{if(window.__jcBadge)window.__jcBadge();}catch(_){}}}
   await ensureNames([m.user_id]);
   if(m.kind==='report')loadVotes().then(function(){drawMsgs(false);});
   drawTop();drawMsgs(m.user_id===X.uid);
@@ -191,7 +201,8 @@ function topHTML(){
  var rc=catOf(X.room),isU=X.room==='Umum',h='<div class="ctop"><div class="cseg"><button data-x="seg" data-v="umum" aria-pressed="true">Umum</button><button data-x="seg" data-v="grup" aria-pressed="false">Grup</button></div></div>';
  h+='<div class="rooms">'+CATS.map(function(x){var r=x[0]==='Umum'?'Umum':x[0]==='JL'?'JakLingko':x[0],st=(x[0]==='MRT'||x[0]==='LRT'||x[0]==='JL')?roomStat(r):'';
   if(x[0]==='KRL'||x[0]==='TJ'){var worst='Normal';subRooms(x[0]).forEach(function(s){var z=roomStat(s);if(z==='Gangguan'||(z==='Padat'&&worst==='Normal'))worst=z;});st=worst;}
-  return '<button class="room" data-x="cat" data-c="'+x[0]+'" aria-pressed="'+(rc===x[0])+'">'+x[1]+(st&&st!=='Normal'?'<i class="sd3" style="background:'+SCOL[st]+'"></i>':'')+'</button>';}).join('')+'</div>';
+  var un=(rc!==x[0]&&X.unr[x[0]]&&!(window.__mute&&window.__mute.room(x[0])))?'<b class="run">'+(X.unr[x[0]]>9?'9+':X.unr[x[0]])+'</b>':'';
+  return '<button class="room" data-x="cat" data-c="'+x[0]+'" aria-pressed="'+(rc===x[0])+'">'+x[1]+un+(st&&st!=='Normal'?'<i class="sd3" style="background:'+SCOL[st]+'"></i>':'')+'</button>';}).join('')+'</div>';
  if(isU)return h;
  var rs=roomStat(X.room),hasDD=(rc==='KRL'||rc==='TJ'),pill='<span class="stp" style="--c:'+SCOL[rs]+'"><i></i>'+rs+'</span>';
  var nm=X.room.replace(/^(KRL|TJ) /,''),sh=nm==='Rangkasbitung'?'Rangkas':nm;
@@ -241,7 +252,7 @@ function mount(root){
  draw();
 }
 function draw(){if(!X.root)return;drawTop();drawComp();drawPanel();drawMsgs(true);}
-function drawTop(){
+function drawTop(){seen();
  var t=el('#jxtop',X.root);if(!t)return;
  var rl=el('.rooms',t),sl=rl?rl.scrollLeft:0;
  t.innerHTML=topHTML();
@@ -278,7 +289,7 @@ async function send(){
  if(!val){toast('Tulis pesan dulu');return;}
  if(dlen(val)>MAXC){toast('Maksimal '+MAXC+' karakter');return;}
  if(Date.now()-X.lastSend<2000){toast('Tunggu sebentar');return;}
- var fr=filterMsg(val);if(fr){toast('Pesan ditolak: '+fr);return;}
+ var fr=filterMsg(val);if(fr){toast(fr.indexOf('Kamu')===0?fr:'Pesan ditolak: '+fr);return;}
  X.lastSend=Date.now();
  try{
   var id=await rpc('post_message',{p_room:X.room,p_kind:'text',p_body:val,p_sticker:null});
@@ -475,7 +486,7 @@ window.__jchat={
  mount:function(root){if(X.mounted)return;X.mounted=true;mount(root);loadAuth().catch(function(){});loadAll();X.tmr=setInterval(tick,10000);setInterval(refreshVotes,20000);},
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
- rpc:rpc,errMsg:errMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
+ rpc:rpc,errMsg:errMsg,unread:unrTotal,seen:function(){seen();if(X.root)drawTop();},cats:CATS,filter:filterMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
  state:X
 };
 /* status login dibaca saat aplikasi dibuka, tidak menunggu tab Chat */

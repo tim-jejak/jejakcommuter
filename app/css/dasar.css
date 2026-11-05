@@ -360,3 +360,5 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 .gd.hasav{color:transparent!important;background-size:cover;background-position:center}
 .msg .who{display:flex;align-items:center;gap:6px}
 .msg .wav{width:18px;height:18px;border-radius:50%;background-size:cover;background-position:center;flex:none}
+.gmt{display:block;font-size:11.5px;color:var(--ink-2,#6b7680);font-weight:600}
+#jchat .run,.run{display:inline-block;margin-left:5px;background:#D32F2F;color:#fff;border-radius:9px;min-width:17px;height:17px;padding:0 5px;font-size:10.5px;line-height:17px;font-weight:800;box-sizing:border-box;vertical-align:1px}

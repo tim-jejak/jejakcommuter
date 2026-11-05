@@ -54,6 +54,9 @@ var IC={
   badge:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>',
   nav:'<path d="M12 3L5 20l7-4 7 4z"/>',
   sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  share:'<path d="M4 12v7h16v-7M12 3v12M7 8l5-5 5 5"/>',
+  msg:'<path d="M4 5h16v11H9l-5 4z"/><path d="M9 10h6"/>',
   info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
   palette:'<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="15.5" cy="10" r="1"/>'
 };
@@ -94,6 +97,14 @@ var css=''+
 '.jrow .g{flex:1;min-width:0}'+
 '.jrow .v{color:var(--ink-2);font-size:13px;font-weight:600}'+
 '.jhd{display:flex;align-items:center;gap:14px;padding:6px 0 16px}'+
+'.jhd0{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;margin:0 0 4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:left;font:inherit}.jhd0 .g{flex:1;min-width:0}.jhn{font-size:18px;font-weight:800}.jhs{font-size:12.5px;color:var(--ink-2);font-weight:500}'+
+'.jrs{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:2px}.jnote{font-size:12.5px;color:var(--ink-2);margin:4px 4px 12px;line-height:1.45}'+
+'.jtg{width:46px;height:28px;border-radius:14px;background:#C5CCD4;position:relative;flex:none;transition:background .15s}.jtg:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}.jtg.on{background:#2F5FB5}.jtg.on:after{left:21px}.jtgr{cursor:pointer}.jsub{padding-left:16px}'+
+'.jsb{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 11px;font:700 13px system-ui,sans-serif}'+
+'.jbig{display:block;width:100%;min-height:46px;margin:0 0 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;font:700 15px system-ui,sans-serif}.jbig.p{background:#2F5FB5;border-color:#2F5FB5;color:#fff}'+
+'.jta{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--ink);font:15px/1.45 system-ui,sans-serif;resize:vertical}'+
+'.jdoc{font-size:14px;line-height:1.55;color:var(--ink)}.jdoc h3{font-size:15px;margin:16px 0 4px}.jdoc p{margin:0 0 8px}'+
+'[data-t="chat"]{position:relative}.nbd{position:absolute;top:4px;left:calc(50% + 6px);background:#D32F2F;color:#fff;border-radius:9px;min-width:18px;height:18px;padding:0 5px;font-size:11px;line-height:18px;font-weight:800;box-sizing:border-box}'+
 '.jav{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex:none}'+
 '.jseg{display:flex;gap:6px;margin:6px 0 14px}'+
 '.jseg button{flex:1;min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;font-weight:700;font-size:14px;padding:0 4px}'+
@@ -147,7 +158,7 @@ var st=document.createElement('style');st.textContent=css;document.head.appendCh
 
 /* ---------- kerangka ---------- */
 var nav=document.createElement('nav');nav.id='jnav';nav.setAttribute('aria-label','Menu utama');
-nav.innerHTML=[['peta','map','Peta'],['chat','chat','Chat'],['urgent','urgent','Urgent'],['profil','user','Profil']].map(function(x){return '<button type="button" data-t="'+x[0]+'"'+(x[0]==='urgent'?' class="urg"':'')+' aria-current="'+(x[0]==='peta')+'">'+ic(x[1])+x[2]+'</button>';}).join('');
+nav.innerHTML=[['peta','map','Peta'],['chat','chat','Chat'],['urgent','urgent','Urgent'],['profil','user','Profil']].map(function(x){return '<button type="button" data-t="'+x[0]+'"'+(x[0]==='urgent'?' class="urg"':'')+' aria-current="'+(x[0]==='peta')+'">'+ic(x[1])+x[2]+(x[0]==='chat'?'<span class="nbd" hidden></span>':'')+'</button>';}).join('');
 document.body.appendChild(nav);
 function mk(id){var d=document.createElement('div');d.id=id;d.className='jsc';d.hidden=true;document.body.appendChild(d);return d;}
 var vProf=mk('jprof'),vTamp=mk('jtamp'),vUrg=mk('jurg'),vUgo=mk('jugo'),vChat=mk('jchat');
@@ -237,31 +248,125 @@ tb.addEventListener('contextmenu',function(e){e.preventDefault();});
 /* ---------- Profil ---------- */
 function seg(key,opts,cur){return '<div class="jseg">'+opts.map(function(o){return '<button type="button" data-k="'+key+'" data-v="'+o[0]+'" aria-pressed="'+(cur===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>';}
 var pfHome=null;
-window.__updAv=function(nm,cl){var a=vProf&&vProf.querySelector('.jhd .jav');if(!a)return;var name=nm||'',col=cl||'#1F5FB5';var n=parseInt(col.slice(1),16),l=(.2126*(n>>16&255)+.7152*(n>>8&255)+.0722*(n&255))/255;a.style.background=col;a.style.color=l<.4?'#fff':'#14202B';a.textContent=(name||'J').trim().charAt(0).toUpperCase();var t=a.nextElementSibling;if(t)t.textContent=name||'Jecom';if(window.__jtemanDeco)window.__jtemanDeco();};
+window.__updAv=function(nm,cl){var name=nm||'',col=cl||'#1F5FB5';var n=parseInt(col.slice(1),16),l=(.2126*(n>>16&255)+.7152*(n>>8&255)+.0722*(n&255))/255;document.querySelectorAll('.jav.me').forEach(function(a){a.style.background=col;a.style.color=l<.4?'#fff':'#14202B';a.textContent=(name||'J').trim().charAt(0).toUpperCase();});var t=vProf&&vProf.querySelector('.jhn');if(t)t.textContent=name||'Jecom';if(window.__jtemanDeco)window.__jtemanDeco();};
 function renderProf(){
   var name='',col='#1F5FB5';
   try{name=JSON.parse(localStorage.getItem('jc_name')||'""')||'';var c=JSON.parse(localStorage.getItem('jc_color')||'null');if(c)col=c;}catch(e){}
   var ini=(name||'J').trim().charAt(0).toUpperCase();
   var lum=function(h){var n=parseInt(h.slice(1),16);return (.2126*(n>>16&255)+.7152*(n>>8&255)+.0722*(n&255))/255;};
-  var pm=document.getElementById('pfMount');
-  var keep=pm&&pm.parentNode&&pm.closest('#jprof');
-  vProf.innerHTML='<div class="jscr" style="padding-top:12px"><div class="jhd"><div class="jav" style="background:'+col+';color:'+(lum(col)<.4?'#fff':'#14202B')+'">'+esc(ini)+'</div><div style="font-size:18px;font-weight:800">'+esc(name||'Jecom')+'</div></div>'+
-  '<div class="jcrd" id="jpfbox" style="padding:12px 14px"></div>'+
+  vProf.innerHTML='<div class="jscr" style="padding-top:12px">'+
+  '<button type="button" class="jhd0" data-a="me"><div class="jav me" style="background:'+col+';color:'+(lum(col)<.4?'#fff':'#14202B')+'">'+esc(ini)+'</div><div class="g"><div class="jhn">'+esc(name||'Jecom')+'</div><div class="jhs">Ketuk untuk ubah foto, nama, dan warna</div></div>'+ic('chev',18)+'</button>'+
   '<div class="jlbl">Teman</div><div class="jcrd" id="jteman" style="padding:0 14px"></div>'+
-  '<div class="jlbl">Akun</div><div class="jcrd" id="jacct">'+(window.__jchat?window.__jchat.acct():'')+'</div>'+
   '<div class="jlbl">Pengaturan</div><div class="jcrd">'+
-  '<button class="jrow" data-a="tamp">'+ic('sliders')+'<span class="g">Tampilan</span>'+ic('chev',18)+'</button>'+
-  '<button class="jrow" data-a="about">'+ic('info')+'<span class="g">Tentang</span>'+ic('chev',18)+'</button></div></div>';
-  var box=vProf.querySelector('#jpfbox');
-  if(pm){box.appendChild(pm);pm.hidden=false;}
+  prow('akun','user','Akun',akunSub())+prow('priv','lock','Privasi',privSub())+prow('tamp','sliders','Tampilan','Tema, gaya peta, ukuran')+prow('chat','chat','Chat',muteSum())+'</div>'+
+  '<div class="jlbl">Tentang</div><div class="jcrd">'+
+  prow('ajak','share','Ajak teman')+prow('masukan','msg','Kirim masukan','Laporkan masalah atau kirim ide')+prow('about','info','Tentang Jecom','Versi, sumber data, privasi')+'</div></div>';
   var jt=vProf.querySelector('#jteman');if(jt&&window.__jteman)window.__jteman.mount(jt);
+  if(window.__jtemanDeco)window.__jtemanDeco();
 }
+function prow(a,i,t){return '<button class="jrow" data-a="'+a+'">'+ic(i)+'<span class="g">'+t+'</span>'+ic('chev',18)+'</button>';}
+function akunSub(){var J=window.__jchat;return J&&J.uid&&J.uid()?'Google, kode teman, keluar':'Belum masuk';}
+function privSub(){return window.__ghost&&window.__ghost()?'Mode hantu aktif':'Lokasi, foto profil';}
 vProf.addEventListener('click',function(e){
-  var b=e.target.closest('[data-a]');if(!b)return;
-  if(b.dataset.a==='tamp'){renderTamp();vProf.hidden=true;vTamp.hidden=false;}
-  else if(b.dataset.a==='about'){var a=$('#about');if(a)a.hidden=false;}
+  var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a;
+  if(a==='tamp'){SUB.stack=[];SUB.cur=null;renderTamp();vProf.hidden=true;vTamp.hidden=false;}
+  else if(['me','akun','priv','chat','ajak','masukan','about'].indexOf(a)>-1){SUB.stack=[];openSub(a);}
 });
-function renderTamp(){
+
+/* ---------- sub halaman Profil ---------- */
+var SUB={cur:null,stack:[]};window.__openSub=function(p){SUB.stack=[];openSub(p);};
+var SUBT={me:'Profil saya',akun:'Akun',priv:'Privasi',chat:'Chat',ajak:'Ajak teman',masukan:'Kirim masukan',about:'Tentang Jecom',kebijakan:'Kebijakan privasi',syarat:'Syarat penggunaan'};
+function openSub(p,push){if(push&&SUB.cur)SUB.stack.push(SUB.cur);SUB.cur=p;vProf.hidden=true;vTamp.hidden=false;drawSub();var sc=vTamp.querySelector('.jscr');if(sc)sc.scrollTop=0;}
+function subBack(){stashPm();if(SUB.stack.length){SUB.cur=SUB.stack.pop();drawSub();return;}SUB.cur=null;vTamp.hidden=true;renderProf();vProf.hidden=false;}
+function tgl(k,on,t,s,cls){return '<div class="jrow jtgr'+(cls?' '+cls:'')+'" data-tg="'+esc(k)+'"><span class="g">'+t+(s?'<small class="jrs">'+s+'</small>':'')+'</span><span class="jtg'+(on?' on':'')+'" role="switch" aria-checked="'+!!on+'"></span></div>';}
+function stashPm(){var pm=document.getElementById('pfMount');if(pm&&vTamp.contains(pm)){pm.hidden=true;document.body.appendChild(pm);}}
+function drawSub(){var p=SUB.cur,h='';if(p!=='me')stashPm();
+  if(p==='me'){var pm=document.getElementById('pfMount');
+    h='<div class="jcrd" style="padding:14px"><div class="jhd"><div class="jav me" id="jmeav"></div><div class="jhs" style="flex:1">Foto hanya terlihat oleh temanmu</div></div></div><div class="jcrd" id="jmebox" style="padding:12px 14px"></div>';
+    vTamp.innerHTML=top(p)+'<div class="jscr">'+h+'</div>';
+    var bx=vTamp.querySelector('#jmebox');if(pm){bx.appendChild(pm);pm.hidden=false;}
+    try{var nm=JSON.parse(localStorage.getItem('jc_name')||'""')||'',cl=JSON.parse(localStorage.getItem('jc_color')||'null')||'#1F5FB5';var av=vTamp.querySelector('#jmeav');av.style.background=cl;av.textContent=(nm||'J').charAt(0).toUpperCase();}catch(e){}
+    if(window.__jtemanDeco)window.__jtemanDeco();return;}
+  if(p==='akun'){h='<div class="jcrd" id="jacct">'+(window.__jchat?window.__jchat.acct():'<div class="jrow">Memuat…</div>')+'</div><p class="jnote">Kode teman diberikan ke teman supaya dia bisa menambahkanmu. Hapus akun menghapus akun, teman, foto, dan laporanmu, dan tidak bisa dibatalkan.</p>';}
+  else if(p==='priv'){var gh=window.__ghost&&window.__ghost(),vs=window.__jteman&&window.__jteman.viewers?window.__jteman.viewers():[],gs=[];
+    try{gs=window.__grp?window.__grp.list().filter(function(g){return g.sharing;}):[];}catch(e){}
+    h='<div class="jcrd">'+tgl('ghost',gh,'Mode hantu','Berhenti berbagi lokasi dan rute ke semua teman dan grup sekaligus. Selama aktif, berbagi baru tidak bisa dinyalakan.')+'</div>'+
+    '<div class="jlbl">Sedang melihat lokasimu</div><div class="jcrd">'+
+    (vs.length||gs.length?vs.map(function(v){return '<div class="jrow"><span class="g">'+esc(v.name)+'<small class="jrs">Teman · '+(v.loc?'lokasi '+esc(v.until):'')+(v.loc&&v.route?' · ':'')+(v.route?'rute':'')+'</small></span><button type="button" class="jsb" data-stopf="'+esc(v.id)+'">Hentikan</button></div>';}).join('')+
+      gs.map(function(g){return '<div class="jrow"><span class="g">'+esc(g.name)+'<small class="jrs">Grup · '+(g.ar?'lokasi dan rute':'lokasi')+'</small></span><button type="button" class="jsb" data-stopg="'+esc(g.code)+'">Hentikan</button></div>';}).join('')
+      :'<div class="jrow"><span class="g jrs" style="font-weight:400">Tidak ada. Lokasimu tidak sedang dibagikan.</span></div>')+'</div>'+
+    '<div class="jlbl">Foto profil</div><div class="jcrd"><div class="jrow"><span class="g">Siapa yang bisa melihat</span><span class="v">Hanya teman</span></div></div>'+
+    '<p class="jnote">Di chat umum, profil orang tidak bisa dibuka dan tidak ada chat pribadi. Nomor HP dan kode teman tidak bisa dikirim di chat umum.</p>';}
+  else if(p==='chat'){var M=muteState();
+    h='<div class="jcrd">'+tgl('all',M.all,'Bisukan semua chat','Tidak ada notifikasi dari chat mana pun')+'</div>'+
+    '<div class="jlbl">Grup</div><div class="jcrd">'+tgl('grp',M.grp,'Bisukan semua grup')+M.groups.map(function(g){return tgl('g:'+g.code,g.on,esc(g.name),'','jsub');}).join('')+(M.groups.length?'':'<div class="jrow"><span class="g jrs" style="font-weight:400">Belum ikut grup. Grup baru ikut dibisukan kalau "Bisukan semua grup" aktif.</span></div>')+'</div>'+
+    '<div class="jlbl">Chat umum</div><div class="jcrd">'+tgl('umum',M.umum,'Bisukan semua chat umum')+M.rooms.map(function(r){return tgl('u:'+r.k,r.on,esc(r.n),'','jsub');}).join('')+'</div>'+
+    '<p class="jnote">Pesan tetap masuk dan bisa dibaca kapan saja. Chat yang dibisukan tidak memunculkan angka belum dibaca dan gelembung pesan di peta.</p>';}
+  else if(p==='ajak'){h='<p class="jnote" style="margin-top:0">Pesan yang akan dibagikan:</p><div class="jcrd" style="padding:12px 14px;white-space:pre-wrap;font-size:14px;line-height:1.5" id="jajak">'+esc(ajakTxt())+'</div>'+
+    '<button type="button" class="jbig p" data-ajak="share">Bagikan</button><button type="button" class="jbig" data-ajak="copy">Salin pesan</button><p class="jnote">Temanmu bisa memasukkan kode di Profil > Teman supaya kalian langsung terhubung.</p>';}
+  else if(p==='masukan'){h='<div class="jlbl" style="margin-top:0">Jenis</div><div class="jseg" id="jfk">'+[['masalah','Ada masalah'],['ide','Ide fitur'],['lainnya','Lainnya']].map(function(x,i){return '<button type="button" data-fk="'+x[0]+'" aria-pressed="'+(i===0)+'">'+x[1]+'</button>';}).join('')+'</div>'+
+    '<div class="jlbl">Ceritakan</div><textarea id="jfb" maxlength="2000" rows="6" class="jta" placeholder="Contoh: rute dari Bekasi ke Manggarai tidak muncul"></textarea>'+
+    '<div class="jcrd" style="margin-top:12px">'+tgl('finfo',true,'Sertakan info aplikasi','Versi aplikasi dan jenis HP, supaya masalah lebih cepat dicari')+'</div><button type="button" class="jbig p" data-fsend="1">Kirim</button>';}
+  else if(p==='about'){var ver=(document.getElementById('verTag')||{}).textContent||'';var ft=(document.getElementById('foot')||{}).innerHTML||'';
+    h='<div class="jcrd" style="padding:16px;text-align:center"><div style="font-size:20px;font-weight:800">jejakcommuter</div><div class="jrs">Teman perjalanan pengguna transportasi umum Jabodetabek</div><div class="jrs" style="margin-top:6px">'+esc(ver)+'</div></div>'+
+    '<div class="jlbl">Kontak</div><div class="jcrd"><div class="jrow"><span class="g">Email</span><span class="v" style="user-select:text">jejak.tim@gmail.com</span></div></div>'+
+    '<div class="jlbl">Sumber data</div><div class="jcrd" style="padding:12px 14px;font-size:13px;line-height:1.5;color:var(--ink-2)">'+ft+'</div>'+
+    '<div class="jcrd">'+prow2('kebijakan','Kebijakan privasi')+prow2('syarat','Syarat penggunaan')+'</div>';}
+  else if(p==='kebijakan'){h='<div class="jdoc">'+(window.__JCDOC?window.__JCDOC.privasi:'')+'</div>';}
+  else if(p==='syarat'){h='<div class="jdoc">'+(window.__JCDOC?window.__JCDOC.syarat:'')+'</div>';}
+  vTamp.innerHTML=top(p)+'<div class="jscr">'+h+'</div>';}
+function prow2(p,t){return '<button class="jrow" data-sub="'+p+'"><span class="g">'+t+'</span>'+ic('chev',18)+'</button>';}
+function top(p){return '<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+esc(SUBT[p]||'')+'</h2></div>';}
+function ajakTxt(){var c='';try{var X=window.__jchat&&window.__jchat.state;c=X&&X.prof&&X.prof.friend_code||'';}catch(e){}
+  return 'Yuk pakai Jecom, biar bisa saling lihat posisi di perjalanan dan ngobrol bareng sesama pengguna KRL, MRT, dan TransJakarta.\n\nUnduh: https://jejakcommuter.com/unduh'+(c?'\nKode temanku: '+c:'');}
+async function copyTxt(t){try{await navigator.clipboard.writeText(t);if(!(window.__sysCopy&&window.__sysCopy()))toast('Disalin');}catch(e){toast(t);}}
+vTamp.addEventListener('click',async function(e){if(!SUB.cur)return;
+  var b=e.target.closest('[data-a="back"]');if(b){e.stopImmediatePropagation();subBack();return;}
+  var sb=e.target.closest('[data-sub]');if(sb){openSub(sb.dataset.sub,true);return;}
+  var t=e.target.closest('[data-tg]');if(t){onTgl(t.dataset.tg);return;}
+  var sf=e.target.closest('[data-stopf]');if(sf){await window.__jteman.stopFor(sf.dataset.stopf);toast('Berhenti berbagi');drawSub();return;}
+  var sg=e.target.closest('[data-stopg]');if(sg){try{window.__grp.all.forEach(function(x){if(x.G&&x.G.code===sg.dataset.stopg)x.setShare(false);});}catch(_){}toast('Berhenti berbagi');drawSub();return;}
+  var aj=e.target.closest('[data-ajak]');if(aj){var tx=ajakTxt();if(aj.dataset.ajak==='copy'){copyTxt(tx);return;}
+    try{var CS=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Share;if(CS&&CS.share)await CS.share({title:'Jecom',text:tx,dialogTitle:'Ajak lewat'});else if(navigator.share)await navigator.share({title:'Jecom',text:tx});else copyTxt(tx);}catch(_){}return;}
+  var fk=e.target.closest('[data-fk]');if(fk){vTamp.querySelectorAll('[data-fk]').forEach(function(x){x.setAttribute('aria-pressed',String(x===fk));});return;}
+  if(e.target.closest('[data-fsend]')){var J=window.__jchat;if(!(J&&J.uid&&J.uid())){toast('Masuk dengan Google dulu untuk mengirim masukan');try{J.googleLogin();}catch(_){}return;}
+    var body=(vTamp.querySelector('#jfb').value||'').trim();if(body.length<3){toast('Tulis masukanmu dulu');return;}
+    var kind=(vTamp.querySelector('[data-fk][aria-pressed="true"]')||{dataset:{fk:'masalah'}}).dataset.fk,inc=vTamp.querySelector('[data-tg="finfo"] .jtg').classList.contains('on');
+    var info=inc?((document.getElementById('verTag')||{}).textContent||'')+' · '+(isNative()?'Android':'Web')+' · '+navigator.userAgent.replace(/^Mozilla\/5\.0 /,'').slice(0,200):null;
+    try{await J.rpc('feedback_send',{p_kind:kind,p_body:body,p_info:info});toast('Terima kasih, masukan terkirim');subBack();}catch(er){var m=(er&&er.message)||'';toast(m.indexOf('terlalu_banyak')>-1?'Terlalu banyak masukan hari ini':m.indexOf('belum_login')>-1?'Masuk dulu':'Gagal mengirim. Coba lagi');}
+    return;}
+},true);
+function onTgl(k){
+  if(k==='finfo'){var x=vTamp.querySelector('[data-tg="finfo"] .jtg');x.classList.toggle('on');return;}
+  if(k==='ghost'){var on=!(window.__ghost&&window.__ghost());if(window.__jteman&&window.__jteman.ghostSet)window.__jteman.ghostSet(on).then(function(){if(SUB.cur==='priv')drawSub();});toast(on?'Mode hantu aktif. Lokasimu tidak dibagikan ke siapa pun':'Mode hantu mati');drawSub();return;}
+  var M=muteState(),v;
+  if(k==='all'){v=!M.all;MUTE.ag=v;MUTE.au=v;MUTE.g={};MUTE.u={};M.groups.forEach(function(g){MUTE.g[g.code]=v;});M.rooms.forEach(function(r){MUTE.u[r.k]=v;});}
+  else if(k==='grp'){v=!M.grp;MUTE.ag=v;MUTE.g={};M.groups.forEach(function(g){MUTE.g[g.code]=v;});}
+  else if(k==='umum'){v=!M.umum;MUTE.au=v;MUTE.u={};M.rooms.forEach(function(r){MUTE.u[r.k]=v;});}
+  else if(k.indexOf('g:')===0){var c=k.slice(2),cur=muteGrp(c);M.groups.forEach(function(g){MUTE.g[g.code]=muteGrp(g.code);});MUTE.g[c]=!cur;MUTE.ag=M.groups.every(function(g){return MUTE.g[g.code];})&&M.groups.length>0;}
+  else if(k.indexOf('u:')===0){var r=k.slice(2),cu=muteRoom(r);M.rooms.forEach(function(x){MUTE.u[x.k]=muteRoom(x.k);});MUTE.u[r]=!cu;MUTE.au=M.rooms.every(function(x){return MUTE.u[x.k];});}
+  muteSave();drawSub();}
+
+/* ---------- bisukan chat ---------- */
+var MUTE={ag:false,au:false,g:{},u:{}};try{var mm=JSON.parse(localStorage.getItem('jc_mute')||'{}');MUTE.ag=!!mm.ag;MUTE.au=!!mm.au;MUTE.g=mm.g||{};MUTE.u=mm.u||{};}catch(e){}
+var ROOMS=[['Umum','General'],['KRL','KRL'],['MRT','MRT'],['LRT','LRT'],['TJ','TransJakarta'],['JL','JakLingko']];
+function muteGrp(c){return c in MUTE.g?!!MUTE.g[c]:!!MUTE.ag;}
+function muteRoom(k){return k in MUTE.u?!!MUTE.u[k]:!!MUTE.au;}
+function muteState(){var gl=[];try{gl=window.__grp?window.__grp.list():[];}catch(e){}
+  var groups=gl.map(function(g){return {code:g.code,name:g.name,on:muteGrp(g.code)};}),rooms=ROOMS.map(function(r){return {k:r[0],n:r[1],on:muteRoom(r[0])};});
+  var grp=groups.length?groups.every(function(g){return g.on;}):!!MUTE.ag,umum=rooms.every(function(r){return r.on;});
+  return {groups:groups,rooms:rooms,grp:grp,umum:umum,all:grp&&umum};}
+function muteSum(){var M=muteState(),n=M.groups.filter(function(g){return g.on;}).length+M.rooms.filter(function(r){return r.on;}).length;return M.all?'Semua chat dibisukan':n?n+' chat dibisukan':'Semua chat aktif';}
+function muteSave(){try{localStorage.setItem('jc_mute',JSON.stringify(MUTE));}catch(e){}try{if(window.__grp)window.__grp.all.forEach(function(x){x.unread=muteGrp(x.G&&x.G.code)?0:x.unread;});}catch(e){}
+  try{var X=window.__jchat&&window.__jchat.state;if(X&&X.unr)for(var k in X.unr)if(muteRoom(k))X.unr[k]=0;}catch(e){}jcBadge();}
+window.__mute={grp:muteGrp,room:muteRoom};
+
+/* ---------- angka belum dibaca di menu Chat ---------- */
+function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}
+  var b=nav.querySelector('[data-t="chat"] .nbd');if(!b)return;b.textContent=n>9?'9+':String(n);b.hidden=!n;
+  var sg=document.querySelector('#jchat [data-x="seg"][data-v="grup"]');if(sg){var gn=0;try{gn=window.__grp.unread();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}}}
+window.__jcBadge=jcBadge;setInterval(jcBadge,2000);
+function renderTamp(){stashPm();
   var ui='1';try{ui=String(+localStorage.getItem('jc_ui')||1);}catch(e){}
   var th='dark',op=85;try{var c=JSON.parse(localStorage.getItem('jc_chat_v1')||'{}');th=c.th||'dark';op=c.op||85;}catch(e){}
   vTamp.innerHTML='<div class="jtop"><button class="jib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>Tampilan</h2></div><div class="jscr">'+
@@ -533,5 +638,5 @@ function init(){
   if(J&&J.map)trackMap(J.map);
 }
 (function w(n){if(window.__jc&&window.__jc.map)return init();if(n>200){return init();}setTimeout(function(){w(n+1);},100);})(0);
-window.__jshell={setTab:setTab,look:LOOK,toast:toast,refreshProf:function(){if(!vProf.hidden)renderProf();},openGrp:function(){var b=$('#grpBtn');if(!b)return;TAB='grup';document.documentElement.dataset.tab='grup';nav.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-current',String(x.dataset.t==='chat'));});vChat.hidden=true;b.click();}};
+window.__jshell={setTab:setTab,look:LOOK,toast:toast,refreshProf:function(){if(!vProf.hidden)renderProf();else if(!vTamp.hidden&&(SUB.cur==='akun'||SUB.cur==='priv'))drawSub();},openGrp:function(){var b=$('#grpBtn');if(!b)return;TAB='grup';document.documentElement.dataset.tab='grup';nav.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-current',String(x.dataset.t==='chat'));});vChat.hidden=true;b.click();}};
 })();

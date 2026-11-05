@@ -9,6 +9,7 @@ const rand=n=>{const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';return Array.from(crypt
 const lum=h=>{h=h||'#1F5FB5';const n=parseInt(h.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (.2126*r+.7152*g+.0722*b)/255;};
 const caseFor=c=>lum(c)<.4?'#FFFFFF':'#14202B';
 const MAXH=2*3600e3;
+const gMuted=c=>{try{return !!(window.__mute&&window.__mute.grp(c));}catch(e){return false;}};
 function mkCode(mode){const c=(mode==='p'?'PW':'AX')[crypto.getRandomValues(new Uint8Array(1))[0]&1];const nm=(P.name||'').toUpperCase().normalize('NFD').replace(/[^A-Z]/g,'');return c+(nm[0]||'X')+rand(4);}
 function parseJoin(s){s=String(s||'').trim();if(!s)return null;
   if(/^https?:/i.test(s)){try{const u=new URL(s);const c=u.searchParams.get('g');if(!c)return null;return{code:c,mode:u.searchParams.get('m')==='p'?'p':'a'};}catch(_){return null;}}
@@ -128,6 +129,8 @@ async function sendRoute(force){if(!G||!G.key)return;const me=G.roster.get(G.me)
   await sendE({t:'route',id:G.me,r},true);}
 
 /* ---------- pesan masuk ---------- */
+const ghost=()=>{try{return !!(window.__ghost&&window.__ghost());}catch(e){return false;}};
+
 const myUid=()=>{try{return (window.__jchat&&window.__jchat.uid&&window.__jchat.uid())||null;}catch(e){return null;}};
 const uidOf=m=>m?(m.id===(G&&G.me)?myUid():(m.uid||null)):null;
 const avOf=m=>{try{const u=uidOf(m);return u&&window.__jav?window.__jav.img(u):null;}catch(e){return null;}};
@@ -170,7 +173,7 @@ async function onMessage(p){
    case'end':{ endLocal(G.viewer?'Perjalanan ini sudah selesai dibagikan.':gName()+' dihentikan oleh pemilik.');return;}
   }
 }
-function bump(){if(!(chatOpen()&&vis()))self.unread++;updBadge();listRefresh();}
+function bump(){if(!(chatOpen()&&vis())&&!gMuted(G.code))self.unread++;updBadge();listRefresh();}
 function mergeChat(msgs){const ids=new Set(G.chat.map(c=>c.id));msgs.forEach(c=>{if(!ids.has(c.id))G.chat.push(c);});G.chat.sort((a,b)=>a.ts-b.ts);updChat();}
 
 /* ---------- roster / pemilik ---------- */
@@ -224,7 +227,7 @@ function endLocal(msg){if(!G)return;const code=G.code,wasGroup=G.mode!=='v';leav
 /* ---------- buat / gabung ---------- */
 async function createGroup(o){
   const code=o.code||mkCode(o.mode);G=newG({code,mode:o.mode,owner:true,max:o.max,exp:o.exp||Date.now()+MAXH,sim:o.sim,confirmed:true,ar:o.ar!==false});
-  G.share={loc:!sharers().some(e=>e!==self),route:!sharers().some(e=>e!==self)&&o.ar!==false};
+  G.share={loc:!ghost()&&!sharers().some(e=>e!==self),route:!ghost()&&!sharers().some(e=>e!==self)&&o.ar!==false};
   G.kp=await ecKP();G.raw=o.mode==='p'?await pwKey(o.pw,code):crypto.getRandomValues(new Uint8Array(32));G.key=await aesFrom(G.raw);G.joined=true;
   G.roster.set(G.me,{id:G.me,name:P.name,color:P.color||COLORS[2][1],dot:P.dot,owner:true,seen:Date.now(),joined:true});
   G.name=String(o.name||('Grup '+(P.name||'Saya'))).trim().slice(0,30);
@@ -233,7 +236,7 @@ async function createGroup(o){
 }
 async function joinGroup(o){
   G=newG({code:o.code,mode:o.mode,owner:false,exp:o.exp||Date.now()+MAXH,ar:o.ar!==false});G.kp=await ecKP();
-  G.share={loc:!sharers().some(e=>e!==self),route:!sharers().some(e=>e!==self)&&o.ar!==false};
+  G.share={loc:!ghost()&&!sharers().some(e=>e!==self),route:!ghost()&&!sharers().some(e=>e!==self)&&o.ar!==false};
   G.roster.set(G.me,{id:G.me,name:P.name,color:P.color||COLORS[2][1],dot:P.dot,owner:false,seen:Date.now(),joined:true});
   await connect();startTimers();
   if(o.mode==='p'){G.raw=await pwKey(o.pw,o.code);G.key=await aesFrom(G.raw);await afterKey();showWait('Menyambung ke grup…');}
@@ -307,7 +310,7 @@ function drawGroup(){const j=J();if(!j||!j.map)return;if(!onMap()){clearMarkers(
     else if(mk){mk.remove();MK.delete(m.id);}});
   [...MK.keys()].forEach(id=>{if(!G.roster.has(id.replace(/^cp-/,''))){MK.get(id).remove();MK.delete(id);}});
   j.map.getSource('grp').setData({type:'FeatureCollection',features:feats});if(G.viewer)fitViewer();}
-function bubble(id,text){if(!onMap())return;const mk=MK.get(id);if(!mk)return;const b=mk.getElement().querySelector('.gb');b.textContent=text;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true;},6000);}
+function bubble(id,text){if(!onMap()||gMuted(G&&G.code))return;const mk=MK.get(id);if(!mk)return;const b=mk.getElement().querySelector('.gb');b.textContent=text;b.hidden=false;clearTimeout(b._t);b._t=setTimeout(()=>{b.hidden=true;},6000);}
 
 /* ---------- tampilan grup ---------- */
 function gName(){return G?(G.mode==='v'?(G.viewer?'Perjalanan':'Bagikan rute'):(G.name||('Grup '+G.code))):'Grup';}
@@ -368,6 +371,7 @@ function routeFromCard(id){const c=G.chat.find(x=>x.id===id);return c&&c.rc;}
 
 /* ---------- berbagi lokasi & rute: hanya di 1 grup ---------- */
 function setShare(on){if(!G)return;
+  if(on&&ghost()){toast('Mode hantu sedang aktif. Matikan dulu di Profil > Privasi.',6000);if(vis()){const sb=$('#gShareBox');if(sb)sb.innerHTML=shareBox();}return;}
   if(on){sharers().filter(e=>e!==self).slice(0,Math.max(0,sharers().length-SHARE_MAX+1)).forEach(e=>e.setShare(false));
     G.share={loc:true,route:!!G.ar};if(J()&&J().locate)J().locate();}
   else G.share={loc:false,route:false};
@@ -414,7 +418,7 @@ async function act(a,el){const id=el&&el.dataset.id;
      if(!S.saved.some(s=>s.from.label===f.label&&s.to.label===t.label)){S.saved.unshift({from:f,to:t});S.saved=S.saved.slice(0,12);try{localStorage.setItem('jc_saved_v3',JSON.stringify(S.saved));}catch(e){}if(typeof window.renderSaved==='function')window.renderSaved();}
      toast('Rute disimpan di Rute tersimpan');break;}
   }}
-function onChange(t){if(!G)return;if(t.id==='gShLoc'){G.share.loc=t.checked;if(!G.share.loc&&!G.share.route){setShare(false);return;}if(G.share.loc&&J()&&J().locate)J().locate();sendHB();listRefresh();}
+function onChange(t){if(!G)return;if(t.checked&&ghost()){t.checked=false;toast('Mode hantu sedang aktif. Matikan dulu di Profil > Privasi.',6000);return;}if(t.id==='gShLoc'){G.share.loc=t.checked;if(!G.share.loc&&!G.share.route){setShare(false);return;}if(G.share.loc&&J()&&J().locate)J().locate();sendHB();listRefresh();}
   if(t.id==='gShRt'){G.share.route=t.checked&&G.ar;if(!G.share.loc&&!G.share.route){setShare(false);return;}G.routeSig='';sendRoute(true);listRefresh();}}
 
 Object.defineProperty(self,'G',{get(){return G;}});
@@ -454,7 +458,7 @@ async function srvLimitInfo(){if(!useServer()||!loggedIn())return null;try{retur
 const isOpen=()=>$('#grp').classList.contains('open');
 function openPanel(v){const el=$('#grp');el.classList.toggle('open',v);el.setAttribute('aria-hidden',!v);$('#grpBtn').hidden=v;if(v){if(window.__closeUrgent)window.__closeUrgent();}}
 window.__closeGrp=()=>openPanel(false);
-function updBadge(){const b=$('#grpBadge');let n=0;groups().forEach(e=>{const G=e.G;if(G&&G.owner)n+=G.pend.length+(G.hreq||[]).length;});b.textContent=n;b.hidden=!n;
+function updBadge(){try{if(window.__jcBadge)window.__jcBadge();}catch(e){}const b=$('#grpBadge');let n=0;groups().forEach(e=>{const G=e.G;if(G&&G.owner)n+=G.pend.length+(G.hreq||[]).length;});b.textContent=n;b.hidden=!n;
   const cb=$('#chatBtn');if(cb){cb.hidden=true;}}
 /* ---------- chat grup layar penuh ---------- */
 const CHK='jc_chat_v1';const CH={op:85,th:'dark'};try{Object.assign(CH,JSON.parse(localStorage.getItem(CHK)||'{}'));}catch(e){}
@@ -480,7 +484,7 @@ function limText(){const gs=groups();const made=LIM?LIM.created_24h:(()=>{try{co
 function rowFor(e){const G=e.G;if(!G)return '';const n=[...G.roster.values()].filter(m=>m.joined!==false).length,me=G.roster.get(G.me)||{};const col=me.color||'#2F5FB5';const nm=e.gName();
   const sh=(G.share.loc||G.share.route)&&G.mode!=='v';const pend=G.owner?G.pend.length:0;
   const sub=G.mode==='v'?(G.viewer?'Melihat perjalanan · sisa ':'Dibagikan lewat tautan · sisa ')+fmtT(G.exp-Date.now()).replace(/:\d\d$/,''):n+'/'+G.max+' anggota · sisa '+fmtT(G.exp-Date.now()).replace(/:\d\d$/,'')+(G.owner?' · pemilik':'');
-  return '<button type="button" class="grow" data-act="gopen" data-code="'+esc(G.code)+'"><span class="gav" style="background:'+esc(col)+'">'+esc((nm.replace(/^Grup\s+/i,'')||'G').charAt(0).toUpperCase())+'</span><span class="gtx"><b>'+esc(nm)+'</b><small>'+esc(sub)+'</small>'+(sh?'<small class="gsh">Lokasi'+(G.ar&&G.share.route?' dan rute':'')+' kamu dibagikan di sini</small>':'')+(pend?'<small class="gsh">'+pend+' orang ingin bergabung</small>':'')+'</span>'+(e.unread?'<span class="gun">'+e.unread+'</span>':'')+'<span class="gchev">›</span></button>';}
+  return '<button type="button" class="grow" data-act="gopen" data-code="'+esc(G.code)+'"><span class="gav" style="background:'+esc(col)+'">'+esc((nm.replace(/^Grup\s+/i,'')||'G').charAt(0).toUpperCase())+'</span><span class="gtx"><b>'+esc(nm)+'</b><small>'+esc(sub)+'</small>'+(sh?'<small class="gsh">Lokasi'+(G.ar&&G.share.route?' dan rute':'')+' kamu dibagikan di sini</small>':'')+(pend?'<small class="gsh">'+pend+' orang ingin bergabung</small>':'')+'</span>'+(G.mode!=='v'&&gMuted(G.code)?'<small class="gmt">dibisukan</small>':'')+(e.unread?'<span class="gun">'+e.unread+'</span>':'')+'<span class="gchev">›</span></button>';}
 function listRefresh(){const l=$('#gList');if(l){l.innerHTML=ENG.map(rowFor).join('');const lt=$('#gLim');if(lt)lt.textContent=limText();}}
 setInterval(()=>{if($('#gBody')&&$('#gBody').dataset.view==='home'&&$('#gBody').dataset.sub==='home')listRefresh();},1000);
 function showHome(sub){const b=$('#gBody');const q=new URLSearchParams(location.search);const lc=q.get('g'),lm=q.get('m')==='p'?'p':'a';
@@ -517,7 +521,7 @@ function showHome(sub){const b=$('#gBody');const q=new URLSearchParams(location.
 /* ---------- buat / gabung / perjalanan (lintas grup) ---------- */
 function addEngine(){const e=Engine();ENG.push(e);return e;}
 function dropEngine(e){const i=ENG.indexOf(e);if(i>-1)ENG.splice(i,1);if(VIEW===e)VIEW=null;if(MAPE===e)setMap(ENG[0]||null);}
-function noName(){toast('Isi nama kamu dulu di Profil.',5000);try{openPanel(false);window.__jshell.setTab('profil');}catch(e){}}
+function noName(){toast('Isi nama kamu dulu di Profil.',5000);try{openPanel(false);window.__jshell.setTab('profil');if(window.__openSub)window.__openSub('me');}catch(e){}}
 async function createGroup(o){
   if(!P.name){noName();return;}
   if(o.mode==='p'&&!/^\d{6}$/.test(o.pw)){toast('Password harus 6 angka.');return;}
@@ -627,6 +631,7 @@ function boot(){window.__toast=toast;mountSettings();applyProfile();chatApply();
   else if(q.get('v')){const hm=/k=([A-Za-z0-9_-]+)/.exec(location.hash||'');if(hm){const iv2=setInterval(()=>{if(window.__jc){clearInterval(iv2);safe(()=>joinTrip(q.get('v'),hm[1]));}},300);}else toast('Tautan perjalanan tidak lengkap.');}
   const iv=setInterval(()=>{if(window.__jc){clearInterval(iv);applyProfile();}},300);
   window.__grp={get G(){const e=VIEW||groups()[0]||ENG[0];return e?e.G:null;},get all(){return ENG;},P,startTrip,joinTrip,createGroup,joinGroup,shareTo,decim,buildRoute,enc,dec,pwKey,sealTo,openSeal,ecKP,
+    unread:()=>groups().reduce((n,e)=>n+(gMuted(e.G.code)?0:(e.unread||0)),0),
     list:()=>groups().map(e=>({code:e.G.code,name:e.gName(),ar:e.G.ar!==false,sharing:!!(e.G.share.loc||e.G.share.route),owner:e.G.owner,joined:!!e.G.joined})),
     stopGroup:()=>VIEW&&VIEW.stopGroup(),sendChat:(t,q)=>VIEW&&VIEW.sendChat(t,q),approve:id=>VIEW&&VIEW.approve(id),kick:id=>VIEW&&VIEW.kick(id)};}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

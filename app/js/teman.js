@@ -42,8 +42,9 @@ async function avUpload(f){try{const d=await shrink(f);const v=await rpc('avatar
 function pickAv(){if(!T.uid){toast('Masuk dengan Google dulu untuk memasang foto');return;}
  const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)avUpload(f);};i.click();}
-function decoProf(){const a=document.querySelector('.jhd .jav');if(!a)return;const im=avImg(T.uid);
- a.style.backgroundImage=im?'url("'+im+'")':'';a.style.backgroundSize='cover';a.style.backgroundPosition='center';a.classList.toggle('hasimg',!!im);a.style.cursor='pointer';a.dataset.av='pick';a.setAttribute('role','button');a.setAttribute('aria-label','Ubah foto profil');
+function decoProf(){const im=avImg(T.uid);
+ document.querySelectorAll('.jav.me').forEach(x=>{x.style.backgroundImage=im?'url("'+im+'")':'';x.style.backgroundSize='cover';x.style.backgroundPosition='center';x.classList.toggle('hasimg',!!im);});
+ const a=document.querySelector('.jhd .jav');if(!a)return;a.style.cursor='pointer';a.dataset.av='pick';a.setAttribute('role','button');a.setAttribute('aria-label','Ubah foto profil');
  const h=a.parentNode;let x=h.querySelector('.javx');if(!x){x=document.createElement('div');x.className='javx';h.appendChild(x);}
  x.innerHTML='<button type="button" data-av="pick">'+(im?'Ganti foto':'Pasang foto')+'</button>'+(im?'<button type="button" data-av="del">Hapus</button>':'');}
 window.__jtemanDeco=decoProf;
@@ -70,7 +71,7 @@ const css=document.createElement('style');css.textContent=
 '.jtb.p{background:#2F5FB5;border-color:#2F5FB5;color:#fff}'+
 '.jtb:disabled{opacity:.5}'+
 '.jtrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.jtrow:last-child{border-bottom:0}'+
-'.jhd .jav.hasimg{color:transparent!important}.javx{margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end}.javx button{border:1px solid var(--line,#ccd);background:transparent;color:inherit;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}'+
+'.jav.hasimg{color:transparent!important}.javx{margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end}.javx button{border:1px solid var(--line,#ccd);background:transparent;color:inherit;border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}'+
 '.jtav{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}'+
 '.jtn{flex:1;min-width:0}.jtn b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jtn span{font-size:12.5px;color:var(--ink-2)}'+
 '.jttg{width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;border:0;flex:none;padding:0;cursor:pointer}.jttg:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}.jttg.on{background:#2F5FB5}.jttg.on:after{left:21px}'+
@@ -223,7 +224,7 @@ M.addEventListener('click',async e=>{const b=e.target.closest('[data-m]');if(!b)
  if(m==='del'){const id=b.dataset.id;closeM();try{await rpc('friend_remove',{p_other:id});T.open={};await poll(true);toast('Teman dihapus');}catch(er){toast(em(er));}return;}
 });
 let bypass=false;
-document.addEventListener('click',e=>{if(bypass)return;const li=!!(T.uid&&T.st),hg=GL().length>0;if(!li&&!hg)return;
+document.addEventListener('click',e=>{if(bypass)return;if(GH){if(e.target.closest('#rShare')){e.stopPropagation();e.preventDefault();toast('Mode hantu sedang aktif. Matikan dulu di Profil > Privasi.');}return;}const li=!!(T.uid&&T.st),hg=GL().length>0;if(!li&&!hg)return;
  if(e.target.closest('#rShare')){if(!li)return;e.stopPropagation();e.preventDefault();openShare(false);return;}
  if(e.target.closest('#rStart')&&((li&&okF().length)||hg)){e.stopPropagation();e.preventDefault();openShare(true);}},true);
 
@@ -259,11 +260,22 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#jteman [d
  if(t==='more'){T.open[id]=!T.open[id];render();return;}
  if(t==='del'){const f=okF().find(x=>x.id===id);openM('<h3>Hapus '+esc(f?f.name:'teman')+'?</h3><div class="jtfoot">Berbagi lokasi dan rute dengan teman ini ikut berhenti.</div><button type="button" class="jtb p" data-m="del" data-id="'+id+'" style="background:#C62828;border-color:#C62828">Hapus teman</button><button type="button" class="jtb" data-m="x">Batal</button>');return;}
  if(t==='loc'){const f=okF().find(x=>x.id===id);if(!f)return;
+  if(!f.my_loc&&GH){toast('Mode hantu sedang aktif. Matikan dulu di Profil > Privasi.');return;}
   if(f.my_loc){try{await rpc('loc_share_stop',{p_viewer:id});await poll(true);toast('Berhenti berbagi lokasi');}catch(er){toast(em(er));}return;}
   if(okF().filter(x=>x.my_loc).length>=lim('loc')){toast('Lebih dari '+lim('loc')+' teman belum tersedia');return;}
   durFor=id;durSel=1;drawDur();}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='jtCode'){const b=document.querySelector('#jteman [data-t=add]');if(b)b.click();}});
 
-window.__jteman={mount(el){T.mount=el;render();decoProf();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
+/* ---------- mode hantu ---------- */
+let GH=false;try{GH=localStorage.getItem('jc_ghost')==='1';}catch(e){}
+window.__ghost=()=>GH;
+async function ghostSet(on){GH=!!on;try{localStorage.setItem('jc_ghost',GH?'1':'0');}catch(e){}
+ if(!GH)return;
+ try{if(window.__grp)window.__grp.shareTo(null);}catch(e){}
+ if(T.uid&&T.st){const f=okF();try{for(const x of f.filter(x=>x.my_loc))await rpc('loc_share_stop',{p_viewer:x.id});if(f.some(x=>x.my_route))await rpc('route_share_stop');T.push.sig='';await poll(true);}catch(e){toast(em(e));}}}
+function viewers(){return T.st?okF().filter(f=>f.my_loc||f.my_route).map(f=>({id:f.id,name:f.name,loc:f.my_loc,route:!!f.my_route,until:f.my_loc?fmtUntil(f.my_loc):''})):[];}
+async function stopFor(id){const f=okF().find(x=>x.id===id);if(!f)return;
+ try{if(f.my_loc)await rpc('loc_share_stop',{p_viewer:id});if(f.my_route){const rest=myShares().route.filter(x=>x!==id);if(rest.length)await rpc('route_share_set',{p_viewers:rest});else await rpc('route_share_stop');}T.push.sig='';await poll(true);}catch(e){toast(em(e));}}
+window.__jteman={ghostSet,viewers,stopFor,mount(el){T.mount=el;render();decoProf();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
 (function w(n){if(window.__jc&&window.__jc.map&&window.__jchat){ensureChip();poll(true);return;}if(n<300)setTimeout(()=>w(n+1),200);})(0);
 })();
