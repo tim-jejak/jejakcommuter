@@ -185,7 +185,8 @@ async function setUser(u){
 function newLeft(){
  if(!X.prof)return 0;var d=1*864e5-(Date.now()-new Date(X.prof.created_at).getTime());return d>0?Math.ceil(d/864e5):0;
 }
-function roomMsgs(r){return X.msgs.filter(function(m){return m.room===r;});}
+var REP_MS=3600e3;function alive(m){return m.kind!=='report'||Date.now()-m.ts<REP_MS;}
+function roomMsgs(r){return X.msgs.filter(function(m){return m.room===r&&alive(m);});}
 function roomStat(r){
  var sc={};roomMsgs(r).forEach(function(m){if(m.kind!=='report')return;var v=X.votes[m.id]||{ok:0,no:0};sc[m.rep]=(sc[m.rep]||0)+Math.max(0,1+v.ok-v.no);});
  var top=Object.keys(sc).sort(function(a,b){return sc[b]-sc[a];})[0];
@@ -493,7 +494,7 @@ function tick(){
  if(!X.root||X.root.hidden)return;
  X.root.querySelectorAll('[data-ts]').forEach(function(e){var ts=+e.dataset.ts,tx=wt(ts);if(e.textContent!==tx)e.textContent=tx;});
  X.root.querySelectorAll('[data-agots]').forEach(function(e){var ts=+e.dataset.agots,tx=agoTxt(ts);if(e.textContent!==tx)e.textContent=tx;});
- var cut=Date.now()-24*3600e3,n=X.msgs.length;X.msgs=X.msgs.filter(function(m){return m.ts>cut;});
+ var cut=Date.now()-24*3600e3,n=X.msgs.length;X.msgs=X.msgs.filter(function(m){return m.ts>cut&&alive(m);});
  if(n!==X.msgs.length)drawMsgs(false);
 }
 var vt=0;
