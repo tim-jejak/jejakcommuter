@@ -1,0 +1,29 @@
+name: Ambil geometri jalur (sementara)
+on:
+  workflow_dispatch: {}
+  push:
+    paths: ['.github/workflows/bake-geo.yml', 'scripts/bake_geo.py']
+permissions:
+  contents: write
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unduh dan potong peta Jabodetabek
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          pip install osmium
+          curl -sSfL --retry 3 -o java.osm.pbf https://download.geofabrik.de/asia/indonesia/java-latest.osm.pbf
+          osmium extract -b 106.30,-6.80,107.30,-5.95 java.osm.pbf -o jbd.osm.pbf -s smart
+          rm -f java.osm.pbf
+          osmium tags-filter jbd.osm.pbf w/railway=rail,subway,light_rail r/route=bus,trolleybus -o geo.osm.pbf
+      - name: Tulis data/jalur-geo.json
+        run: python3 scripts/bake_geo.py geo.osm.pbf
+      - name: Simpan
+        run: |
+          git config user.name "jejakcommuter-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/jalur-geo.json
+          git commit -m "Geometri jalur untuk cek lokasi laporan" && git pull --rebase -q && git push
