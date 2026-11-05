@@ -8,8 +8,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          mkdir t && cd t && npm init -y >/dev/null && npm i nsfwjs@4 @tensorflow/tfjs@4 >/dev/null 2>&1
-          cat node_modules/nsfwjs/package.json | head -40
-          find node_modules/nsfwjs -maxdepth 4 -not -path "*/node_modules/nsfwjs/node_modules/*" | head -80
-          ls -la node_modules/@tensorflow/tfjs/dist | head -30
-          du -sh node_modules/nsfwjs/dist/* 2>/dev/null | head -20
+          mkdir t && cd t && npm init -y >/dev/null && npm i nsfwjs@4.3.0 @tensorflow/tfjs@4 >/dev/null 2>&1
+          mkdir -p ../vendor/nsfw/models/mobilenet_v2
+          cp node_modules/@tensorflow/tfjs/dist/tf.min.js ../vendor/nsfw/
+          cp node_modules/nsfwjs/dist/browser/nsfwjs.min.js ../vendor/nsfw/
+          cp node_modules/nsfwjs/dist/models/mobilenet_v2/* ../vendor/nsfw/models/mobilenet_v2/
+          cat node_modules/@tensorflow/tfjs/package.json | grep '"version"'
+          ls -la ../vendor/nsfw ../vendor/nsfw/models/mobilenet_v2
+          cd .. && rm -rf t
+          git config user.name "jejakcommuter-bot" && git config user.email "actions@users.noreply.github.com"
+          git add vendor && git commit -m "Tambah pemeriksa foto (nsfwjs + tfjs)" && git push
