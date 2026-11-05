@@ -29,7 +29,7 @@ function ic(n,c){return '<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hid
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function avc(n){var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);return AVC[s%AVC.length];}
 
-var STKL=window.__CD.STKL,EMOL=window.__CD.EMOL,EMC=window.__CD.EMC;
+var STKL=window.__CD.STKL,EMOL=window.__CD.EMOL,EMC=window.__CD.EMC,EMOB=window.__CD.EMOB,STKB=window.__CD.STKB,STKA=window.__CD.STKA,EMN=window.__CD.EMN;
 
 function emoSVG(id,ci){var c=EMC[ci==null?2:ci];return (EMOB[id]||'').replace(/\{F\}/g,c[0]).replace(/\{S\}/g,'#14202B').replace(/\{I\}/g,c[1]);}
 function txtH(t){return esc(t).replace(/⟦([a-z]+):(\d)⟧/g,function(m,id,c){return '<span class="et" contenteditable="false" data-tok="'+id+':'+c+'">'+emoSVG(id,+c)+'</span>';});}
@@ -517,7 +517,7 @@ window.__jchat={
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
  rpc:rpc,errMsg:errMsg,unread:unrTotal,seen:function(){seen();if(X.root)drawTop();},cats:CATS,filter:filterMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
- state:X,seg:segHTML,sb:getSB,stickers:function(){var r3=rank();return STKL.filter(function(x){return TRK[x.t]<=r3;});},stk:function(id){return STKB[id]||'';},names:function(){return X.names;}
+ state:X,seg:segHTML,sb:getSB,stickers:function(){var r3=rank();return STKL.filter(function(x){return TRK[x.t]<=r3;});},stk:function(id){return STKB[id]||'';},emos:function(){return EMOL.map(function(x){return {id:x.id,n:x.n,svg:emoSVG(x.id,2)};});},txtH:txtH,ce2s:ce2s,names:function(){return X.names;}
 };
 /* status login dibaca saat aplikasi dibuka, tidak menunggu tab Chat */
 setTimeout(function(){loadAuth().catch(function(){X.authOn=false;});},400);

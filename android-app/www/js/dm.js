@@ -62,7 +62,7 @@ function draw(){if(!D.on)return;if(D.cur)return;
    (D.list.length?withMsg.map(row).join('')+(noMsg.length?'<div class="dlb">TEMAN LAIN</div>'+noMsg.map(row).join(''):''):'<div class="dempty">Belum ada teman.<br>Tambah teman lewat kode teman di Profil.</div>')+'</div>';
   const i=$('#dmQ');if(i&&D.qf){i.focus();i.setSelectionRange(D.q.length,D.q.length);}}
 function openConv(f){D.cur=Object.assign({},f);D.msgs=[];D.panel=null;
-  V.innerHTML='<div class="dch" id="dmH"></div><div class="dms" id="dmM"><div class="dempty">Memuat…</div></div><div class="dpn" id="dmP"></div><div class="dcomp"><button type="button" class="dib plus" data-d="plus" aria-label="Lainnya">+</button><div class="dinp" id="dmI" contenteditable="true" role="textbox" data-ph="Tulis pesan" aria-label="Tulis pesan"></div><button type="button" class="dib" data-d="stk" aria-label="Stiker">☺</button><button type="button" class="dsnd" data-d="send" aria-label="Kirim"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7z"/></svg></button></div>';
+  V.innerHTML='<div class="dch" id="dmH"></div><div class="dms" id="dmM"><div class="dempty">Memuat…</div></div><div class="dpn" id="dmP"></div><div class="dcomp"><button type="button" class="dib plus" data-d="plus" aria-label="Lainnya"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button><div class="dinp" id="dmI" contenteditable="true" role="textbox" data-ph="Tulis pesan" aria-label="Tulis pesan"></div><button type="button" class="dib" data-d="stk" aria-label="Emot dan stiker"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="3"/></svg></button><button type="button" class="dsnd" data-d="send" aria-label="Kirim"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7z"/></svg></button></div>';
   head();loadConv();}
 function head(){const h=$('#dmH');if(!h||!D.cur)return;const f=D.cur;
   h.innerHTML='<button type="button" class="dbk" data-d="back" aria-label="Kembali">‹</button>'+avHTML(f)+'<span class="g"><b>'+esc(f.name)+'</b><small>'+(f.online?'<span class="don2">● Online</span>':'Offline')+'</small></span><button type="button" class="dgi" data-d="loc" aria-label="Lihat di peta">📍</button>';}
@@ -78,14 +78,17 @@ function drawMsgs(bottom){const el=$('#dmM');if(!el)return;const u=uid();
     if(m.kind==='sticker')body='<div class="dstk">'+(C().stk(m.sticker)||'')+'</div>';
     else if(m.kind==='invite')body=inviteHTML(m,mine);
     else if(m.kind==='route')body=routeHTML(m);
-    else body='<div class="db">'+esc(m.body||'')+'<span class="t">'+hm(m.created_at)+(mine?' ✓':'')+'</span></div>';
+    else body='<div class="db'+(/^(\s*⟦[a-z]+:\d⟧\s*)+$/.test(m.body||'')?' big':'')+'">'+(C().txtH?C().txtH(m.body||''):esc(m.body||''))+'<span class="t">'+hm(m.created_at)+(mine?' ✓':'')+'</span></div>';
     return h+'<div class="dmr'+(mine?' me':'')+(cont?' cont':'')+'">'+body+'</div>';}).join('');
   if(bottom)el.scrollTop=el.scrollHeight;}
 function panel(){const p=$('#dmP');if(!p)return;
   if(D.panel==='plus'){const gs=(window.__grp&&window.__grp.list?window.__grp.list():[]).filter(g=>g.owner);
     p.innerHTML='<div class="dpi"><div class="dplh">UNDANG KE GRUP</div>'+(gs.length?gs.map(g=>'<button type="button" class="dpa" data-d="inv" data-c="'+esc(g.code)+'"><span>👥</span><b>'+esc(g.name)+'</b></button>').join(''):'<div class="dpn0">Belum punya grup. Buat grup dulu di tab Grup.</div>')+
       '<div class="dplh">RUTE</div><button type="button" class="dpa" data-d="route"><span>🗺</span><b>Kirim rute yang sedang dipilih</b></button></div>';}
-  else if(D.panel==='stk'){const st=C().stickers();p.innerHTML='<div class="dpi"><div class="dstg">'+(st.length?st.map(x=>'<button type="button" class="dsb" data-d="stks" data-s="'+esc(x.id)+'">'+x.svg+'</button>').join(''):'<div class="dpn0">Stiker terbuka setelah kamu punya level.</div>')+'</div></div>';}
+  else if(D.panel==='stk'){const st=C().stickers(),em=C().emos?C().emos():[],tab=st.length?(D.etab||'emo'):'emo';
+    p.innerHTML='<div class="dpi">'+(st.length?'<div class="detb"><button type="button" data-d="etab" data-t="emo" aria-pressed="'+(tab==='emo')+'">Emot</button><button type="button" data-d="etab" data-t="stk" aria-pressed="'+(tab==='stk')+'">Stiker</button></div>':'')+
+     (tab==='emo'?'<div class="demg">'+em.map(x=>'<button type="button" class="deb" data-d="emo" data-e="'+esc(x.id)+'" aria-label="'+esc(x.n)+'">'+x.svg+'</button>').join('')+'</div>':
+      '<div class="dstg">'+st.map(x=>'<button type="button" class="dsb" data-d="stks" data-s="'+esc(x.id)+'">'+x.svg+'</button>').join('')+'</div>')+'</div>';}
   else p.innerHTML='';
   V.querySelectorAll('[data-d=plus],[data-d=stk]').forEach(b=>b.setAttribute('aria-pressed',String(D.panel===b.dataset.d)));}
 async function sendRaw(kind,body,sticker,meta){if(!D.cur)return false;
@@ -93,8 +96,9 @@ async function sendRaw(kind,body,sticker,meta){if(!D.cur)return false;
     if(r&&r.id&&!D.msgs.some(x=>x.id===r.id)){D.msgs.push({id:r.id,sender:uid(),kind,body,sticker,meta,created_at:r.created_at||new Date().toISOString()});drawMsgs(true);}
     const f=D.list.find(x=>x.id===D.cur.id);if(f)f.last={id:r.id,kind,body,sender:uid(),created_at:new Date().toISOString(),meta};return true;}
   catch(e){toast(em(e));return false;}}
-async function send(){const i=$('#dmI');if(!i)return;const v=(i.innerText||'').trim();if(!v)return;if(v.length>1000){toast('Pesan terlalu panjang');return;}
-  i.textContent='';if(!(await sendRaw('text',v,null,null)))i.textContent=v;}
+async function send(){const i=$('#dmI');if(!i)return;const v=(C().ce2s?C().ce2s(i):(i.innerText||'')).trim();if(!v)return;if(v.length>1000){toast('Pesan terlalu panjang');return;}
+  const keep=i.innerHTML;i.innerHTML='';if(!(await sendRaw('text',v,null,null)))i.innerHTML=keep;}
+function addEmo(id){const i=$('#dmI');if(!i||!C().txtH)return;i.insertAdjacentHTML('beforeend',C().txtH('⟦'+id+':2⟧'));i.appendChild(document.createTextNode(''));}
 async function sendInvite(code){const t=window.__grp&&window.__grp.invite?window.__grp.invite(code):null;if(!t){toast('Grup tidak ditemukan');return;}
   D.panel=null;panel();if(await sendRaw('invite',null,null,t))toast('Undangan terkirim');}
 async function sendRoute(){D.panel=null;panel();const r=window.__grp&&window.__grp.routeCard?window.__grp.routeCard():null;if(!r){toast('Cari rute dulu di Peta, lalu pilih satu.');return;}await sendRaw('route',null,null,r);}
@@ -109,6 +113,8 @@ V.addEventListener('click',async e=>{
   if(a==='plus'||a==='stk'){D.panel=D.panel===a?null:a;panel();return;}
   if(a==='inv'){sendInvite(b.dataset.c);return;}
   if(a==='route'){sendRoute();return;}
+  if(a==='etab'){D.etab=b.dataset.t;panel();return;}
+  if(a==='emo'){addEmo(b.dataset.e);return;}
   if(a==='stks'){D.panel=null;panel();sendRaw('sticker',null,b.dataset.s,null);return;}
   if(a==='join'){const m=D.msgs.find(x=>String(x.id)===b.dataset.i);if(!m||!window.__grp||!window.__grp.joinInvite)return;close();await window.__grp.joinInvite(m.meta||{});return;}
   if(a==='rsee'){const m=D.msgs.find(x=>String(x.id)===b.dataset.i);if(m&&window.__grp&&window.__grp.seeRoute){close();window.__grp.seeRoute(m.meta||{});}return;}
@@ -118,9 +124,9 @@ V.addEventListener('click',async e=>{
 });
 V.addEventListener('input',e=>{if(e.target.id==='dmQ'){D.q=e.target.value;D.qf=true;draw();D.qf=false;}});
 V.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='dmI'&&!e.shiftKey){e.preventDefault();send();}});
-V.addEventListener('focusin',e=>{if(e.target.id==='dmI'&&D.panel){D.panel=null;panel();}});
+V.addEventListener('focusin',e=>{if(e.target.id==='dmI'&&D.panel==='plus'){D.panel=null;panel();}});
 new MutationObserver(()=>{if(document.documentElement.dataset.tab!=='chat'&&D.on)close();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-tab']});
-window.__jdmBack=()=>{if(!D.on)return false;if(D.cur){D.cur=null;D.panel=null;draw();return true;}close();if(window.__jshell)window.__jshell.setTab('peta');return true;};
+window.__jdmBack=()=>{if(!D.on)return false;if(D.panel){D.panel=null;panel();return true;}if(D.cur){D.cur=null;D.panel=null;draw();return true;}close();if(window.__jshell)window.__jshell.setTab('peta');return true;};
 
 const css=document.createElement('style');css.textContent=
 '#jdm{background:var(--bg)}'+
@@ -164,11 +170,14 @@ const css=document.createElement('style');css.textContent=
 '#jdm .dpn0{font-size:13px;color:var(--ink-2);padding:2px 2px 10px}'+
 '#jdm .dstg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}#jdm .dsb{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:3px;cursor:pointer}#jdm .dsb svg{width:100%;height:auto;display:block}'+
 '#jdm .dcomp{flex:none;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--surface);border-top:1px solid var(--line)}'+
-'#jdm .dib{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:19px;cursor:pointer;flex:none}'+
-'#jdm .dib.plus{background:rgba(19,138,99,.13);border-color:transparent;color:#138A63;font-size:22px}#jdm .dib[aria-pressed="true"]{background:#138A63;color:#fff;border-color:transparent}'+
+'#jdm .dib{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:0;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}#jdm .dib svg,#jdm .dsnd svg{display:block}'+
+'#jdm .detb{display:flex;gap:6px;margin-bottom:10px}#jdm .detb button{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px;font:700 13px system-ui;cursor:pointer}#jdm .detb button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}'+
+'#jdm .demg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}#jdm .deb{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px;cursor:pointer}#jdm .deb svg{width:100%;height:auto;display:block;pointer-events:none}'+
+'#jdm .et{display:inline-block;width:1.4em;height:1.4em;vertical-align:-.3em}#jdm .et svg{width:100%;height:100%;display:block}#jdm .db.big .et{width:2.2em;height:2.2em;vertical-align:-.65em}'+
+'#jdm .dib.plus{background:rgba(19,138,99,.13);border-color:transparent;color:#138A63}#jdm .dib[aria-pressed="true"]{background:#138A63;color:#fff;border-color:transparent}'+
 '#jdm .dinp{flex:1;min-width:0;min-height:40px;max-height:100px;overflow:auto;border-radius:20px;background:var(--surface-2);color:var(--ink);padding:9px 14px;font:15px/22px var(--f-body,system-ui);outline:none;white-space:pre-wrap;overflow-wrap:anywhere}'+
 '#jdm .dinp:empty::before{content:attr(data-ph);color:var(--ink-2)}'+
-'#jdm .dsnd{width:40px;height:40px;border-radius:50%;border:0;background:#138A63;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}';
+'#jdm .dsnd{width:40px;height:40px;padding:0;border-radius:50%;border:0;background:#138A63;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}';
 document.head.appendChild(css);
 window.__jdm={open,close,unread,poll,state:D};
 })();

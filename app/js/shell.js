@@ -67,6 +67,7 @@ function ic(n,sz){sz=sz||22;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 /* ---------- CSS ---------- */
 var css=''+
 ':root{--jnh:calc(60px + var(--sab,env(safe-area-inset-bottom,0px)));--jred:#D8262B}'+
+'html.kbd{--jnh:0px}html.kbd #jnav{display:none}'+
 'html.jn .acct,html.jn #urgentBtn,html.jn #grpBtn,html.jn #chatBtn{display:none!important}'+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
@@ -368,6 +369,12 @@ window.__mute={grp:muteGrp,room:muteRoom};
 function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}try{if(window.__jdm)n+=window.__jdm.unread();}catch(e){}
   var b=nav.querySelector('[data-t="chat"] .nbd');if(!b)return;b.textContent=n>9?'9+':String(n);b.hidden=!n;
   [['grup',function(){return window.__grp.unread();}],['teman',function(){return window.__jdm.unread();}]].forEach(function(z){document.querySelectorAll('[data-x="seg"][data-v="'+z[0]+'"]').forEach(function(sg){var gn=0;try{gn=z[1]();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}});});}
+/* keyboard: menu bawah tidak ikut naik, hanya kolom tulis */
+(function(){var touch=window.matchMedia&&matchMedia('(pointer:coarse)').matches;if(!touch)return;
+  function isTxt(t){return t&&(t.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file|color)$/i.test(t.type)||t.tagName==='TEXTAREA'||t.isContentEditable);}
+  document.addEventListener('focusin',function(e){if(isTxt(e.target)&&innerWidth<=760)document.documentElement.classList.add('kbd');});
+  document.addEventListener('focusout',function(e){if(isTxt(e.target))setTimeout(function(){if(!isTxt(document.activeElement))document.documentElement.classList.remove('kbd');},60);});
+  var maxH=innerHeight;addEventListener('resize',function(){if(innerHeight>maxH)maxH=innerHeight;if(document.documentElement.classList.contains('kbd')&&innerHeight>=maxH*0.9&&maxH-innerHeight<80){setTimeout(function(){if(innerHeight>=maxH*0.9)document.documentElement.classList.remove('kbd');},250);}});})();
 window.__jcBadge=jcBadge;setInterval(jcBadge,2000);
 function renderTamp(){stashPm();
   var ui='1';try{ui=String(+localStorage.getItem('jc_ui')||1);}catch(e){}
