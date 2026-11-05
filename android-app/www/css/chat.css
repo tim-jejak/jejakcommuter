@@ -289,3 +289,8 @@
 #jxs .aggr{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line,#e2e6ec);font-size:14px}
 #jxs .aggr span{display:flex;align-items:center;gap:6px;font-weight:700;min-width:0}
 #jxs .aggr small{color:var(--muted,#5b6673);white-space:nowrap}
+#jchat .plw{display:flex;align-items:center;gap:6px;margin:-2px 2px 10px;font-size:13px;font-weight:700;color:var(--ink)}
+#jchat .plw.no{color:var(--muted);font-weight:600}
+#jchat .plw svg{width:14px;height:14px;color:#138A63}
+#jchat .plo{flex-direction:row;flex-wrap:wrap;margin:-2px 0 10px}
+#jchat .plo button{padding:6px 11px;font-size:13px}

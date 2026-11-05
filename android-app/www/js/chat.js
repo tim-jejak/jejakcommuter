@@ -86,8 +86,8 @@ var ERR={
  rute_belum_ada:'Rute jalur ini belum tersedia',pesan_ditolak:'Pesan ditolak: tautan, nomor, ajakan ke aplikasi lain, atau kata terlarang',
  terlalu_panjang:'Maksimal '+MAXC+' karakter',kosong:'Tulis pesan dulu',laporan_sendiri:'Tidak bisa vote laporan sendiri',laporan_kadaluarsa:'Laporan sudah kedaluwarsa',
  laporan_tidak_ada:'Laporan tidak ditemukan',dikunci:'Chat umum sedang dikunci',ajakan_aktif:'Kamu masih punya ajakan aktif',ajakan_penuh:'Ajakan sudah penuh',
- ajakan_berakhir:'Ajakan sudah berakhir',lokasi_palsu:'Lokasi palsu (fake GPS) terdeteksi',lokasi_jauh:'Hanya bisa saat kamu di stasiun, halte, atau di dalam kereta/bus',
- lokasi_gps:'GPS belum akurat. Tunggu sebentar',lokasi_tunggu:'Tunggu sebentar, memastikan jalurmu',lokasi_tidak_wajar:'Lokasi tidak wajar. Coba lagi nanti',lokasi_salah:'Pilih lokasimu lagi',perbarui_aplikasi:'Perbarui aplikasi Jecom',lokasi_kosong:'Lokasi belum aktif. Nyalakan lokasi lalu coba lagi',undangan_salah:'Grup gagal dibuat'
+ ajakan_berakhir:'Ajakan sudah berakhir',lokasi_palsu:'Lokasi palsu terdeteksi',lokasi_jauh:'Hanya dari stasiun atau kereta',
+ lokasi_gps:'Memastikan lokasi…',lokasi_tunggu:'Memastikan lokasi…',lokasi_tidak_wajar:'Hanya dari stasiun atau kereta',lokasi_salah:'Coba lagi',perbarui_aplikasi:'Perbarui aplikasi Jecom',lokasi_kosong:'Lokasi belum aktif. Nyalakan lokasi lalu coba lagi',undangan_salah:'Grup gagal dibuat'
 };
 function errMsg(e){var m=(e&&e.message)||'';for(var k in ERR)if(m.indexOf(k)>-1)return ERR[k];return /fetch|network|Failed/i.test(m)?'Tidak ada sinyal':'Gagal. Coba lagi';}
 async function rpc(name,args){var sb=await getSB();if(!sb)throw new Error('Server belum diatur');var r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data;}
@@ -260,7 +260,7 @@ function msgHTML(m,agg,cont){
   var v=X.votes[m.id]||{ok:0,no:0},tot=v.ok+v.no,st='',my=X.my[m.id];
   if(tot>=10&&v.ok/tot>=.8)st='ok';else if(tot>=10&&v.ok/tot<.4)st='dbt';
   card=' xcard'+(st==='dbt'?' dbt':'')+'" style="--rc:'+REPC[m.rep];
-  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div>'+(m.stn?'<div class="lcx">'+PINI+'dari '+esc(m.stn)+'</div>':'')+'<div class="l2">'+esc(m.room)+' · <span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span> · berakhir '+Math.max(1,Math.ceil((REP_MS-(Date.now()-m.ts))/60000))+' mnt lagi</div>'+
+  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div><div class="l2">'+(m.stn?'dari '+esc(m.stn)+' · ':'')+'<span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span></div>'+
   (mine?'<div class="l2" style="margin-top:6px">'+v.ok+' membenarkan · '+v.no+' menolak</div>':
   '<div class="vt"><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="ok" aria-pressed="'+(my==='ok')+'">Masih sesuai <b>'+v.ok+'</b></button><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="no" aria-pressed="'+(my==='no')+'">Tidak sesuai <b>'+v.no+'</b></button></div>');
  }else{
@@ -305,8 +305,8 @@ function panelHTML(){
  if(!X.panel||!X.uid)return '';
  if(X.panel==='plus'){var rc2=catOf(X.room),q=QR[rc2];
   var LO=X.loc||{},okL=!!LO.ok,lh='';
-  if(q){lh='<div class="plh">LOKASIMU</div>'+(LO.busy&&!LO.done?'<div class="plw">Memeriksa lokasi…</div>':okL?'<div class="plo">'+LO.opts.map(function(o,i){return '<button data-x="lpick" data-i="'+i+'" aria-pressed="'+(i===(LO.pick||0))+'">'+PINI+'<span>'+esc(o.l)+'</span></button>';}).join('')+'</div>':'<div class="plw no">'+esc(window.__jloc?window.__jloc.why(LO.why):'')+'</div>');}
-  return '<div class="epn plusp">'+(q?lh+'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div><div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"'+(okL?'':' disabled')+'><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
+  if(q){lh=!LO.done?'':okL?(LO.opts.length>1?'<div class="plo">'+LO.opts.map(function(o,i){return '<button data-x="lpick" data-i="'+i+'" aria-pressed="'+(i===(LO.pick||0))+'">'+esc(o.l)+'</button>';}).join('')+'</div>':'<div class="plw">'+PINI+'Dari '+esc(LO.opts[0].l)+'</div>'):'<div class="plw no">'+esc(window.__jloc?window.__jloc.why(LO.why):'')+'</div>';}
+  return '<div class="epn plusp">'+(q?'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div>'+lh+'<div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"'+(okL?'':' disabled')+'><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
    '<button class="pla" data-x="ajak"><span>🙋</span><b>Buat ajakan</b></button></div>';}
  var r3=rank(),cl=r3?[0,1,2,3,4]:[2,0],tab=r3?X.panel:'emo',h='<div class="epn">';
  if(r3)h+='<div class="etabs"><button data-x="ptab" data-t="emo" aria-pressed="'+(tab==='emo')+'">Emot</button><button data-x="ptab" data-t="stk" aria-pressed="'+(tab==='stk')+'">Stiker</button></div>';
@@ -421,7 +421,7 @@ async function vote(id,v){
  var m=X.msgs.filter(function(x){return x.id==id;})[0];if(!m)return;
  if(!window.__jloc)return;
  var lc=await window.__jloc.check(true);
- if(!lc.ok){toast(lc.why==='jauh'?'Vote hanya bisa saat kamu di stasiun, halte, atau di dalam kereta/bus':window.__jloc.why(lc.why));return;}
+ if(!lc.ok){toast(window.__jloc.why(lc.why));return;}
  try{
   var r=await rpc('vote_report2',{p_message:+id,p_v:v,p_track:window.__jloc.track()});
   if(r)X.my[id]=r;else delete X.my[id];

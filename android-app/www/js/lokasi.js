@@ -38,11 +38,9 @@ async function check(force){
   L.busy=(async()=>{try{const r=await C().rpc('loc_eval',{p_track:tr});L.cache=r||{ok:false,why:'gps'};L.cacheAt=Date.now();return L.cache;}
     catch(e){return {ok:false,why:'net'};}finally{L.busy=null;}})();
   return L.busy;}
-const WHY={web:'Laporan hanya bisa dikirim dari aplikasi Android Jecom.',versi:'Perbarui aplikasi Jecom untuk mengirim laporan.',
-  izin:'Izinkan akses lokasi untuk mengirim laporan.',palsu:'Lokasi palsu (fake GPS) terdeteksi. Matikan aplikasi lokasi palsu untuk melapor.',
-  gps:'Mencari GPS… Tunggu sebentar, sebaiknya di tempat terbuka.',tunggu:'Tunggu sebentar, memastikan jalurmu.',
-  jauh:'Kamu tidak sedang di stasiun, halte, atau di dalam kereta/bus. Laporan bisa dikirim saat kamu di sana.',
-  tidak_wajar:'Lokasi tidak wajar. Coba lagi nanti.',net:'Tidak ada sinyal. Coba lagi.'};
+const WHY={web:'Lapor hanya dari aplikasi Android',versi:'Perbarui aplikasi untuk lapor',izin:'Izinkan akses lokasi untuk lapor',
+  palsu:'Lokasi palsu terdeteksi',gps:'Memastikan lokasi…',tunggu:'Memastikan lokasi…',jauh:'Lapor hanya dari stasiun atau kereta',
+  tidak_wajar:'Lapor hanya dari stasiun atau kereta',net:'Tidak ada sinyal'};
 function why(w){return WHY[w]||WHY.jauh;}
 /* catat terus selama aplikasi terbuka dan sudah masuk, supaya laporan dari kereta (300 m) bisa dihitung */
 function sync(){const u=C()&&C().uid&&C().uid();if(!document.hidden&&u&&has())start();else stop();}
