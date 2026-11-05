@@ -67,7 +67,7 @@ function ic(n,sz){sz=sz||22;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 /* ---------- CSS ---------- */
 var css=''+
 ':root{--jnh:calc(60px + var(--sab,env(safe-area-inset-bottom,0px)));--jred:#D8262B}'+
-'html.kbd{--jnh:var(--kbo,0px)}html.kbd #jnav{display:none}'+
+'html.kbd{--jnh:var(--kvb,0px)}html.kbd #jnav{display:none}html.kbd .jsc{top:var(--kvt,0px)}html.kbd #chat.open{position:fixed;top:var(--kvt,0px);bottom:var(--kvb,0px);left:0;right:0;height:auto}html.kbd #chSheet{padding-bottom:0}html.jn.kbd #grp{top:var(--kvt,0px)}'+
 'html.jn .acct,html.jn #urgentBtn,html.jn #grpBtn,html.jn #chatBtn{display:none!important}'+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
@@ -299,7 +299,8 @@ function openSub(p,push){if(push&&SUB.cur)SUB.stack.push(SUB.cur);SUB.cur=p;if((
 function subBack(){stashPm();if(SUB.stack.length){SUB.cur=SUB.stack.pop();drawSub();return;}SUB.cur=null;vTamp.hidden=true;renderProf();vProf.hidden=false;}
 function tgl(k,on,t,s,cls){return '<div class="jrow jtgr'+(cls?' '+cls:'')+'" data-tg="'+esc(k)+'"><span class="g">'+t+(s?'<small class="jrs">'+s+'</small>':'')+'</span><span class="jtg'+(on?' on':'')+'" role="switch" aria-checked="'+!!on+'"></span></div>';}
 function stashPm(){var pm=document.getElementById('pfMount');if(pm&&vTamp.contains(pm)){pm.hidden=true;document.body.appendChild(pm);}}
-function drawSub(){var p=SUB.cur,h='';if(p!=='me')stashPm();
+function drawSub(){var sc=vTamp.querySelector('.jscr'),k=(sc&&vTamp.dataset.p===SUB.cur)?sc.scrollTop:0;drawSub0();vTamp.dataset.p=SUB.cur||'';var n=vTamp.querySelector('.jscr');if(n&&k)n.scrollTop=k;}
+function drawSub0(){var p=SUB.cur,h='';if(p!=='me')stashPm();
   if(p==='me'){var pm=document.getElementById('pfMount');
     h='<div class="jcrd" style="padding:14px"><div class="jhd"><div class="jav me" id="jmeav"></div><div class="jhs" style="flex:1">Foto terlihat oleh: '+(PVN[PV.vis]||'Hanya teman').toLowerCase()+'</div></div></div><div class="jcrd" id="jmebox" style="padding:12px 14px"></div>';
     vTamp.innerHTML=top(p)+'<div class="jscr">'+h+'</div>';
@@ -331,7 +332,7 @@ function drawSub(){var p=SUB.cur,h='';if(p!=='me')stashPm();
     h='<div class="jcrd" style="padding:16px;text-align:center"><div style="font-size:20px;font-weight:800">jejakcommuter</div><div class="jrs">Teman perjalanan pengguna transportasi umum Jabodetabek</div><div class="jrs" style="margin-top:6px">'+esc(ver)+'</div></div>'+
     '<div class="jlbl">Kontak</div><div class="jcrd"><div class="jrow"><span class="g">Email</span><span class="v" style="user-select:text">jejak.tim@gmail.com</span></div></div>'+
     '<div class="jlbl">Sumber data</div><div class="jcrd" style="padding:12px 14px;font-size:13px;line-height:1.5;color:var(--ink-2)">'+ft+'</div>'+
-    '<div class="jcrd">'+prow2('kebijakan','Kebijakan privasi')+prow2('syarat','Syarat penggunaan')+'</div>';}
+    '<div class="jcrd">'+prow2('kebijakan','Kebijakan privasi')+prow2('syarat','Syarat penggunaan')+'</div><p class="jnote" style="text-align:center;margin-top:18px">created by @mfaisalirsyad</p>';}
   else if(p==='kebijakan'){h='<div class="jdoc">'+(window.__JCDOC?window.__JCDOC.privasi:'')+'</div>';}
   else if(p==='syarat'){h='<div class="jdoc">'+(window.__JCDOC?window.__JCDOC.syarat:'')+'</div>';}
   vTamp.innerHTML=top(p)+'<div class="jscr">'+h+'</div>';}
@@ -393,14 +394,18 @@ function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__
   [['grup',function(){return window.__grp.unread();}],['teman',function(){return window.__jdm.unread();}]].forEach(function(z){document.querySelectorAll('[data-x="seg"][data-v="'+z[0]+'"]').forEach(function(sg){var gn=0;try{gn=z[1]();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}});});}
 /* keyboard: menu bawah tetap di tempat (tertutup keyboard), hanya kolom tulis yang naik.
    Tinggi keyboard dibaca dari aplikasi Android (--kb) atau dari layar yang mengecil (web). */
-(function(){var D=document.documentElement,VV=window.visualViewport;
-  function curH(){return Math.min(innerHeight,(VV&&VV.height)||innerHeight);}
-  var maxH=curH();
+(function(){var D=document.documentElement;
+  function vvv(){var v=window.visualViewport,ih=innerHeight;if(!v||v.scale>1.05)return {t:0,h:ih,ih:ih};return {t:Math.max(0,v.offsetTop),h:v.height,ih:ih};}
+  var maxH=Math.min(innerHeight,vvv().h);
   function nkb(){return parseFloat(D.style.getPropertyValue('--kb'))||0;}
-  function upd(){var h=curH(),kb=nkb();if(kb<40&&h>maxH)maxH=h;var sh=Math.max(0,maxH-h),on=kb>40||sh>120;
-    D.style.setProperty('--kbo',(on?Math.max(0,kb-sh):0)+'px');D.classList.toggle('kbd',on);}
-  addEventListener('resize',upd);if(VV)VV.addEventListener('resize',upd);
-  addEventListener('orientationchange',function(){maxH=0;setTimeout(function(){maxH=curH();upd();},600);});
+  /* layar yang terlihat di atas keyboard: semua layar chat dipasang tepat di area ini,
+     jadi header tetap terlihat dan kolom tulis tepat di atas keyboard */
+  function upd(){var v=vvv(),kb=nkb(),h=Math.min(v.ih,v.h);if(kb<40&&h>maxH)maxH=h;
+    var on=kb>40||(maxH-h)>120,vb=Math.min(v.t+v.h,v.ih-kb);
+    D.style.setProperty('--kvt',(on?Math.round(v.t):0)+'px');D.style.setProperty('--kvb',(on?Math.max(0,Math.round(v.ih-vb)):0)+'px');
+    D.classList.toggle('kbd',on);if(on&&(window.scrollY||document.body.scrollTop)){window.scrollTo(0,0);document.body.scrollTop=0;}}
+  addEventListener('resize',upd);if(window.visualViewport){visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd);}
+  addEventListener('orientationchange',function(){maxH=0;setTimeout(function(){maxH=Math.min(innerHeight,vvv().h);upd();},600);});
   /* kolom tulis kosong: hapus sisa <br> dari keyboard supaya tulisan "Tulis pesan" muncul lagi */
   document.addEventListener('input',function(e){var t=e.target;if(t&&t.isContentEditable&&!t.textContent&&!t.querySelector('[data-tok],img,svg'))t.innerHTML='';},true);
   window.__kbUpd=upd;upd();})();

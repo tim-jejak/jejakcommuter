@@ -379,3 +379,4 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 #chat .cin .gin{flex:1;min-width:0;height:40px;border-radius:20px;border:0;background:var(--cbub);color:var(--cfg);padding:0 14px}
 #chat .gsnd{width:40px;height:40px;min-width:40px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:#138A63;border-color:#138A63;color:#fff}
 #chat .quick .btn.q{border-radius:999px}
+.jav.me.adm::before{border-radius:14px;inset:-4px}
