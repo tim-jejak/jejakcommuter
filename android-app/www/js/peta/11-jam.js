@@ -33,15 +33,15 @@ const HM=m=>fmt(m).replace(':','.');
 function lineTerm(L){return [cleanName(L.s[0][0]),cleanName(L.s[L.n-1][0])];}
 function depList(L,t,off){const out=[];let c=L.start+off;while(c<t&&c<L.end)c+=L.hw[band(c)];while(out.length<4&&c<L.end){out.push(c);c+=L.hw[band(c)];}return out;}
 function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
-  const nt=$('#shNote');if(nt)nt.hidden=(SCH.v==='mrtst'&&!!MRD)||(SCH.v==='tjline'&&!!TJD)||(SCH.v==='lines'&&((SCH.mode==='mrt'&&!!MRD)||(SCH.mode.startsWith('tj:')&&!!TJD)));
+  const nt=$('#shNote');if(nt)nt.hidden=true;
   const back=(to,txt)=>'<button type="button" class="btn" data-sch="'+to+'" style="margin-bottom:8px">&lsaquo; '+txt+'</button>';
-  if(SCH.v==='modes'){$('#shT').textContent='Jadwal dan rute';$('#shSub').textContent='Sekarang jam '+HM(t)+'. Ketuk satu moda untuk melihat semua lininya.';
+  if(SCH.v==='modes'){$('#shT').textContent='Lini dan rute';$('#shSub').textContent='Ketuk satu moda untuk melihat semua lininya.';
     ensureTJ();ensureMRD();const day=dayKey();
     let rows=SHEETROWS.filter(r=>!(TJD&&['brt','tj','mikro'].includes(r[0]))).map(([k,n,c])=>({k,n,c,M:MODES[k],run:t>=MODES[k].start&&t<MODES[k].end,cnt:LINES.filter(L=>L.cls===k).length}));
     if(TJD){TJCAT.forEach(([cat,n,c])=>{const rs=Object.values(TJD.routes).filter(x=>x.cat===cat);if(!rs.length)return;const run=rs.filter(x=>tjRunning(x,day,t)).length;rows.push({k:'tj:'+cat,n,c,tj:true,cnt:rs.length,run:run>0,runN:run});});}
-    if(MRD){const mr=rows.find(r=>r.k==='mrt');if(mr){const dk=mrtDay();let a=1e9,b=0;MRD.st.forEach(s=>Object.values(s[dk]||{}).forEach(l=>{a=Math.min(a,toMin(l[0]));b=Math.max(b,toMin(l[l.length-1]));}));mr.tj=true;mr.run=t>=a&&t<=b;mr.txt=MRD.st.length+' stasiun · jadwal resmi · '+HM(a)+' sampai '+HM(b);}}
+    if(MRD){const mr=rows.find(r=>r.k==='mrt');if(mr){const dk=mrtDay();let a=1e9,b=0;MRD.st.forEach(s=>Object.values(s[dk]||{}).forEach(l=>{a=Math.min(a,toMin(l[0]));b=Math.max(b,toMin(l[l.length-1]));}));mr.tj=true;mr.run=t>=a&&t<=b;mr.txt=MRD.st.length+' stasiun · jadwal resmi';}}
     rows.sort((a,b)=>b.run-a.run);
-    box.innerHTML=rows.map(r=>'<button type="button" class="lrow" data-mode="'+r.k+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+r.c+'">&nbsp;</span> <b>'+esc(r.n)+'</b><div class="small">'+(r.txt?r.txt:r.tj?r.cnt+' lini · data resmi · '+r.runN+' beroperasi sekarang':r.cnt+' lini · perkiraan '+HM(r.M.start)+' sampai '+(r.M.end>=1440?'24.00':HM(r.M.end)))+'</div></div><span><span class="pill '+(r.run?'ok':'stop')+'">'+(r.tj?(r.run?'beroperasi':'berhenti'):(r.run?'sisa '+hm(r.M.end-t):(t<r.M.start?'belum mulai':'berhenti')))+'</span> &rsaquo;</span></button>').join('');return;}
+    box.innerHTML=rows.map(r=>'<button type="button" class="lrow" data-mode="'+r.k+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+r.c+'">&nbsp;</span> <b>'+esc(r.n)+'</b><div class="small">'+(r.txt?r.txt:r.cnt+' lini')+'</div></div><span>&rsaquo;</span></button>').join('');return;}
   if(SCH.v==='lines'&&SCH.mode==='mrt'&&MRD){$('#shT').textContent='MRT Jakarta';$('#shSub').textContent='Jadwal resmi per stasiun, '+(mrtDay()==='we'?'hari libur':'hari biasa')+' ini';
     box.innerHTML=back('modes','Semua moda')+MRD.st.map(s=>'<button type="button" class="lrow" data-mrs="'+s.id+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:#1A237E">&nbsp;</span> <b>'+esc(s.n)+'</b></div><span>&rsaquo;</span></button>').join('');return;}
   if(SCH.v==='mrtst'&&MRD){const s=MRD.st.find(x=>x.id===SCH.mst);if(s){const dk=SCH.day==='wd'||SCH.day==='we'?SCH.day:mrtDay(),dd=s[dk]||{},dirs=Object.keys(dd);let dr=dirs.includes(SCH.mdir)?SCH.mdir:dirs[0];
@@ -67,24 +67,22 @@ function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
       '<p class="small">Estimasi berdasarkan jadwal resmi MRT Jakarta, bukan jaminan. Jam bisa bergeser, datanglah lebih awal. Sumber: <a href="https://jakartamrt.co.id/jadwal-keberangkatan" target="_blank" rel="noopener noreferrer" style="color:inherit">jadwal keberangkatan resmi</a>, diperbarui '+esc(MRD.built||'')+'.</p></div>';
     if(SCH.mall){const n=box.querySelector('[data-next]'),mb=$('#mallBox');if(n&&mb)mb.scrollTop=Math.max(0,n.offsetTop-mb.offsetTop-70);}
     return;}}
-  if(SCH.v==='lines'&&SCH.mode.startsWith('tj:')&&TJD){const cat=SCH.mode.slice(3),ce=TJCAT.find(c=>c[0]===cat),day=dayKey();$('#shT').textContent=ce?ce[1]:cat;$('#shSub').textContent='Data resmi TransJakarta · '+DAYN[day]+' ini';
+  if(SCH.v==='lines'&&SCH.mode.startsWith('tj:')&&TJD){const cat=SCH.mode.slice(3),ce=TJCAT.find(c=>c[0]===cat),day=dayKey();$('#shT').textContent=ce?ce[1]:cat;$('#shSub').textContent='';
     const q=normName(SCH.q||'');let rs=Object.entries(TJD.routes).filter(([k,x])=>x.cat===cat);
     if(q.length>=2)rs=rs.filter(([k,x])=>normName(x.n+' '+x.name).includes(q)||x.d.some(dd=>dd.h.some(h=>normName(h).includes(q))||dd.s.some(i=>normName(TJD.names[i]).includes(q))));
     rs.sort((a,b)=>String(a[1].n).localeCompare(String(b[1].n),'id',{numeric:true}));
     box.innerHTML=back('modes','Semua moda')+'<input id="schQ" type="search" placeholder="Cari lini atau halte" value="'+esc(SCH.q||'')+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line);margin-bottom:6px;font:inherit">'+
-      (rs.length?rs.map(([k,x])=>{const w=tjWin(x,day),run=tjRunning(x,day,t);return '<button type="button" class="lrow" data-tj="'+esc(k)+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.n)+'</b> '+esc(x.name)+'<div class="small">'+(w?HM(w[0])+' sampai '+(w[1]>=1440?'24.00':HM(w[1])):'tidak beroperasi')+(run?' · beroperasi sekarang':'')+'</div></div><span>&rsaquo;</span></button>';}).join(''):'<p class="small">Tidak ada lini yang cocok.</p>');
+      (rs.length?rs.map(([k,x])=>{const w=tjWin(x,day),run=tjRunning(x,day,t);return '<button type="button" class="lrow" data-tj="'+esc(k)+'" style="width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.n)+'</b> '+esc(x.name)+'</div><span>&rsaquo;</span></button>';}).join(''):'<p class="small">Tidak ada lini yang cocok.</p>');
     return;}
   if(SCH.v==='tjline'&&TJD&&TJD.routes[SCH.tj]){const x=TJD.routes[SCH.tj],day=SCH.day||dayKey(),mi=TJIDX[tjKey(x.n)];$('#shT').textContent=x.n+' '+x.name;$('#shSub').textContent=x.cat;
     const tabs=['wd','sat','sun'].map(d=>'<button type="button" class="btn" data-day="'+d+'" style="'+(d===day?'background:#14202B;color:#fff;':'')+'padding:6px 10px">'+DAYN[d]+'</button>').join(' ');
     const dirs=x.d.map(dd=>{const ws=dd.w[day]||[],cur=ws.find(w=>t>=w[0]&&t<w[1]);
       return '<div style="border-top:1px solid var(--line);padding-top:8px"><b>Menuju '+esc(dd.h[0]||'-')+'</b>'+(dd.h.length>1?'<div class="small">Juga: '+esc(dd.h.slice(1).join(', '))+'</div>':'')+
-       '<div class="small" style="margin-top:4px">'+(ws.length?ws.map(w=>HM(w[0])+'–'+(w[1]>=1440?'24.00':HM(w[1]))+': tiap '+w[2]+' mnt').join('<br>'):'Tidak beroperasi pada hari ini.')+'</div>'+
-       (day===dayKey()?'<div class="small"><b>Sekarang:</b> '+(cur?'sekitar tiap '+cur[2]+' mnt <span style="background:#FFE9A8;color:#14202B;border-radius:6px;padding:1px 6px;font-weight:700;font-size:11px">Estimasi</span>':'di luar jam layanan')+'</div>':'')+
-       '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">'+dd.s.length+' pemberhentian</summary><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+dd.s.map(i=>'<li>'+esc(TJD.names[i])+'</li>').join('')+'</ol></details></div>';}).join('');
-    box.innerHTML=back('tjlist','Daftar lini')+'<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.name)+'</b></div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tabs+'</div>'+dirs+
+       '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">'+dd.s.length+' pemberhentian</summary><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+dd.s.map(i=>'<li>'+esc(cleanName(TJD.names[i]))+'</li>').join('')+'</ol></details></div>';}).join('');
+    box.innerHTML=back('tjlist','Daftar lini')+'<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+x.col+'">&nbsp;</span> <b>'+esc(x.name)+'</b></div>'+dirs+
       '<button type="button" class="btn" data-spot="'+esc(SCH.tj)+'">Tampilkan jalur di peta</button>'+
-      '<p class="small">Sumber: TransJakarta (data GTFS resmi), diperbarui '+esc(TJD.built||'')+'. Jarak antar bus berbasis frekuensi resmi, bukan jam berangkat per bus, jadi hanya estimasi. Waktu tunggu nyata bisa lebih lama, datanglah lebih awal dan cek informasi resmi TransJakarta.</p></div>';return;}
-  if(SCH.v==='lines'){const row=SHEETROWS.find(r=>r[0]===SCH.mode),M=MODES[SCH.mode];$('#shT').textContent=row[1];$('#shSub').textContent=HM(M.start)+' sampai '+(M.end>=1440?'24.00':HM(M.end))+' (perkiraan)';
+      '</div>';return;}
+  if(SCH.v==='lines'){const row=SHEETROWS.find(r=>r[0]===SCH.mode),M=MODES[SCH.mode];$('#shT').textContent=row[1];$('#shSub').textContent='';
     const q=normName(SCH.q||'');let ls=LINES.filter(L=>L.cls===SCH.mode);
     if(q.length>=2)ls=ls.filter(L=>normName(L.label+' '+L.name).includes(q)||L.s.some(s=>normName(s[0]).includes(q)));
     ls.sort((a,b)=>String(a.label).localeCompare(String(b.label),'id',{numeric:true}));
@@ -93,15 +91,8 @@ function renderSheet(){const t=Math.floor(S.t),box=$('#shList');
     return;}
   const L=LINES[SCH.line];if(!L){SCH.v='modes';return renderSheet();}const [a,b]=lineTerm(L),run=t>=L.start&&t<L.end;
   $('#shT').textContent=L.label;$('#shSub').textContent=a+' ↔ '+b;
-  const f=(x)=>'tiap '+x+' mnt';const dl=(from,off)=>{const d=depList(L,t,off);return '<div class="small"><b>Dari '+esc(from)+':</b> '+(d.length?d.map(HM).join(' · '):'tidak ada lagi hari ini')+'</div>';};
-  box.innerHTML=back('lines','Daftar lini')+
-   '<div style="display:grid;gap:8px"><div><span class="lb" style="background:'+L.col+'">&nbsp;</span> <b>'+esc(L.name||L.label)+'</b> <span class="pill '+(run?'ok':'stop')+'">'+(run?'sisa '+hm(L.end-t):(t<L.start?'belum mulai':'berhenti'))+'</span></div>'+
-   '<div class="small">Rute: '+esc(a)+' &harr; '+esc(b)+' (dua arah) · '+L.n+' pemberhentian · ±'+Math.round(L.len/1000)+' km</div>'+
-   '<div class="small"><b>Jam operasional (perkiraan):</b> '+HM(L.start)+' sampai '+(L.end>=1440?'24.00':HM(L.end))+'</div>'+
-   '<div class="small"><b>Jarak antar kendaraan (perkiraan):</b><br>Jam sibuk (07.00–09.00, 17.00–19.00): '+f(L.hw.peak)+'<br>Siang dan sore: '+f(L.hw.off)+'<br>Malam (21.00–06.00): '+f(L.hw.late)+'</div>'+
-   '<div><b>Keberangkatan berikutnya (perkiraan)</b>'+dl(a,0)+dl(b,2)+'</div>'+
-   '<button type="button" class="btn" data-show="'+L.idx+'">Tampilkan jalur di peta</button>'+
-   '<div><b>Pemberhentian berurutan</b><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+L.s.map(s=>'<li>'+esc(cleanName(s[0]))+'</li>').join('')+'</ol></div></div>';}
+  box.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="btn" data-sch="lines">&lsaquo; Daftar lini</button><button type="button" class="btn" data-show="'+L.idx+'" style="flex:1">Tampilkan jalur di peta</button></div>'+
+   '<div><b>'+L.n+' pemberhentian</b><ol style="margin:6px 0 0;padding-left:22px;font-size:13.5px;line-height:1.5">'+L.s.map(s=>'<li>'+esc(cleanName(s[0]))+'</li>').join('')+'</ol></div>';}
 const SPOT={on:false,dirs:[],di:0,sel:-1,title:'',sub:'',col:'#1A237E',back:null,single:false};
 function spotData(){if(!mapReady)return;const d=SPOT.dirs[SPOT.di];if(!d)return;const fs=[];
   if(d.line&&d.line.length>1)fs.push({type:'Feature',properties:{col:SPOT.col},geometry:{type:'LineString',coordinates:d.line}});

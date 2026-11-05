@@ -13,6 +13,6 @@ const REFCOL={B:'#E4002B',C:'#1E78C8',R:'#3FA535',T:'#8D5A2B',TP:'#E0589F',A:'#6
 const CLSCOL={brt:'#F39C12',tj:'#E59866',mikro:'#16A085'};
 function band(t){if((t>=420&&t<540)||(t>=1020&&t<1140))return 'peak';if(t>=1260||t<360)return 'late';return 'off';}
 function isNight(t){return t>=1260||t<300;}
-function cleanName(n){return String(n).replace(/\s+(Bank\b.*|Grab|Indomaret|BCA|BNI|BRI|Mandiri|Astra|Mastercard|Summarecon|Sinarmas.*|Telkomsel|Tokopedia|Shopee)$/i,'').replace(/^(Stasiun|Halte)\s+/i,'').trim();}
+function cleanName(n){return String(n).replace(/\s+Arah\s+(Barat|Timur|Utara|Selatan)(\s+Daya|\s+Laut)?\b/ig,'').replace(/\s+(Bank\b.*|Grab|Indomaret|BCA|BNI|BRI|Mandiri|Astra|Mastercard|Summarecon|Sinarmas.*|Telkomsel|Tokopedia|Shopee)$/i,'').replace(/^(Stasiun|Halte)\s+/i,'').trim();}
 function normName(n){return cleanName(n).toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();}
 function decodePoly(s){let i=0,la=0,lo=0,out=[];while(i<s.length){let b,sh=0,r=0;do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5}while(b>=32);la+=(r&1)?~(r>>1):(r>>1);sh=0;r=0;do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5}while(b>=32);lo+=(r&1)?~(r>>1):(r>>1);out.push([lo/1e5,la/1e5]);}return out;}
