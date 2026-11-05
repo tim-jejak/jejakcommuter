@@ -67,7 +67,7 @@ function ic(n,sz){sz=sz||22;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 /* ---------- CSS ---------- */
 var css=''+
 ':root{--jnh:calc(60px + var(--sab,env(safe-area-inset-bottom,0px)));--jred:#D8262B}'+
-'html.kbd{--jnh:var(--kvb,0px)}html.kbd #jnav{display:none}html.kbd .jsc{top:var(--kvt,0px)}html.kbd #chat.open{position:fixed;top:var(--kvt,0px);bottom:var(--kvb,0px);left:0;right:0;height:auto}html.kbd #chSheet{padding-bottom:0}html.jn.kbd #grp{top:var(--kvt,0px)}'+
+'html.kbd{--jnh:var(--kvb,0px)}html.kbd #jnav{display:none}html.kbd .jsc{top:var(--kvt,0px)}html.kbd #chat.open{position:fixed;top:var(--kvt,0px);bottom:var(--kvb,0px);left:0;right:0;height:auto}html.kbd #chSheet{padding-bottom:0}html.kbd .jsc::after{content:"";position:absolute;left:0;right:0;top:100%;height:calc(var(--kvb,0px) + 40px);background:var(--surface);pointer-events:none}html.kbd #chat.open::after{content:"";position:absolute;left:0;right:0;top:100%;height:calc(var(--kvb,0px) + 40px);background:rgb(var(--cbg));pointer-events:none}html.jn.kbd #grp{top:var(--kvt,0px)}'+
 'html.jn .acct,html.jn #urgentBtn,html.jn #grpBtn,html.jn #chatBtn{display:none!important}'+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
