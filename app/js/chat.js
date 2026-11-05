@@ -86,7 +86,8 @@ var ERR={
  rute_belum_ada:'Rute jalur ini belum tersedia',pesan_ditolak:'Pesan ditolak: tautan, nomor, ajakan ke aplikasi lain, atau kata terlarang',
  terlalu_panjang:'Maksimal '+MAXC+' karakter',kosong:'Tulis pesan dulu',laporan_sendiri:'Tidak bisa vote laporan sendiri',laporan_kadaluarsa:'Laporan sudah kedaluwarsa',
  laporan_tidak_ada:'Laporan tidak ditemukan',dikunci:'Chat umum sedang dikunci',ajakan_aktif:'Kamu masih punya ajakan aktif',ajakan_penuh:'Ajakan sudah penuh',
- ajakan_berakhir:'Ajakan sudah berakhir',lokasi_kosong:'Lokasi belum aktif. Nyalakan lokasi lalu coba lagi',undangan_salah:'Grup gagal dibuat'
+ ajakan_berakhir:'Ajakan sudah berakhir',lokasi_palsu:'Lokasi palsu (fake GPS) terdeteksi',lokasi_jauh:'Hanya bisa saat kamu di stasiun, halte, atau di dalam kereta/bus',
+ lokasi_gps:'GPS belum akurat. Tunggu sebentar',lokasi_tunggu:'Tunggu sebentar, memastikan jalurmu',lokasi_tidak_wajar:'Lokasi tidak wajar. Coba lagi nanti',lokasi_salah:'Pilih lokasimu lagi',perbarui_aplikasi:'Perbarui aplikasi Jecom',lokasi_kosong:'Lokasi belum aktif. Nyalakan lokasi lalu coba lagi',undangan_salah:'Grup gagal dibuat'
 };
 function errMsg(e){var m=(e&&e.message)||'';for(var k in ERR)if(m.indexOf(k)>-1)return ERR[k];return /fetch|network|Failed/i.test(m)?'Tidak ada sinyal':'Gagal. Coba lagi';}
 async function rpc(name,args){var sb=await getSB();if(!sb)throw new Error('Server belum diatur');var r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data;}
@@ -239,6 +240,7 @@ async function makeGrp(id,auto){var a=X.aj.filter(function(x){return x.id==id;})
 function newLeft(){
  if(!X.prof)return 0;var d=1*864e5-(Date.now()-new Date(X.prof.created_at).getTime());return d>0?Math.ceil(d/864e5):0;
 }
+var PINI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 var REP_MS=3600e3;function alive(m){return m.kind!=='report'||Date.now()-m.ts<REP_MS;}
 function roomMsgs(r){return X.msgs.filter(function(m){return m.room===r&&alive(m);});}
 function roomStat(r){
@@ -258,7 +260,7 @@ function msgHTML(m,agg,cont){
   var v=X.votes[m.id]||{ok:0,no:0},tot=v.ok+v.no,st='',my=X.my[m.id];
   if(tot>=10&&v.ok/tot>=.8)st='ok';else if(tot>=10&&v.ok/tot<.4)st='dbt';
   card=' xcard'+(st==='dbt'?' dbt':'')+'" style="--rc:'+REPC[m.rep];
-  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(m.stn?' · '+esc(m.stn):'')+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div><div class="l2">'+esc(m.room)+' · <span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span> · berakhir '+Math.max(1,Math.ceil((REP_MS-(Date.now()-m.ts))/60000))+' mnt lagi</div>'+
+  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div>'+(m.stn?'<div class="lcx">'+PINI+'dari '+esc(m.stn)+'</div>':'')+'<div class="l2">'+esc(m.room)+' · <span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span> · berakhir '+Math.max(1,Math.ceil((REP_MS-(Date.now()-m.ts))/60000))+' mnt lagi</div>'+
   (mine?'<div class="l2" style="margin-top:6px">'+v.ok+' membenarkan · '+v.no+' menolak</div>':
   '<div class="vt"><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="ok" aria-pressed="'+(my==='ok')+'">Masih sesuai <b>'+v.ok+'</b></button><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="no" aria-pressed="'+(my==='no')+'">Tidak sesuai <b>'+v.no+'</b></button></div>');
  }else{
@@ -284,7 +286,7 @@ function topHTML(){
  var hasDD=(rc==='KRL'||rc==='TJ');
  var nm=X.room.replace(/^(KRL|TJ) /,''),sh=nm==='Rangkasbitung'?'Rangkas':nm;
  var lbl=rc==='KRL'?dotH(nm)+esc(sh):(nm==='Non-BRT'?'Non-BRT':'Koridor '+esc(nm));
- var ag=repAgg(X.room),chips=ag.length?ag.map(function(a){return '<span class="stc" style="--c:'+REPC[a.k]+'">'+esc(a.k)+' <small>'+a.n+' org · '+Math.max(1,Math.round((Date.now()-a.ts)/60000))+' mnt</small></span>';}).join(''):'<span class="stc ok" style="--c:#2F9E6E">Belum ada laporan</span>';
+ var ag=repAgg(X.room),chips=ag.length?ag.map(function(a){return '<button class="stc" data-x="agg" data-k="'+esc(a.k)+'" style="--c:'+REPC[a.k]+'">'+esc(a.k)+' <small>'+a.n+' org · '+Math.max(1,Math.round((Date.now()-a.ts)/60000))+' mnt</small></button>';}).join(''):'<span class="stc ok" style="--c:#2F9E6E">Belum ada laporan</span>';
  h+='<div class="rln">'+(hasDD?'<div class="ddw"><button class="ddb sm" data-x="dd" aria-expanded="'+X.dd+'">'+lbl+ic('chev','s')+'</button>'+(X.dd?'<div class="ddl" role="listbox">'+subRooms(rc).map(function(r){var n2=r.replace(/^(KRL|TJ) /,''),z=roomStat(r);return '<button class="ddi" role="option" data-x="room" data-r="'+esc(r)+'" aria-selected="'+(X.room===r)+'"><span class="dn">'+(rc==='KRL'?dotH(n2):'')+(rc==='TJ'&&n2!=='Non-BRT'?'Koridor ':'')+esc(n2)+'</span>'+(z!=='Normal'?'<i class="sd3" style="background:'+SCOL[z]+'"></i>':'')+'</button>';}).join('')+'</div>':'')+'</div>':'')+
   '<div class="stcs">'+chips+'</div></div>';
  if(X.pins[X.room])h+='<div class="rln2"><span class="pt">'+ic('pin','s')+esc(X.pins[X.room])+'</span></div>';
@@ -302,7 +304,9 @@ function compHTML(){
 function panelHTML(){
  if(!X.panel||!X.uid)return '';
  if(X.panel==='plus'){var rc2=catOf(X.room),q=QR[rc2];
-  return '<div class="epn plusp">'+(q?'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div><div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
+  var LO=X.loc||{},okL=!!LO.ok,lh='';
+  if(q){lh='<div class="plh">LOKASIMU</div>'+(LO.busy&&!LO.done?'<div class="plw">Memeriksa lokasi…</div>':okL?'<div class="plo">'+LO.opts.map(function(o,i){return '<button data-x="lpick" data-i="'+i+'" aria-pressed="'+(i===(LO.pick||0))+'">'+PINI+'<span>'+esc(o.l)+'</span></button>';}).join('')+'</div>':'<div class="plw no">'+esc(window.__jloc?window.__jloc.why(LO.why):'')+'</div>');}
+  return '<div class="epn plusp">'+(q?lh+'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div><div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"'+(okL?'':' disabled')+'><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
    '<button class="pla" data-x="ajak"><span>🙋</span><b>Buat ajakan</b></button></div>';}
  var r3=rank(),cl=r3?[0,1,2,3,4]:[2,0],tab=r3?X.panel:'emo',h='<div class="epn">';
  if(r3)h+='<div class="etabs"><button data-x="ptab" data-t="emo" aria-pressed="'+(tab==='emo')+'">Emot</button><button data-x="ptab" data-t="stk" aria-pressed="'+(tab==='stk')+'">Stiker</button></div>';
@@ -394,24 +398,32 @@ async function sendSticker(id){
   if(mid&&addMsg({id:mid,room:X.room,user_id:X.uid,kind:'sticker',sticker:id,created_at:new Date().toISOString()}))drawMsgs(true);
  }catch(e){toast(errMsg(e));}
 }
+/* lokasi untuk lapor: dicek ulang tiap 4 detik selama panel + terbuka */
+var locT=null;
+function locLoop(){clearTimeout(locT);if(X.panel!=='plus'||!QR[catOf(X.room)]||!window.__jloc)return;
+ X.loc=X.loc||{};X.loc.busy=true;if(!X.loc.done)drawPanel();
+ window.__jloc.check().then(function(r){var pk=X.loc&&X.loc.opts&&r.ok&&X.loc.opts[X.loc.pick||0]?X.loc.opts[X.loc.pick||0].l:null;
+  X.loc={ok:!!r.ok,opts:r.opts||[],why:r.why,done:true,pick:0};if(pk)r.opts&&r.opts.forEach(function(o,i){if(o.l===pk)X.loc.pick=i;});
+  if(X.panel==='plus')drawPanel();locT=setTimeout(locLoop,4000);});}
 async function lapor(n){
- X.rdd=false;X.panel=null;drawTop();drawComp();drawPanel();
  if(!need())return;
- toast('Mengecek lokasi…');
- var f=await getFix();
+ var LO=X.loc||{};if(!LO.ok||!LO.opts||!LO.opts.length){toast(window.__jloc?window.__jloc.why(LO.why):'Gagal');return;}
+ var loc=LO.opts[LO.pick||0].l;
+ X.rdd=false;X.panel=null;drawTop();drawComp();drawPanel();
  try{
-  var id=await rpc('post_report',{p_room:X.room,p_rep:n,p_lat:f?f.lat:null,p_lng:f?f.lng:null,p_acc:f?f.acc:null,p_age:f?f.age:null,p_stn:null});
+  var id=await rpc('post_report2',{p_room:X.room,p_rep:n,p_track:window.__jloc.track(),p_loc:loc});
   toast('Laporan terkirim ke '+X.room);
-  if(id&&addMsg({id:id,room:X.room,user_id:X.uid,kind:'report',rep:n,created_at:new Date().toISOString()})){X.votes[id]={ok:0,no:0};drawTop();drawMsgs(true);}
+  if(id&&addMsg({id:id,room:X.room,user_id:X.uid,kind:'report',rep:n,stn:loc,created_at:new Date().toISOString()})){X.votes[id]={ok:0,no:0};drawTop();drawMsgs(true);}
  }catch(e){toast(errMsg(e));}
 }
 async function vote(id,v){
  if(!need())return;
  var m=X.msgs.filter(function(x){return x.id==id;})[0];if(!m)return;
- toast('Mengecek lokasi…');
- var f=await getFix();
+ if(!window.__jloc)return;
+ var lc=await window.__jloc.check(true);
+ if(!lc.ok){toast(lc.why==='jauh'?'Vote hanya bisa saat kamu di stasiun, halte, atau di dalam kereta/bus':window.__jloc.why(lc.why));return;}
  try{
-  var r=await rpc('vote_report',{p_message:+id,p_v:v,p_lat:f?f.lat:null,p_lng:f?f.lng:null,p_acc:f?f.acc:null,p_age:f?f.age:null});
+  var r=await rpc('vote_report2',{p_message:+id,p_v:v,p_track:window.__jloc.track()});
   if(r)X.my[id]=r;else delete X.my[id];
   await loadVotes();drawTop();drawMsgs(false);
  }catch(e){toast(errMsg(e));}
@@ -429,7 +441,9 @@ function onClick(e){
  if(X.lpF&&t.classList.contains('emb')){X.lpF=false;return;}
  var a=t.dataset.x,d=t.dataset;
  if(a==='seg'){if(d.v==='grup'&&window.__jshell&&window.__jshell.openGrp)window.__jshell.openGrp();else if(d.v==='teman'&&window.__jdm)window.__jdm.open();return;}
- if(a==='plus'){X.panel=X.panel==='plus'?null:'plus';X.emPick=null;drawComp();drawPanel();return;}
+ if(a==='plus'){X.panel=X.panel==='plus'?null:'plus';X.emPick=null;drawComp();drawPanel();if(X.panel==='plus')locLoop();return;}
+ if(a==='lpick'){X.loc.pick=+d.i;drawPanel();return;}
+ if(a==='agg'){sheet('agg',d.k);return;}
  if(a==='ajak'){X.panel=null;drawComp();drawPanel();if(!need())return;if(banned()){toast(banTxt());return;}sheet('ajak');return;}
  if(a==='ajikut'){ajIkut(d.i);return;}
  if(a==='ajgrp'){makeGrp(d.i,false);return;}
@@ -491,6 +505,9 @@ function sheet(kind,arg){
   h='<b>Blokir '+esc(n2)+'?</b><p>Pesannya tidak akan terlihat lagi di chat kamu.</p><button class="jb dng" data-s="blk2" data-i="'+arg+'">Blokir</button><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='name'){
   h='<b>Ubah nama</b><input class="jfld" id="jxname" maxlength="30" value="'+esc(X.prof?X.prof.name:'')+'" aria-label="Nama"><button class="jb pri" data-s="name2">Simpan</button><button class="jb" data-s="x">Batal</button>';
+ }else if(kind==='agg'){
+  var rl=roomMsgs(X.room).filter(function(x){return x.kind==='report'&&x.rep===arg;}).sort(function(a,b){return b.ts-a.ts;});
+  h='<b>'+esc(arg)+' di '+esc(X.room)+'</b><div class="aggl">'+rl.map(function(x){return '<div class="aggr"><span>'+PINI+esc(x.stn||'Lokasi tidak tercatat')+'</span><small>'+esc((X.names[x.user_id]||{}).name||'Pengguna')+' · '+agoTxt(x.ts)+'</small></div>';}).join('')+'</div><button class="jb" data-s="x">Tutup</button>';
  }else if(kind==='ajak'){
   h='<b>Buat ajakan</b><textarea class="jfld" id="jxaj" maxlength="90" rows="3" placeholder="Contoh: Ngopi bareng di Stasiun Sudirman, ada yang mau?" aria-label="Isi ajakan"></textarea><p class="sm">Untuk 5 orang di sekitarmu, aktif 30 menit. Utamakan keamanan: bertemu di tempat ramai.</p><button class="jb pri" data-s="ajak2">Buat ajakan</button><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='ajbatal'){

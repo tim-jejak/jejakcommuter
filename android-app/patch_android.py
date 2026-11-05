@@ -24,7 +24,17 @@ ma=glob.glob('android/app/src/main/java/**/MainActivity.java',recursive=True)
 assert ma, 'MainActivity tidak ditemukan'
 open(ma[0],'w',encoding='utf-8').write('''package id.jejak.commuter;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Looper;
+import android.os.SystemClock;
+import androidx.core.content.ContextCompat;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
@@ -55,6 +65,51 @@ public class MainActivity extends BridgeActivity {
       getSharedPreferences("jc", MODE_PRIVATE).edit().putBoolean("full", full).apply();
       runOnUiThread(() -> applyMode());
     }
+  }
+
+  /* ===== jejak GPS untuk laporan, dengan tanda lokasi palsu (mock) ===== */
+  private final Object locLock = new Object();
+  private JSONArray locBuf = new JSONArray();
+  private LocationListener locL = null;
+  private boolean locPerm() {
+    return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+  }
+  private void locAdd(Location l) {
+    try {
+      boolean mock = Build.VERSION.SDK_INT >= 31 ? l.isMock() : l.isFromMockProvider();
+      long t = System.currentTimeMillis() - (SystemClock.elapsedRealtimeNanos() - l.getElapsedRealtimeNanos()) / 1000000L;
+      JSONObject o = new JSONObject();
+      o.put("t", t); o.put("lat", l.getLatitude()); o.put("lon", l.getLongitude());
+      o.put("acc", l.hasAccuracy() ? l.getAccuracy() : 99); o.put("mock", mock ? 1 : 0); o.put("p", String.valueOf(l.getProvider()));
+      synchronized (locLock) { if (locBuf.length() > 400) locBuf = new JSONArray(); locBuf.put(o); }
+    } catch (Exception e) { }
+  }
+  private void locStart() {
+    if (locL != null || !locPerm()) return;
+    LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+    if (lm == null) return;
+    locL = new LocationListener() {
+      @Override public void onLocationChanged(Location l) { locAdd(l); }
+      @Override public void onProviderEnabled(String p) { }
+      @Override public void onProviderDisabled(String p) { }
+      @Override public void onStatusChanged(String p, int st, Bundle b) { }
+    };
+    try {
+      if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, locL, Looper.getMainLooper());
+      if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000L, 0f, locL, Looper.getMainLooper());
+    } catch (SecurityException e) { locL = null; }
+  }
+  private void locStop() {
+    if (locL == null) return;
+    LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+    try { if (lm != null) lm.removeUpdates(locL); } catch (Exception e) { }
+    locL = null;
+  }
+  public class JcLoc {
+    @JavascriptInterface public String start() { if (!locPerm()) return "noperm"; runOnUiThread(() -> locStart()); return "ok"; }
+    @JavascriptInterface public void stop() { runOnUiThread(() -> locStop()); }
+    @JavascriptInterface public String read() { synchronized (locLock) { String r = locBuf.toString(); locBuf = new JSONArray(); return r; } }
   }
 
   private void applyMode() {
@@ -98,6 +153,7 @@ public class MainActivity extends BridgeActivity {
     dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     final WebView wv = bridge.getWebView();
     wv.addJavascriptInterface(new JcInsets(), "JcInsets");
+    wv.addJavascriptInterface(new JcLoc(), "JcLoc");
     ViewCompat.setOnApplyWindowInsetsListener(w.getDecorView(), (v, ins) -> {
       Insets i = ins.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
       float d = getResources().getDisplayMetrics().density;
@@ -114,6 +170,9 @@ public class MainActivity extends BridgeActivity {
 
   @Override
   public void onResume() { super.onResume(); push(); }
+
+  @Override
+  public void onPause() { super.onPause(); locStop(); }
 
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {

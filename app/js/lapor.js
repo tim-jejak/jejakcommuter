@@ -6,7 +6,7 @@ const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 const toast=t=>{if(window.__jshell)window.__jshell.toast(t);};
 const KIND=[['penuh','Penuh','#D64545'],['ramai','Ramai','#E08A00'],['gangguan','Gangguan','#8E24AA'],['tertahan','Tertahan','#1E6FD9']];
 const KN=Object.fromEntries(KIND.map(k=>[k[0],k]));
-const ERR={belum_login:'Masuk dengan Google dulu untuk melapor',sudah_konfirmasi:'Kamu sudah melaporkan ini',terlalu_banyak:'Terlalu banyak laporan. Coba lagi nanti',laporan_berakhir:'Laporan ini sudah berakhir',laporan_salah:'Laporan tidak valid'};
+const ERR={belum_login:'Masuk dengan Google dulu untuk melapor',sudah_konfirmasi:'Kamu sudah melaporkan ini',terlalu_banyak:'Terlalu banyak laporan. Coba lagi nanti',laporan_berakhir:'Laporan ini sudah berakhir',laporan_salah:'Laporan tidak valid',bukan_stasiun_ini:'Kamu harus berada di stasiun/halte ini untuk melapor',perbarui_aplikasi:'Perbarui aplikasi Jecom untuk melapor',lokasi_palsu:'Lokasi palsu (fake GPS) terdeteksi',lokasi_jauh:'Kamu harus berada di stasiun/halte ini untuk melapor',lokasi_gps:'GPS belum akurat. Tunggu sebentar',lokasi_tunggu:'Tunggu sebentar, memastikan lokasimu',lokasi_tidak_wajar:'Lokasi tidak wajar. Coba lagi nanti'};
 function em(e){const m=(e&&e.message)||'';for(const k in ERR)if(m.indexOf(k)>-1)return ERR[k];return 'Gagal. Coba lagi';}
 const R={list:[],at:0,busy:false,open:null};
 const uid=()=>{try{return C()&&C().uid?C().uid():null;}catch(e){return null;}};
@@ -39,8 +39,12 @@ function fill(k){R.open=null;paintBox();load(true);}
 
 document.addEventListener('click',async e=>{const b=e.target.closest('.jrep [data-ro],.jrep [data-rk],.jrep [data-rc]');if(!b)return;e.stopPropagation();
   if(b.dataset.ro){if(!uid()){toast('Masuk dengan Google dulu untuk melapor');try{C().googleLogin();}catch(_){}return;}R.open=b.dataset.ro;paintBox();return;}
-  try{if(b.dataset.rk){await C().rpc('report_add',{p_st:b.dataset.st,p_kind:b.dataset.rk});R.open=null;toast('Terima kasih, laporan terkirim');}
-    else{if(!uid()){toast('Masuk dengan Google dulu untuk melapor');return;}await C().rpc('report_confirm',{p_id:+b.dataset.rc});toast('Terima kasih');}
+  if(b.dataset.rc&&!uid()){toast('Masuk dengan Google dulu untuk melapor');return;}
+  const LC=window.__jloc;if(!LC){toast('Gagal. Coba lagi');return;}
+  const lc=await LC.check(true);
+  if(!lc.ok){toast(LC.why(lc.why));R.open=null;paintBox();return;}
+  try{if(b.dataset.rk){await C().rpc('report_add2',{p_st:b.dataset.st,p_kind:b.dataset.rk,p_track:LC.track()});R.open=null;toast('Terima kasih, laporan terkirim');}
+    else{await C().rpc('report_confirm2',{p_id:+b.dataset.rc,p_track:LC.track()});toast('Terima kasih');}
     await load(true);}catch(er){toast(em(er));R.open=null;paintBox();}});
 
 const css=document.createElement('style');css.textContent=
