@@ -74,9 +74,11 @@ const lb=(L)=>'<span class="lb'+(['tj','brt'].includes(L.cls)?' dark':'')+'" sty
 function stationPopup(id){id=+id;const s=ST[id],t=Math.floor(S.t);
   const ls=[...s.lines].map(i=>LINES[i]);
   let h='<b>'+esc((s.g==='tj'?'Halte ':'Stasiun ')+s.name)+'</b><div style="margin:5px 0">'+ls.slice(0,10).map(lb).join(' ')+(ls.length>10?' +'+(ls.length-10):'')+'</div>';
-  const run=ls.some(L=>runningL(L,t));h+=run?'<span class="pill ok" style="margin-left:0">Beroperasi</span> <span class="small">sampai ±'+fmt(Math.max(...ls.map(L=>L.end)))+' (perkiraan)</span>':'<span class="pill stop" style="margin-left:0">Tidak beroperasi</span>';
+  const k=stKey(s);h+='<div class="jrep" data-st="'+esc(k)+'"></div>';
   h+='<div style="margin-top:7px"><button type="button" class="btn" data-set="from" data-id="'+id+'">Dari sini</button> <button type="button" class="btn" data-set="to" data-id="'+id+'">Ke sini</button></div>';
-  new maplibregl.Popup({offset:10,maxWidth:'320px'}).setLngLat([s.lon,s.lat]).setHTML(h).addTo(map);}
+  new maplibregl.Popup({offset:10,maxWidth:'320px'}).setLngLat([s.lon,s.lat]).setHTML(h).addTo(map);if(window.__lapor)window.__lapor.fill(k);}
+function stKey(s){return (s.g==='tj'?'tj':'rail')+':'+normName(s.name).slice(0,60);}
+window.__stKey=stKey;
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-set]');if(!b)return;const s=ST[+b.dataset.id];setPoint(b.dataset.set,{lat:s.lat,lon:s.lon,label:(s.g==='tj'?'Halte ':'Stasiun ')+s.name},true);document.querySelectorAll('.maplibregl-popup').forEach(p=>p.remove());});
 $('#focusRoute').onchange=e=>{S.focusOn=e.target.checked;draw();};
 $('#map3d').onchange=e=>{S.d3=e.target.checked;set3D(S.d3);};
