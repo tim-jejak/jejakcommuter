@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unduh minimarket, SPBU, dan masjid Jabodetabek dari OpenStreetMap (Overpass) lalu tulis poi.js.
+"""Unduh minimarket, SPBU, masjid, rumah sakit, klinik, dan apotek Jabodetabek dari OpenStreetMap (Overpass) lalu tulis poi.js.
 
 Dijalankan tiap bulan oleh GitHub Actions. Bisa juga dijalankan manual:
     python3 scripts/bake_poi.py                 # unduh lalu tulis poi.js
@@ -15,8 +15,11 @@ QUERIES = {
     "mm": '[%s][timeout:180];(nwr["shop"~"^(convenience|supermarket)$"](%s);nwr["amenity"="fuel"]["brand"~"Shell",i](%s);nwr["amenity"="fuel"]["name"~"Shell",i](%s););out center;',
     "spbu": '[%s][timeout:180];nwr["amenity"="fuel"](%s);out center;',
     "masjid": '[%s][timeout:240];nwr["amenity"="place_of_worship"]["religion"="muslim"](%s);out center;',
+    "rs": '[%s][timeout:180];(nwr["amenity"="hospital"](%s);nwr["healthcare"="hospital"](%s););out center;',
+    "klinik": '[%s][timeout:180];(nwr["amenity"~"^(clinic|doctors)$"](%s);nwr["healthcare"~"^(clinic|doctor|centre)$"](%s););out center;',
+    "apotek": '[%s][timeout:180];(nwr["amenity"="pharmacy"](%s);nwr["healthcare"="pharmacy"](%s););out center;',
 }
-DEFAULT = {"mm": "Minimarket", "spbu": "SPBU", "masjid": "Masjid"}
+DEFAULT = {"mm": "Minimarket", "spbu": "SPBU", "masjid": "Masjid", "rs": "Rumah sakit", "klinik": "Klinik", "apotek": "Apotek"}
 
 def build(k):
     n = QUERIES[k].count("%s") - 1
@@ -89,7 +92,7 @@ def main():
     if "--from-dir" in sys.argv:
         src = sys.argv[sys.argv.index("--from-dir") + 1]
     data = {}
-    for k in ("mm", "spbu", "masjid"):
+    for k in ("mm", "spbu", "masjid", "rs", "klinik", "apotek"):
         if src:
             txt = open(os.path.join(src, k + ".csv"), encoding="utf-8").read()
         else:
@@ -97,7 +100,7 @@ def main():
             time.sleep(10)
         data[k] = parse(k, txt, drop_shell=(k == "spbu"))
         print(k, len(data[k]), "titik")
-    for k, mn in (("mm", 500), ("spbu", 100), ("masjid", 1000)):
+    for k, mn in (("mm", 500), ("spbu", 100), ("masjid", 1000), ("rs", 100), ("klinik", 200), ("apotek", 200)):
         if len(data[k]) < mn:
             raise SystemExit("Data %s terlalu sedikit (%d), poi.js tidak ditimpa" % (k, len(data[k])))
     now = datetime.now(timezone.utc) + timedelta(hours=7)
