@@ -4,6 +4,7 @@
 Dijalankan tiap bulan oleh GitHub Actions. Bisa juga dijalankan manual:
     python3 scripts/bake_poi.py                 # unduh lalu tulis poi.js
     python3 scripts/bake_poi.py --from-dir d    # pakai mm.csv, spbu.csv, masjid.csv yang sudah ada di folder d
+    python3 scripts/bake_poi.py --geojson f     # pakai hasil osmium export (geojsonseq) dari ekstrak Geofabrik
 """
 import json, math, os, re, sys, time, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
@@ -71,6 +72,9 @@ def parse(k, txt, drop_shell=False):
         if drop_shell and re.search("shell", " ".join([name, brand, oper]), re.I):
             continue
         out.append([round(lat, 5), round(lon, 5), name or brand or oper or DEFAULT[k], hours[:60]])
+    return dedupe(out)
+
+def dedupe(out):
     # buang duplikat: nama sama dan jarak < 25 m (mis. titik dan bangunan yang sama)
     out.sort(key=lambda r: (round(r[0], 3), round(r[1], 3)))
     keep, grid = [], {}
@@ -87,12 +91,78 @@ def parse(k, txt, drop_shell=False):
             grid.setdefault(cell, []).append(r)
     return keep
 
+def center(g):
+    t, c = g.get("type"), g.get("coordinates")
+    if t == "Point":
+        return c[1], c[0]
+    pts = []
+    def walk(x):
+        if x and isinstance(x[0], (int, float)):
+            pts.append(x)
+        else:
+            for y in x:
+                walk(y)
+    if t == "Polygon":
+        walk(c[0])
+    elif t == "MultiPolygon":
+        walk(c[0][0])
+    else:
+        walk(c)
+    if not pts:
+        return None
+    return sum(p[1] for p in pts) / len(pts), sum(p[0] for p in pts) / len(pts)
+
+def kinds(t):
+    a, h, sh = t.get("amenity", ""), t.get("healthcare", ""), t.get("shop", "")
+    nm = " ".join([t.get("name", ""), t.get("brand", ""), t.get("operator", "")])
+    out = []
+    if sh in ("convenience", "supermarket") or (a == "fuel" and re.search("shell", nm, re.I)):
+        out.append("mm")
+    if a == "fuel" and not re.search("shell", nm, re.I):
+        out.append("spbu")
+    if a == "place_of_worship" and t.get("religion") == "muslim":
+        out.append("masjid")
+    if a == "hospital" or h == "hospital":
+        out.append("rs")
+    elif a in ("clinic", "doctors") or h in ("clinic", "doctor", "centre"):
+        out.append("klinik")
+    if a == "pharmacy" or h == "pharmacy":
+        out.append("apotek")
+    return out
+
+def from_geojson(path):
+    raw = {k: [] for k in DEFAULT}
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            try:
+                f = json.loads(line)
+            except ValueError:
+                continue
+            t = f.get("properties") or {}
+            ks = kinds(t)
+            if not ks:
+                continue
+            c = center(f.get("geometry") or {})
+            if not c:
+                continue
+            for k in ks:
+                name = t.get("name") or t.get("brand") or t.get("operator") or DEFAULT[k]
+                raw[k].append([round(c[0], 5), round(c[1], 5), name.strip(), (t.get("opening_hours") or "")[:60]])
+    return {k: dedupe(v) for k, v in raw.items()}
+
 def main():
     src = None
     if "--from-dir" in sys.argv:
         src = sys.argv[sys.argv.index("--from-dir") + 1]
     data = {}
-    for k in ("mm", "spbu", "masjid", "rs", "klinik", "apotek"):
+    if "--geojson" in sys.argv:
+        data = from_geojson(sys.argv[sys.argv.index("--geojson") + 1])
+        for k in data:
+            print(k, len(data[k]), "titik")
+    for k in ([] if data else ("mm", "spbu", "masjid", "rs", "klinik", "apotek")):
         if src:
             txt = open(os.path.join(src, k + ".csv"), encoding="utf-8").read()
         else:

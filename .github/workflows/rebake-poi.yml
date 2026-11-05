@@ -14,11 +14,20 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Unduh data dari OpenStreetMap
-        run: python3 scripts/bake_poi.py
+      - name: Unduh peta Jawa dari Geofabrik (data OpenStreetMap)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          curl -sSfL --retry 3 -o java.osm.pbf https://download.geofabrik.de/asia/indonesia/java-latest.osm.pbf
+          osmium extract -b 106.38,-6.80,107.25,-5.95 java.osm.pbf -o jb.osm.pbf
+          osmium tags-filter jb.osm.pbf nwr/amenity=fuel,place_of_worship,hospital,clinic,doctors,pharmacy nwr/shop=convenience,supermarket nwr/healthcare=hospital,clinic,doctor,centre,pharmacy -o poi.osm.pbf
+          osmium export poi.osm.pbf -f geojsonseq -o poi.geojsonseq
+          rm -f java.osm.pbf jb.osm.pbf
+      - name: Tulis poi.js
+        run: python3 scripts/bake_poi.py --geojson poi.geojsonseq
       - name: Simpan bila ada perubahan
         run: |
           git config user.name "jejakcommuter-bot"
           git config user.email "actions@users.noreply.github.com"
           git add poi.js
+          rm -f poi.osm.pbf poi.geojsonseq
           git diff --cached --quiet && echo "Tidak ada perubahan" || (git commit -m "Perbarui data tempat terdekat" && git push)
