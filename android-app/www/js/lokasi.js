@@ -19,10 +19,11 @@ function pull(){if(!has())return;let a=[];try{a=JSON.parse(window.JcLoc.read()||
     if(p&&Math.abs(p.t-s.t)<1500&&p.acc>s.acc)L.buf.pop();
     L.buf.push({t:s.t,lat:s.lat,lon:s.lon,acc:s.acc,mock:s.mock?1:0});});
   if(a.length)thin();}
-function start(){if(L.on||!has())return;let r='';try{r=window.JcLoc.start();}catch(e){}
-  if(r==='noperm'){L.perm=false;try{navigator.geolocation.getCurrentPosition(()=>{L.perm=true;setTimeout(start,300);},()=>{},{timeout:15000});}catch(e){}return;}
-  L.perm=true;L.on=true;clearInterval(L.tmr);L.tmr=setInterval(pull,1000);}
-function stop(){if(!L.on)return;L.on=false;clearInterval(L.tmr);pull();try{window.JcLoc.stop();}catch(e){}}
+/* start = nyalakan/perpanjang pencatat di HP (tetap jalan saat layar terkunci, mati sendiri 30 menit setelah aplikasi terakhir dibuka) */
+function start(){if(!has())return;let r='';try{r=window.JcLoc.start();}catch(e){}
+  if(r==='noperm'){L.perm=false;if(!L.asked){L.asked=1;try{navigator.geolocation.getCurrentPosition(()=>{L.perm=true;L.asked=0;setTimeout(start,300);},()=>{},{timeout:15000});}catch(e){}}return;}
+  L.perm=true;if(!L.on){L.on=true;clearInterval(L.tmr);L.tmr=setInterval(()=>{if(!document.hidden)pull();},1000);}}
+function stop(){if(!L.on)return;L.on=false;clearInterval(L.tmr);L.buf=[];try{window.JcLoc.stop();}catch(e){}}
 function track(){pull();const now=Date.now();return L.buf.filter(s=>now-s.t<=1500000).map(s=>[Math.max(0,Math.round((now-s.t)/100)/10),+s.lat.toFixed(6),+s.lon.toFixed(6),Math.round(s.acc||99),s.mock]);}
 /* hasil: {ok, opts:[{l,st}], why} ; why: web | versi | izin | palsu | gps | tunggu | jauh | tidak_wajar */
 async function check(force){
@@ -42,8 +43,8 @@ const WHY={web:'Lapor hanya dari aplikasi Android',versi:'Perbarui aplikasi untu
   palsu:'Lokasi palsu terdeteksi',gps:'Memastikan lokasi…',tunggu:'Memastikan lokasi…',jauh:'Lapor hanya dari stasiun atau kereta',
   tidak_wajar:'Lapor hanya dari stasiun atau kereta',net:'Tidak ada sinyal'};
 function why(w){return WHY[w]||WHY.jauh;}
-/* catat terus selama aplikasi terbuka dan sudah masuk, supaya laporan dari kereta (300 m) bisa dihitung */
-function sync(){const u=C()&&C().uid&&C().uid();if(!document.hidden&&u&&has())start();else stop();}
+/* selama sudah masuk akun: pencatat di HP diperpanjang tiap kali aplikasi dibuka */
+function sync(){const u=C()&&C().uid&&C().uid();if(!u){stop();return;}if(!document.hidden&&has()){start();pull();}}
 document.addEventListener('visibilitychange',sync);setInterval(sync,5000);setTimeout(sync,1500);
 window.__jloc={check,track,why,native:()=>nat()&&has(),state:L};
 })();
