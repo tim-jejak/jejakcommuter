@@ -47,4 +47,4 @@ W().apply_file(src, locations=True)
 c = {}
 for k, p in OUT: c[k] = c.get(k, 0) + len(p)
 print('ways', len(OUT), 'titik per jenis', c)
-json.dump(OUT, open('data/jalur-geo.json', 'w'), separators=(',', ':'))
+import os; os.makedirs('data', exist_ok=True); json.dump(OUT, open('data/jalur-geo.json', 'w'), separators=(',', ':'))
