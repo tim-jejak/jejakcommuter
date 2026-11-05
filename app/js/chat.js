@@ -134,17 +134,34 @@ async function loadAll(){
 function viewing(){var g=document.getElementById('grp');return !!(X.root&&!X.root.hidden&&document.documentElement.dataset.tab==='chat'&&!(g&&g.classList.contains('open'))&&!document.hidden);}
 function seen(){if(viewing()){var c=catOf(X.room);if(X.unr[c]){X.unr[c]=0;try{if(window.__jcBadge)window.__jcBadge();}catch(_){}}}}
 function unrTotal(){var n=0;for(var k in X.unr){if(!(window.__mute&&window.__mute.room(k)))n+=X.unr[k]||0;}return n;}
+async function onNew(list,fromRt){
+ var got=[];list.forEach(function(m){if(!m||m.hidden)return;if(addMsg(m))got.push(m);});
+ if(!got.length)return;
+ if(!fromRt)X.msgs.sort(function(a,b){return a.ts-b.ts;});
+ got.forEach(function(m){if(m.user_id!==X.uid&&!(viewing()&&m.room===X.room)){var uc=catOf(m.room);if(!(window.__mute&&window.__mute.room(uc))){X.unr[uc]=(X.unr[uc]||0)+1;}}});
+ try{if(window.__jcBadge)window.__jcBadge();}catch(_){}
+ await ensureNames(got.map(function(m){return m.user_id;}));
+ if(got.some(function(m){return m.kind==='report';}))loadVotes().then(function(){drawMsgs(false);});
+ drawTop();drawMsgs(got.some(function(m){return m.user_id===X.uid;}));
+}
+/* susulan: ambil pesan yang terlewat (HP tidur, sinyal putus, realtime terputus) */
+async function catchUp(){
+ if(!X.ready||X.cu)return;var sb=await getSB();if(!sb)return;X.cu=true;
+ try{var last=X.msgs.length?X.msgs[X.msgs.length-1].created_at:new Date(Date.now()-24*3600e3).toISOString();
+  var since=new Date(new Date(last).getTime()-60000).toISOString();
+  var r=await sb.from('messages').select('id,room,user_id,kind,body,sticker,rep,stn,created_at').gt('created_at',since).order('created_at',{ascending:true}).limit(200);
+  if(r.data)await onNew(r.data,false);}catch(e){}finally{X.cu=false;}
+}
 async function subscribe(){
  if(X.ch)return;var sb=await getSB();if(!sb||!sb.channel)return;
- X.ch=sb.channel('jx-msgs').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async function(p){
-  var m=p.new;if(!m||m.hidden)return;
-  if(!addMsg(m))return;
-  if(m.user_id!==X.uid&&!(viewing()&&m.room===X.room)){var uc=catOf(m.room);if(!(window.__mute&&window.__mute.room(uc))){X.unr[uc]=(X.unr[uc]||0)+1;try{if(window.__jcBadge)window.__jcBadge();}catch(_){}}}
-  await ensureNames([m.user_id]);
-  if(m.kind==='report')loadVotes().then(function(){drawMsgs(false);});
-  drawTop();drawMsgs(m.user_id===X.uid);
- }).subscribe();
+ X.ch=sb.channel('jx-msgs').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(p){onNew([p.new],true);})
+ .subscribe(function(st){
+  if(st==='SUBSCRIBED'){catchUp();return;}
+  if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){var c=X.ch;X.ch=null;try{sb.removeChannel(c);}catch(e){}clearTimeout(X.rsT);X.rsT=setTimeout(function(){subscribe();},4000);}
+ });
 }
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&X.ready){catchUp();if(!X.ch)subscribe();}});
+setInterval(function(){if(!document.hidden&&X.ready)catchUp();},20000);
 async function loadAuth(){
  if(X.authOn)return;X.authOn=true;
  var sb=await getSB();if(!sb){X.authOn=false;return;}
@@ -269,11 +286,11 @@ function drawPanel(){var p=el('#jxpanel',X.root);if(p)p.innerHTML=panelHTML();}
 function drawMsgs(toBottom){
  var m=el('#jxmsgs',X.root);if(!m)return;
  var near=m.scrollHeight-m.scrollTop-m.clientHeight<80,st=m.scrollTop;
- var isU=X.room==='Umum',list=isU?X.msgs.slice(-120):roomMsgs(X.room),h;
+ var isU=X.room==='Umum',list=isU?roomMsgs('Umum').slice(-120):roomMsgs(X.room),h;
  if(!X.ready)h='<div class="empty">Memuat…</div>';
  else if(X.err&&!list.length)h='<div class="empty">'+esc(X.err)+'</div>';
  else if(!list.length)h=isU?'<div class="empty">Belum ada pesan.</div>':'<div class="empty">Belum ada laporan di jalur ini.<br>Jadilah yang pertama.</div>';
- else h=list.map(function(x){return msgHTML(x,isU);}).join('');
+ else h=list.map(function(x){return msgHTML(x,false);}).join('');
  m.innerHTML=h;
  if(toBottom||near)m.scrollTop=m.scrollHeight;else m.scrollTop=st;
 }
