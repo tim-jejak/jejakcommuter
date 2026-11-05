@@ -74,6 +74,10 @@ def parse(k, txt, drop_shell=False):
         out.append([round(lat, 5), round(lon, 5), name or brand or oper or DEFAULT[k], hours[:60]])
     return dedupe(out)
 
+def nkey(n):
+    n = re.sub(r"\s+", " ", n.lower()).strip()
+    return re.sub(r"^(rumah sakit|rs\.?)\s+", "rs ", n)
+
 def dedupe(out):
     # buang duplikat: nama sama dan jarak < 25 m (mis. titik dan bangunan yang sama)
     out.sort(key=lambda r: (round(r[0], 3), round(r[1], 3)))
@@ -84,7 +88,7 @@ def dedupe(out):
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 for s in grid.get((cell[0] + dx, cell[1] + dy), []):
-                    if s[2] == r[2] and hav(s, r) < 25:
+                    if nkey(s[2]) == nkey(r[2]) and hav(s, r) < 40:
                         dup = True
         if not dup:
             keep.append(r)
