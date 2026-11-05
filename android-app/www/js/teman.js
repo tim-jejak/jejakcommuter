@@ -226,8 +226,7 @@ M.addEventListener('click',async e=>{const b=e.target.closest('[data-m]');if(!b)
 });
 let bypass=false;
 document.addEventListener('click',e=>{if(bypass)return;if(GH){if(e.target.closest('#rShare')){e.stopPropagation();e.preventDefault();toast('Mode hantu sedang aktif. Matikan dulu di Profil > Privasi.');}return;}const li=!!(T.uid&&T.st),hg=GL().length>0;if(!li&&!hg)return;
- if(e.target.closest('#rShare')){if(!li)return;e.stopPropagation();e.preventDefault();openShare(false);return;}
- if(e.target.closest('#rStart')&&((li&&okF().length)||hg)){e.stopPropagation();e.preventDefault();openShare(true);}},true);
+ if(e.target.closest('#rShare')){e.stopPropagation();e.preventDefault();openShare(false);return;}},true);
 
 /* durasi lokasi */
 let durFor=null,durSel=1;
