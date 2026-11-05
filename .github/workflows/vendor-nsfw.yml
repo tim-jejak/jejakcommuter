@@ -1,0 +1,15 @@
+name: Vendor pemeriksa foto (sementara)
+on: {workflow_dispatch: {}}
+permissions:
+  contents: write
+jobs:
+  v:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir t && cd t && npm init -y >/dev/null && npm i nsfwjs@4 @tensorflow/tfjs@4 >/dev/null 2>&1
+          cat node_modules/nsfwjs/package.json | head -40
+          find node_modules/nsfwjs -maxdepth 4 -not -path "*/node_modules/nsfwjs/node_modules/*" | head -80
+          ls -la node_modules/@tensorflow/tfjs/dist | head -30
+          du -sh node_modules/nsfwjs/dist/* 2>/dev/null | head -20
