@@ -11,7 +11,7 @@ var SCOL={Normal:'#2F9E6E',Padat:'#D9822B',Gangguan:'#D14343'};
 var KRLL=['Bogor','Bekasi','Rangkasbitung','Tangerang','Tj. Priok'];
 var TJK=['1','2','3','4','5','6','7','8','9','10','11','12','13','Non-BRT'];
 var KC={'Bogor':'#E3342F','Bekasi':'#1E6FD9','Rangkasbitung':'#2E9E5B','Tangerang':'#8B5A2B','Tj. Priok':'#E86FA8'};
-var TRK={bronze:1,silver:2,gold:3,diamond:4};
+var TRK={bronze:1,silver:2,gold:3,diamond:4,admin:9};
 var AVC=['#0B8F6A','#2F6FEB','#D6457A','#E0701F','#7A4FD0','#4B5C66'];
 var P={
  send:'<path d="M4 12l16-8-6 16-3-7z"/>',
@@ -155,8 +155,8 @@ async function loadAuth(){
 async function setUser(u){
  var old=X.uid;X.user=u;X.uid=u?u.id:null;X.prof=null;
  if(u){
-  var sb=await getSB();var r=await sb.from('profiles').select('id,name,tier,friend_code,created_at').eq('id',u.id).single();
-  X.prof=r.data||null;if(X.prof){X.names[u.id]={id:u.id,name:X.prof.name,tier:X.prof.tier};
+  var sb=await getSB();var r=await sb.from('profiles').select('id,name,tier,friend_code,created_at,plan').eq('id',u.id).single();
+  X.prof=r.data||null;if(X.prof&&X.prof.plan==='admin')X.prof.tier='admin';if(X.prof){X.names[u.id]={id:u.id,name:X.prof.name,tier:X.prof.tier};
    var ln='';try{ln=JSON.parse(localStorage.getItem('jc_name')||'""')||'';}catch(e){}
    if(!ln&&window.__setName)window.__setName(String(X.prof.name||'').slice(0,16));else if(ln&&ln!==X.prof.name&&window.__syncName)window.__syncName(ln,1);}
  }
@@ -176,7 +176,7 @@ function roomStat(r){
  return top==='Penuh'?'Padat':top==='Kosong'?'Normal':'Gangguan';
 }
 function tinfo(uid){var t=(X.names[uid]||{}).tier;return t?{c:' t-x t-line t-'+t,k:'<span class="tk">'+t[0].toUpperCase()+'</span>'}:{c:'',k:''};}
-function av(uid){var n=(X.names[uid]||{}).name||'?',t=(X.names[uid]||{}).tier;return '<div class="av'+(t==='gold'?' gfr':t==='diamond'?' dfr':'')+'" style="background:'+avc(n)+'">'+esc(n.charAt(0).toUpperCase())+'</div>';}
+function av(uid){var n=(X.names[uid]||{}).name||'?',t=(X.names[uid]||{}).tier;return '<div class="av'+(t==='gold'?' gfr':t==='diamond'?' dfr':t==='admin'?' afr':'')+'" style="background:'+avc(n)+'">'+esc(n.charAt(0).toUpperCase())+'</div>';}
 function msgHTML(m,agg){
  var mine=m.user_id===X.uid,nm=(X.names[m.user_id]||{}).name||'Pengguna',h,body,card='',tc='';
  if(m.kind==='sticker'){
@@ -450,7 +450,7 @@ async function sheetClick(e){
 }
 
 /* ---------- kartu akun di Profil ---------- */
-var TN={bronze:'Bronze',silver:'Silver',gold:'Gold',diamond:'Diamond'};
+var TN={bronze:'Bronze',silver:'Silver',gold:'Gold',diamond:'Diamond',admin:'Admin'};
 function acctHTML(){
  if(!X.uid)return '<button class="jrow" data-ja="login"><span class="g">Masuk dengan Google</span></button>';
  var p=X.prof||{name:'…',tier:'',friend_code:''};

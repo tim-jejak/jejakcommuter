@@ -42,7 +42,8 @@ async function avUpload(f){try{const d=await shrink(f);const v=await rpc('avatar
 function pickAv(){if(!T.uid){toast('Masuk dengan Google dulu untuk memasang foto');return;}
  const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)avUpload(f);};i.click();}
-function decoProf(){const im=avImg(T.uid);
+function admOn(){try{const X=C()&&C().state;return !!(X&&X.prof&&X.prof.tier==='admin');}catch(e){return false;}}
+function decoProf(){const ad=admOn();document.querySelectorAll('.jav.me').forEach(a=>a.classList.toggle('adm',ad));const hn=document.querySelector('.jhd0 .jhn');if(hn){const bd=hn.querySelector('.jadmb');if(ad&&!bd)hn.insertAdjacentHTML('beforeend','<span class="jadmb">ADMIN</span>');else if(!ad&&bd)bd.remove();}const im=avImg(T.uid);
  document.querySelectorAll('.jav.me').forEach(x=>{x.style.backgroundImage=im?'url("'+im+'")':'';x.style.backgroundSize='cover';x.style.backgroundPosition='center';x.classList.toggle('hasimg',!!im);});
  const a=document.querySelector('.jhd .jav');if(!a)return;a.style.cursor='pointer';a.dataset.av='pick';a.setAttribute('role','button');a.setAttribute('aria-label','Ubah foto profil');
  const h=a.parentNode;let x=h.querySelector('.javx');if(!x){x=document.createElement('div');x.className='javx';h.appendChild(x);}
@@ -202,7 +203,7 @@ function drawShare(){const f=T.uid&&T.st?okF():[],max=T.uid&&T.st?lim('route'):5
  const grows=gl.map(g=>{const on=grpSel===g.code,dis=!g.ar||(!on&&grpSel);return '<label class="o'+(dis?' dis':'')+'"><input type="checkbox" data-g="'+esc(g.code)+'"'+(on?' checked':'')+(dis?' disabled':'')+'> '+esc(g.name)+(!g.ar?'<small>rute tidak diizinkan</small>':dis?'<small>belum tersedia</small>':'')+'</label>';}).join('');
  const rows=f.map(x=>{const on=shareSel.has(x.id),dis=!on&&shareSel.size>=max;return '<label class="o'+(dis?' dis':'')+'"><input type="checkbox" data-f="'+esc(x.id)+'"'+(on?' checked':'')+(dis?' disabled':'')+'> '+esc(x.name)+(dis?'<small>belum tersedia</small>':'')+'</label>';}).join('');
  openM('<h3>'+(shareStart?'Mulai dan bagikan rute ke':'Bagikan rute')+'</h3>'+
-  (T.uid&&T.st?'<div class="jtlb">TEMAN · maks '+max+'</div>'+(rows||'<div class="jtfoot" style="padding:4px 2px">Belum ada teman. Tambah teman di Profil.</div>'):'')+
+  (T.uid&&T.st?'<div class="jtlb">TEMAN'+(max>=999?'':' · maks '+max)+'</div>'+(rows||'<div class="jtfoot" style="padding:4px 2px">Belum ada teman. Tambah teman di Profil.</div>'):'')+
   (grows?'<div class="jtlb">GRUP · maks 1</div>'+grows:'')+
   (shareStart?'':'<div class="jtlb">LAINNYA</div><button type="button" class="jtb" data-m="link">Bagikan lewat tautan</button>')+
   '<button type="button" class="jtb p" data-m="ok" style="margin-top:6px">'+(shareStart?'Mulai':'Bagikan')+'</button><button type="button" class="jtb" data-m="x">Batal</button>');}
@@ -250,7 +251,7 @@ function render(){const el=T.mount;if(!el||!document.body.contains(el))return;
   const sub=f.my_loc?'Melihat lokasimu · '+fmtUntil(f.my_loc):'Tidak melihat lokasimu';
   h+='<div class="jtrow">'+av+'<div class="jtn" data-t="more" data-id="'+f.id+'" style="cursor:pointer"><b>'+esc(f.name)+'</b><span>'+esc(sub)+'</span></div><button type="button" class="jttg'+(f.my_loc?' on':'')+'" data-t="loc" data-id="'+f.id+'" aria-label="Izinkan '+esc(f.name)+' melihat lokasimu"></button></div>';
   if(T.open[f.id])h+='<div class="jtx"><button type="button" class="jtb" data-t="del" data-id="'+f.id+'" style="color:var(--urgent,#C62828)">Hapus teman</button></div>';});
- if(T.st&&okF().length)h+='<div class="jtfoot" style="padding-bottom:12px">Lokasi dilihat '+okF().filter(f=>f.my_loc).length+' dari '+lim('loc')+' teman</div>';
+ if(T.st&&okF().length)h+='<div class="jtfoot" style="padding-bottom:12px">Lokasi dilihat '+okF().filter(f=>f.my_loc).length+(lim('loc')>=999?' teman':' dari '+lim('loc')+' teman')+'</div>';
  el.innerHTML=h;const ni=el.querySelector('#jtCode');if(ni){ni.value=val;if(foc){ni.focus();try{ni.setSelectionRange(val.length,val.length);}catch(_){}}}}
 document.addEventListener('click',async e=>{const b=e.target.closest('#jteman [data-t]');if(!b)return;const t=b.dataset.t,id=b.dataset.id;
  if(t==='add'){const i=$('#jtCode');const v=(i&&i.value||'').trim().toUpperCase();if(!/^JC\d{7}$/.test(v)){toast('Kode teman berbentuk JC dan 7 angka');return;}

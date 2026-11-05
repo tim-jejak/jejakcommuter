@@ -362,3 +362,9 @@ html.nav #search,html.nav #row2,html.nav #urgentBtn,html.nav #grpBtn{display:non
 .msg .wav{width:18px;height:18px;border-radius:50%;background-size:cover;background-position:center;flex:none}
 .gmt{display:block;font-size:11.5px;color:var(--ink-2,#6b7680);font-weight:600}
 #jchat .run,.run{display:inline-block;margin-left:5px;background:#D32F2F;color:#fff;border-radius:9px;min-width:17px;height:17px;padding:0 5px;font-size:10.5px;line-height:17px;font-weight:800;box-sizing:border-box;vertical-align:1px}
+@property --jang{syntax:'<angle>';inherits:false;initial-value:0deg}
+.jav.me.adm{position:relative;overflow:visible}
+.jav.me.adm::before{content:"";position:absolute;inset:-4px;padding:4px;border-radius:inherit;background:conic-gradient(from var(--jang),#0b0c0e,#6b727a,#f2f5f8,#8a9199,#0b0c0e,#454a51,#dfe4e9,#0b0c0e);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:jadm 3s linear infinite;pointer-events:none}
+@keyframes jadm{to{--jang:360deg}}
+@media (prefers-reduced-motion:reduce){.jav.me.adm::before{animation:none}}
+.jadmb{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;color:#fff;background:linear-gradient(135deg,#0b0c0e,#5d636b 45%,#cfd5db 55%,#2a2e33);vertical-align:2px}

@@ -480,7 +480,7 @@ function chatDrag(){const H=$('#chH'),C=$('#chat'),Sh=$('#chSheet');if(!H)return
 /* ---------- daftar grup ---------- */
 let LIM=null,limAt=0;
 function limText(){const gs=groups();const made=LIM?LIM.created_24h:(()=>{try{const d=Date.now()-24*3600e3;return JSON.parse(localStorage.getItem('jc_grp_made')||'[]').filter(t=>t>d).length;}catch(e){return 0;}})();
-  const lc=LIM?LIM.lim_create:2,lj=LIM?LIM.lim_join:5;return 'Grup diikuti '+gs.length+'/'+lj+' · Dibuat 24 jam terakhir '+made+'/'+lc;}
+  const lc=LIM?LIM.lim_create:2,lj=LIM?LIM.lim_join:5;if(lc>=999)return 'Grup diikuti '+gs.length+' · Admin: tanpa batas';return 'Grup diikuti '+gs.length+'/'+lj+' · Dibuat 24 jam terakhir '+made+'/'+lc;}
 function rowFor(e){const G=e.G;if(!G)return '';const n=[...G.roster.values()].filter(m=>m.joined!==false).length,me=G.roster.get(G.me)||{};const col=me.color||'#2F5FB5';const nm=e.gName();
   const sh=(G.share.loc||G.share.route)&&G.mode!=='v';const pend=G.owner?G.pend.length:0;
   const sub=G.mode==='v'?(G.viewer?'Melihat perjalanan · sisa ':'Dibagikan lewat tautan · sisa ')+fmtT(G.exp-Date.now()).replace(/:\d\d$/,''):n+'/'+G.max+' anggota · sisa '+fmtT(G.exp-Date.now()).replace(/:\d\d$/,'')+(G.owner?' · pemilik':'');

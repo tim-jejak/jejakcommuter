@@ -206,3 +206,9 @@
 
 #jchat .msgs:has(>.empty){display:flex;align-items:center;justify-content:center;padding-bottom:12vh}
 #jchat .empty{background:none;border:0;padding:0 32px;margin:0;text-shadow:0 0 8px var(--surface),0 0 3px var(--surface)}
+#jchat .ddl.rt{display:block;max-width:calc(100vw - 32px)}
+#jchat .bub.t-line.t-admin{border:2.5px solid transparent;background:linear-gradient(var(--bb),var(--bb)) padding-box,conic-gradient(from var(--ang),#0b0c0e,#5d636b,#e9edf1,#7b828a,#0b0c0e,#3a3f45,#cfd5db,#0b0c0e) border-box;box-shadow:0 0 8px rgba(40,44,50,.35);animation:dsp 4s linear infinite}
+#jchat .bub.t-admin .tk{opacity:1;color:inherit}
+#jchat .av.afr{position:relative}
+#jchat .av.afr::before{content:"";position:absolute;inset:-3px;padding:3px;border-radius:11px;background:conic-gradient(from var(--ang),#0b0c0e,#6b727a,#f2f5f8,#8a9199,#0b0c0e,#454a51,#dfe4e9,#0b0c0e);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:dsp 3s linear infinite}
+@media (prefers-reduced-motion:reduce){#jchat .bub.t-admin,#jchat .av.afr::before{animation:none}}
