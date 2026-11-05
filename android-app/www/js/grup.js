@@ -642,7 +642,8 @@ function boot(){window.__toast=toast;mountSettings();applyProfile();chatApply();
     await safe(()=>joinGroup({code:m.code,mode:m.mode==='p'?'p':'a',tok:m.tok,pw:''}));};
   const routeCard=()=>{const j=J();const r=buildRoute();if(!r||!j||!j.S.from||!j.S.to)return null;const S=j.S;return {f:r.f,t:r.t,ti:r.ti,tot:r.tot,fp:[+S.from.lat.toFixed(6),+S.from.lon.toFixed(6)],tp:[+S.to.lat.toFixed(6),+S.to.lon.toFixed(6)]};};
   const seeRoute=r=>{const j=J();if(!r||!r.fp||!j)return;if(window.__jshell)window.__jshell.setTab('peta');j.setPoint('from',{lat:r.fp[0],lon:r.fp[1],label:r.f},false);j.setPoint('to',{lat:r.tp[0],lon:r.tp[1],label:r.t},false);const go=$('#go');if(go)go.click();};
-  window.__grp={invite,joinInvite,routeCard,seeRoute,get G(){const e=VIEW||groups()[0]||ENG[0];return e?e.G:null;},get all(){return ENG;},P,startTrip,joinTrip,createGroup,joinGroup,shareTo,decim,buildRoute,enc,dec,pwKey,sealTo,openSeal,ecKP,
+  const ajakGroup=async name=>{const before=new Set(ENG);await safe(()=>createGroup({mode:'a',name:String(name||'Ajakan').slice(0,30),ar:true}));const e=ENG.find(x=>!before.has(x)&&x.G&&x.G.owner&&x.G.code);return e?invite(e.G.code):null;};
+  window.__grp={invite,joinInvite,ajakGroup,routeCard,seeRoute,get G(){const e=VIEW||groups()[0]||ENG[0];return e?e.G:null;},get all(){return ENG;},P,startTrip,joinTrip,createGroup,joinGroup,shareTo,decim,buildRoute,enc,dec,pwKey,sealTo,openSeal,ecKP,
     unread:()=>groups().reduce((n,e)=>n+(gMuted(e.G.code)?0:(e.unread||0)),0),
     list:()=>groups().map(e=>({code:e.G.code,name:e.gName(),ar:e.G.ar!==false,sharing:!!(e.G.share.loc||e.G.share.route),owner:e.G.owner,joined:!!e.G.joined})),
     stopGroup:()=>VIEW&&VIEW.stopGroup(),sendChat:(t,q)=>VIEW&&VIEW.sendChat(t,q),approve:id=>VIEW&&VIEW.approve(id),kick:id=>VIEW&&VIEW.kick(id)};}

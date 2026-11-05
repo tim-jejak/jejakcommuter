@@ -37,7 +37,7 @@ function dlen(s){return s.replace(TOK,'.').length;}
 function dcut(s){var o='',n=0,re=/^⟦[a-z]+:\d⟧/,m;while(s.length&&n<MAXC){if(s[0]==='⟦'&&(m=re.exec(s))){o+=m[0];s=s.slice(m[0].length);}else{o+=s[0];s=s.slice(1);}n++;}return o;}
 function ce2s(e){var s='';e.childNodes.forEach(function(n){if(n.nodeType===3)s+=n.nodeValue;else if(n.dataset&&n.dataset.tok)s+='⟦'+n.dataset.tok+'⟧';else if(n.nodeName!=='BR')s+=n.textContent;});return s;}
 
-var BAD=['judi','togel','gacor','maxwin','pinjol','pinjaman online','anjing','bangsat','goblok','tolol','kontol','memek','ngentot'];
+var BAD=['judi','togel','gacor','maxwin','pinjol','pinjaman online'];
 var TLD='com|co\\.id|id|net|org|io|me|xyz|info|biz|site|online|top|vip|cc|link|app|ly|my\\.id|web\\.id|ac\\.id|go\\.id|dev|store|shop|club|live|asia|tv|ai|gl';
 var NUMW={kosong:'0',nol:'0',satu:'1',dua:'2',tiga:'3',empat:'4',lima:'5',enam:'6',tujuh:'7',delapan:'8',sembilan:'9'};
 function numNorm(t){var s=t.replace(/kosong|nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan/g,function(w){return ' '+NUMW[w]+' ';});
@@ -59,7 +59,7 @@ function filterMsg(text){
 
 /* ---------- state ---------- */
 var X={unr:{},sb:null,uid:null,user:null,prof:null,room:'Umum',lastRoom:{KRL:'KRL Bogor',TJ:'TJ 1'},msgs:[],ids:{},names:{},votes:{},my:{},pins:{},
- draft:{},panel:null,emPick:null,emc:{},dd:false,rdd:false,lastSend:0,ready:false,loading:false,ch:null,root:null,tmr:null,busy:false};
+ aj:[],ajRes:{},ajBusy:{},ajDone:{},vs:{points:0,ban:0},draft:{},panel:null,emPick:null,emc:{},dd:false,rdd:false,lastSend:0,ready:false,loading:false,ch:null,root:null,tmr:null,busy:false};
 try{var lr=localStorage.getItem('jx_room');if(lr)X.room=lr;}catch(e){}
 
 function catOf(r){return r==='Umum'?'Umum':r.indexOf('KRL')===0?'KRL':r.indexOf('TJ')===0?'TJ':r==='JakLingko'?'JL':r;}
@@ -85,7 +85,8 @@ var ERR={
  cooldown_laporan:'Satu laporan per jalur tiap 10 menit',gps_belum_akurat:'Lokasi belum akurat. Tunggu GPS',bukan_di_jalur:'Kamu belum berada di jalur ini',
  rute_belum_ada:'Rute jalur ini belum tersedia',pesan_ditolak:'Pesan ditolak: tautan, nomor, ajakan ke aplikasi lain, atau kata terlarang',
  terlalu_panjang:'Maksimal '+MAXC+' karakter',kosong:'Tulis pesan dulu',laporan_sendiri:'Tidak bisa vote laporan sendiri',laporan_kadaluarsa:'Laporan sudah kedaluwarsa',
- laporan_tidak_ada:'Laporan tidak ditemukan'
+ laporan_tidak_ada:'Laporan tidak ditemukan',dikunci:'Chat umum sedang dikunci',ajakan_aktif:'Kamu masih punya ajakan aktif',ajakan_penuh:'Ajakan sudah penuh',
+ ajakan_berakhir:'Ajakan sudah berakhir',lokasi_kosong:'Lokasi belum aktif. Nyalakan lokasi lalu coba lagi',undangan_salah:'Grup gagal dibuat'
 };
 function errMsg(e){var m=(e&&e.message)||'';for(var k in ERR)if(m.indexOf(k)>-1)return ERR[k];return /fetch|network|Failed/i.test(m)?'Tidak ada sinyal':'Gagal. Coba lagi';}
 async function rpc(name,args){var sb=await getSB();if(!sb)throw new Error('Server belum diatur');var r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data;}
@@ -129,6 +130,7 @@ async function loadAll(){
   var pr=await sb.from('pins').select('room,body');X.pins={};(pr.data||[]).forEach(function(p){X.pins[p.room]=p.body;});
   await loadVotes();
   X.ready=true;X.err='';
+  await loadAjak();
  }catch(e){X.err=errMsg(e);X.ready=true;}
  X.loading=false;draw();subscribe();
 }
@@ -162,7 +164,7 @@ async function subscribe(){
  });
 }
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&X.ready){catchUp();if(!X.ch)subscribe();}});
-setInterval(function(){if(!document.hidden&&X.ready)catchUp();},10000);
+setInterval(function(){if(!document.hidden&&X.ready){catchUp();loadAjak();if(banned()===false&&X.vs.ban){X.vs.ban=0;drawComp();}}},10000);
 async function loadAuth(){
  if(X.authOn)return;X.authOn=true;
  var sb=await getSB();if(!sb){X.authOn=false;return;}
@@ -178,9 +180,60 @@ async function setUser(u){
    var ln='';try{ln=JSON.parse(localStorage.getItem('jc_name')||'""')||'';}catch(e){}
    if(!ln&&window.__setName)window.__setName(String(X.prof.name||'').slice(0,16));else if(ln&&ln!==X.prof.name&&window.__syncName)window.__syncName(ln,1);}
  }
- if(old!==X.uid){X.my={};if(X.ready){loadVotes().then(function(){draw();});}}
+ if(old!==X.uid){X.my={};X.vs={points:0,ban:0};loadStatus();if(X.ready){loadVotes().then(function(){draw();});loadAjak();}}
  draw();if(window.__jshell&&window.__jshell.refreshProf)window.__jshell.refreshProf();
 }
+
+/* ---------- pelanggaran ---------- */
+async function loadStatus(){if(!X.uid){X.vs={points:0,ban:0};return;}
+ try{var r=await rpc('my_status');X.vs={points:(r&&r.points)||0,ban:r&&r.ban_until?new Date(r.ban_until).getTime():0};}catch(e){}
+ drawComp();try{if(window.__jshell&&window.__jshell.refreshProf)window.__jshell.refreshProf();}catch(e){}}
+function banned(){return X.vs.ban&&X.vs.ban>Date.now();}
+function hm2(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+'.'+('0'+d.getMinutes()).slice(-2);}
+function banTxt(){if(!banned())return '';var d=new Date(X.vs.ban),n=new Date();var day=d.toDateString()===n.toDateString()?'':(d.getDate()+'/'+(d.getMonth()+1)+' ');return 'Chat umum dikunci sampai '+day+hm2(X.vs.ban);}
+
+/* ---------- ajakan ---------- */
+var AJ_MS=30*60000;
+async function loadAjak(){var sb=await getSB();if(!sb)return;var room=X.room;
+ try{var r=await rpc('ajakan_list',{p_room:room});if(room!==X.room)return;var old=JSON.stringify(X.aj);X.aj=(r||[]).map(function(a){a.ts=new Date(a.created_at).getTime();a.ex=new Date(a.exp).getTime();return a;});
+  ajAuto();if(JSON.stringify(X.aj)!==old)drawMsgs(false);}catch(e){}}
+function ajAuto(){X.aj.forEach(function(a){
+  if(a.mine&&a.status==='open'&&a.n>=a.slots&&!X.ajBusy[a.id])makeGrp(a.id,true);
+  if(a.status==='done'&&a.grp&&!a.mine&&!X.ajDone[a.id]){X.ajDone[a.id]=1;try{localStorage.setItem('jx_ajd',JSON.stringify(X.ajDone));}catch(e){}
+   toast('Grup ajakan sudah dibuat. Kamu masuk otomatis');try{window.__grp&&window.__grp.joinInvite(a.grp);}catch(e){}}});}
+try{X.ajDone=JSON.parse(localStorage.getItem('jx_ajd')||'{}')||{};}catch(e){}
+function ajFix(){return new Promise(function(res){if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(function(p){res({lat:p.coords.latitude,lng:p.coords.longitude});},function(){res(null);},{enableHighAccuracy:true,maximumAge:20000,timeout:12000});});}
+async function ajPing(){var act=X.aj.filter(function(a){return a.status==='open'&&a.joined&&a.ex>Date.now();});if(!act.length||document.hidden)return;
+ var f=await ajFix();if(!f)return;act.forEach(function(a){rpc('ajakan_ping',{p_id:a.id,p_lat:f.lat,p_lon:f.lng}).catch(function(){});});}
+setInterval(ajPing,30000);
+function ajHTML(a){
+ var left=Math.max(0,Math.ceil((a.ex-Date.now())/60000)),res=X.ajRes[a.id],busy=X.ajBusy[a.id],btn='';
+ if(a.status==='done')btn='<div class="ajst ok">Grup sudah dibuat'+(a.joined?'':'')+'</div>';
+ else if(a.mine)btn='<div class="ajb"><button class="vb pri" data-x="ajgrp" data-i="'+a.id+'"'+(a.n<2||busy?' disabled':'')+'>'+(busy?'Membuat grup…':'Buat grup sekarang')+'</button><button class="vb" data-x="ajbatal" data-i="'+a.id+'">Batalkan</button></div>';
+ else if(a.joined)btn='<div class="ajb"><span class="ajst ok">Kamu ikut. Grup dibuat saat penuh</span><button class="vb" data-x="ajkeluar" data-i="'+a.id+'">Keluar</button></div>';
+ else if(a.n>=a.slots)btn='<div class="ajst">Penuh</div>';
+ else btn='<div class="ajb"><button class="vb pri" data-x="ajikut" data-i="'+a.id+'"'+(busy?' disabled':'')+'>'+(busy?'Memeriksa lokasi… '+busy:'Ikut')+'</button></div>';
+ return '<div class="xmsg ajm'+(a.mine?' mine':'')+'"><div class="mb"><div class="bub xcard ajc"><div class="ajh"><span class="ajt">AJAKAN</span><span class="ajn">'+esc(a.owner_name||'Pengguna')+'</span>'+(a.mine?'':'<button class="mo" data-x="ajmo" data-i="'+a.id+'" aria-label="Opsi ajakan">'+ic('more','s')+'</button>')+'</div>'+
+  '<div class="ajbody">'+esc(a.body)+'</div><div class="l2">'+a.n+'/'+a.slots+' ikut'+(a.status==='open'?' · berakhir '+left+' mnt lagi':'')+'</div>'+
+  (a.names&&a.names.length?'<div class="ajnm">'+a.names.map(esc).join(', ')+'</div>':'')+btn+(res?'<div class="ajres">'+esc(res)+'</div>':'')+
+  '<div class="ajsafe">Utamakan keamanan: bertemu di tempat ramai.</div></div><div class="mt"><span data-ts="'+a.ts+'">'+wt(a.ts)+'</span></div></div></div>';
+}
+async function ajIkut(id){if(!need())return;if(banned()){toast(banTxt());return;}if(X.ajBusy[id])return;
+ X.ajRes[id]='';X.ajBusy[id]=3;drawMsgs(false);var fp=ajFix();
+ for(var k=2;k>=1;k--){await new Promise(function(r){setTimeout(r,1000);});X.ajBusy[id]=k;drawMsgs(false);}
+ await new Promise(function(r){setTimeout(r,1000);});
+ var f=await fp;
+ try{if(!f)throw new Error('lokasi_kosong');var r=await rpc('ajakan_join',{p_id:+id,p_lat:f.lat,p_lon:f.lng});
+  X.ajRes[id]=r.res==='ok'?'':r.res==='jauh'?'Jarak kamu dengan pembuat ajakan jauh':'Jarak kamu dengan pembuat ajakan terlalu jauh';
+  if(r.res==='ok')toast('Kamu ikut ajakan ini');}catch(e){X.ajRes[id]=errMsg(e);}
+ delete X.ajBusy[id];await loadAjak();drawMsgs(false);}
+async function makeGrp(id,auto){var a=X.aj.filter(function(x){return x.id==id;})[0];if(!a||X.ajBusy[id])return;
+ if(!window.__grp||!window.__grp.ajakGroup){toast('Grup belum siap. Coba lagi');return;}
+ X.ajBusy[id]=1;drawMsgs(false);
+ try{var g=await window.__grp.ajakGroup(a.body);if(!g)throw new Error('undangan_salah');
+  await rpc('ajakan_done',{p_id:+id,p_grp:g});toast(auto?'Ajakan penuh. Grup dibuat, anggota masuk otomatis':'Grup dibuat. Anggota masuk otomatis');}
+ catch(e){if(!auto)toast(errMsg(e));X.ajFail=(X.ajFail||0)+1;}
+ if(!X.ajFail||X.ajFail<2)delete X.ajBusy[id];await loadAjak();}
 
 /* ---------- tampilan ---------- */
 function newLeft(){
@@ -195,7 +248,7 @@ function roomStat(r){
  return top==='Penuh'?'Padat':top==='Kosong'?'Normal':'Gangguan';
 }
 function tinfo(uid){var t=(X.names[uid]||{}).tier;return t?{c:' t-x t-line t-'+t,k:'<span class="tk">'+t[0].toUpperCase()+'</span>'}:{c:'',k:''};}
-function av(uid){var n=(X.names[uid]||{}).name||'?',t=(X.names[uid]||{}).tier;return '<div class="av'+(t==='gold'?' gfr':t==='diamond'?' dfr':t==='admin'?' afr':'')+'" style="background:'+avc(n)+'">'+esc(n.charAt(0).toUpperCase())+'</div>';}
+function av(uid){var n=(X.names[uid]||{}).name||'?',t=(X.names[uid]||{}).tier,im=null;try{im=window.__jav&&window.__jav.pub?window.__jav.pub(uid):null;}catch(e){}return '<div class="av'+(t==='gold'?' gfr':t==='diamond'?' dfr':t==='admin'?' afr':'')+(im?' hasimg':'')+'" style="background:'+(im?'center/cover url(&quot;'+im+'&quot;)':avc(n))+'">'+(im?'':esc(n.charAt(0).toUpperCase()))+'</div>';}
 function msgHTML(m,agg,cont){
  var mine=m.user_id===X.uid,nm=(X.names[m.user_id]||{}).name||'Pengguna',h,body,card='',tc='';
  if(m.kind==='sticker'){
@@ -242,6 +295,7 @@ function compHTML(){
  if(!X.uid)return '<div class="comp"><button class="xbtn pri login" data-x="login">Masuk untuk menulis</button></div>';
  var nl=newLeft();
  if(nl)return '<div class="comp"><div class="lockb">'+ic('lock','s')+'<span>Akun baru. Menulis dan vote terbuka '+nl+' hari lagi.</span></div></div>';
+ if(banned())return '<div class="comp"><div class="lockb ban">'+ic('lock','s')+'<span>'+esc(banTxt())+'</span></div></div>';
  var d=X.draft[X.room]||'',ln=dlen(d);
  return '<div class="comp"><div class="xcnt'+(ln>=MAXC?' full':'')+'">'+(ln>=70?ln+'/'+MAXC:'')+'</div><div class="rowc"><button class="xib plus" data-x="plus" aria-pressed="'+(X.panel==='plus')+'" aria-label="Lapor dan ajakan">'+ic('plus')+'</button><div class="inp ce" contenteditable="true" role="textbox" data-ph="'+(X.room==='Umum'?'Tulis ke General':'Tulis pesan')+'" aria-label="Tulis pesan">'+txtH(d)+'</div><button class="xib" data-x="stk" aria-pressed="'+(!!X.panel&&X.panel!=='plus')+'" aria-label="Emot dan stiker">'+ic('sticker')+'</button><button class="snd" data-x="send" aria-label="Kirim">'+ic('send')+'</button></div></div>';
 }
@@ -249,7 +303,7 @@ function panelHTML(){
  if(!X.panel||!X.uid)return '';
  if(X.panel==='plus'){var rc2=catOf(X.room),q=QR[rc2];
   return '<div class="epn plusp">'+(q?'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div><div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
-   '<div class="plh">AJAKAN</div><button class="pla" data-x="ajak"><span>🙋</span><b>Buat ajakan</b></button></div>';}
+   '<button class="pla" data-x="ajak"><span>🙋</span><b>Buat ajakan</b></button></div>';}
  var r3=rank(),cl=r3?[0,1,2,3,4]:[2,0],tab=r3?X.panel:'emo',h='<div class="epn">';
  if(r3)h+='<div class="etabs"><button data-x="ptab" data-t="emo" aria-pressed="'+(tab==='emo')+'">Emot</button><button data-x="ptab" data-t="stk" aria-pressed="'+(tab==='stk')+'">Stiker</button></div>';
  if(tab==='emo'){
@@ -301,7 +355,10 @@ function drawMsgs(toBottom){
  if(!X.ready)h='<div class="empty">Memuat…</div>';
  else if(X.err&&!list.length)h='<div class="empty">'+esc(X.err)+'</div>';
  else if(!list.length)h=isU?'<div class="empty">Belum ada pesan.</div>':'<div class="empty">Belum ada laporan di jalur ini.<br>Jadilah yang pertama.</div>';
- else h=list.map(function(x,i){var p=list[i-1];return msgHTML(x,false,!!(p&&p.user_id===x.user_id&&p.kind==='text'&&x.kind==='text'&&x.ts-p.ts<180000));}).join('');
+ else h='';
+ if(X.ready&&list.length||X.aj.length){var all=list.concat(X.aj.map(function(a){return {kind:'ajak',ts:a.ts,a:a};}));all.sort(function(a,b){return a.ts-b.ts;});
+  h=all.map(function(x,i){if(x.kind==='ajak')return ajHTML(x.a);var p=all[i-1];return msgHTML(x,false,!!(p&&p.kind!=='ajak'&&p.user_id===x.user_id&&p.kind==='text'&&x.kind==='text'&&x.ts-p.ts<180000));}).join('');}
+ try{if(window.__jav&&window.__jav.pubLoad)window.__jav.pubLoad(list.map(function(m){return m.user_id;}),function(){drawMsgs(false);});}catch(e){}
  m.innerHTML=h;
  if(toBottom||near)m.scrollTop=m.scrollHeight;else m.scrollTop=st;
 }
@@ -312,6 +369,7 @@ window.__syncName=function(v,now){clearTimeout(snT);if(!X.uid||!v)return;snT=set
 function need(){if(!X.uid){sheet('login');return false;}if(newLeft()){toast('Akun baru. Terbuka '+newLeft()+' hari lagi');return false;}return true;}
 async function send(){
  if(!need())return;
+ if(banned()){toast(banTxt());return;}
  var inp=el('.ce',X.root);if(!inp)return;
  var val=ce2s(inp).trim();
  if(!val){toast('Tulis pesan dulu');return;}
@@ -321,12 +379,14 @@ async function send(){
  X.lastSend=Date.now();
  try{
   var id=await rpc('post_message',{p_room:X.room,p_kind:'text',p_body:val,p_sticker:null});
+  if(id==-1){X.draft[X.room]='';inp.innerHTML='';toast('Anda kena pelanggaran. +1 poin',5000);await loadStatus();return;}
   X.draft[X.room]='';inp.innerHTML='';var cn=el('.xcnt',X.root);if(cn)cn.textContent='';
   if(id&&addMsg({id:id,room:X.room,user_id:X.uid,kind:'text',body:val,created_at:new Date().toISOString()})){drawTop();drawMsgs(true);}
- }catch(e){toast(errMsg(e));}
+ }catch(e){toast(errMsg(e));if(/dikunci/.test((e&&e.message)||''))loadStatus();}
 }
 async function sendSticker(id){
  if(!need())return;
+ if(banned()){toast(banTxt());return;}
  if(Date.now()-X.lastSend<2000){toast('Tunggu sebentar');return;}
  X.lastSend=Date.now();X.panel=null;drawPanel();
  try{
@@ -357,7 +417,7 @@ async function vote(id,v){
  }catch(e){toast(errMsg(e));}
 }
 function setRoom(r){
- X.room=r;X.dd=false;X.rdd=false;X.panel=null;X.emPick=null;
+ X.room=r;X.dd=false;X.rdd=false;X.panel=null;X.emPick=null;X.aj=[];loadAjak();
  var c=catOf(r);if(c==='KRL'||c==='TJ')X.lastRoom[c]=r;
  try{localStorage.setItem('jx_room',r);}catch(e){}
  draw();
@@ -370,7 +430,12 @@ function onClick(e){
  var a=t.dataset.x,d=t.dataset;
  if(a==='seg'){if(d.v==='grup'&&window.__jshell&&window.__jshell.openGrp)window.__jshell.openGrp();else if(d.v==='teman'&&window.__jdm)window.__jdm.open();return;}
  if(a==='plus'){X.panel=X.panel==='plus'?null:'plus';X.emPick=null;drawComp();drawPanel();return;}
- if(a==='ajak'){X.panel=null;drawComp();drawPanel();toast('Ajakan segera hadir');return;}
+ if(a==='ajak'){X.panel=null;drawComp();drawPanel();if(!need())return;if(banned()){toast(banTxt());return;}sheet('ajak');return;}
+ if(a==='ajikut'){ajIkut(d.i);return;}
+ if(a==='ajgrp'){makeGrp(d.i,false);return;}
+ if(a==='ajbatal'){sheet('ajbatal',d.i);return;}
+ if(a==='ajkeluar'){rpc('ajakan_leave',{p_id:+d.i}).then(loadAjak).catch(function(er){toast(errMsg(er));});return;}
+ if(a==='ajmo'){sheet('ajmo',d.i);return;}
  if(a==='cat'){var c=d.c;setRoom(c==='Umum'?'Umum':c==='MRT'?'MRT':c==='LRT'?'LRT':c==='JL'?'JakLingko':X.lastRoom[c]);return;}
  if(a==='dd'){X.dd=!X.dd;X.rdd=false;drawTop();return;}
  if(a==='room'){setRoom(d.r);return;}
@@ -419,12 +484,19 @@ function sheet(kind,arg){
   h='<b>Masuk ke Jecom</b><p>Untuk menulis, melapor, dan vote. Membaca chat tidak perlu masuk.</p>'+(isNat()?'<button class="jb pri" data-s="google">Lanjut dengan Google</button>':'<div id="jxgsi" style="display:flex;justify-content:center;min-height:44px;margin:4px 0"></div>')+'<p class="sm">Dengan masuk, kamu setuju dengan <a href="https://jejakcommuter.com/syarat/" target="_blank" rel="noopener">Syarat</a> dan <a href="https://jejakcommuter.com/privasi/" target="_blank" rel="noopener">Privasi</a>.</p><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='msg'){
   var m=X.msgs.filter(function(x){return x.id==arg;})[0];var nm=m?((X.names[m.user_id]||{}).name||'Pengguna'):'';
-  h='<b>'+esc(nm)+'</b><button class="jb" data-s="rpt" data-i="'+arg+'">Laporkan pesan</button><button class="jb dng" data-s="blk" data-i="'+arg+'">Blokir pengguna</button><button class="jb" data-s="x">Batal</button>';
+  var hasF=false;try{hasF=!!(m&&window.__jav&&window.__jav.pub&&window.__jav.pub(m.user_id));}catch(e){}
+  h='<b>'+esc(nm)+'</b><button class="jb" data-s="rpt" data-i="'+arg+'">Laporkan pesan</button>'+(hasF?'<button class="jb" data-s="rptf" data-i="'+arg+'">Laporkan foto</button>':'')+'<button class="jb dng" data-s="blk" data-i="'+arg+'">Blokir pengguna</button><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='blk'){
   var m2=X.msgs.filter(function(x){return x.id==arg;})[0];var n2=m2?((X.names[m2.user_id]||{}).name||'Pengguna'):'';
   h='<b>Blokir '+esc(n2)+'?</b><p>Pesannya tidak akan terlihat lagi di chat kamu.</p><button class="jb dng" data-s="blk2" data-i="'+arg+'">Blokir</button><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='name'){
   h='<b>Ubah nama</b><input class="jfld" id="jxname" maxlength="30" value="'+esc(X.prof?X.prof.name:'')+'" aria-label="Nama"><button class="jb pri" data-s="name2">Simpan</button><button class="jb" data-s="x">Batal</button>';
+ }else if(kind==='ajak'){
+  h='<b>Buat ajakan</b><textarea class="jfld" id="jxaj" maxlength="90" rows="3" placeholder="Contoh: Ngopi bareng di Stasiun Sudirman, ada yang mau?" aria-label="Isi ajakan"></textarea><p class="sm">Untuk 5 orang di sekitarmu, aktif 30 menit. Utamakan keamanan: bertemu di tempat ramai.</p><button class="jb pri" data-s="ajak2">Buat ajakan</button><button class="jb" data-s="x">Batal</button>';
+ }else if(kind==='ajbatal'){
+  h='<b>Batalkan ajakan?</b><button class="jb dng" data-s="ajbatal2" data-i="'+arg+'">Batalkan ajakan</button><button class="jb" data-s="x">Tidak</button>';
+ }else if(kind==='ajmo'){
+  h='<b>Ajakan</b><button class="jb" data-s="ajrpt" data-i="'+arg+'">Laporkan ajakan</button><button class="jb" data-s="x">Batal</button>';
  }else if(kind==='del'){
   h='<b>Hapus akun?</b><p>Akun, nama, dan level kamu dihapus permanen. Pesan kamu ikut terhapus.</p><button class="jb dng" data-s="del2">Hapus akun</button><button class="jb" data-s="x">Batal</button>';
  }
@@ -462,7 +534,16 @@ async function sheetClick(e){
   return;
  }
  if(s==='rpt'){closeSheet();try{await rpc('report_message',{p_message:+i,p_reason:null});toast('Laporan diterima. Terima kasih');}catch(er){toast(errMsg(er));}return;}
+ if(s==='rptf'){var mf=X.msgs.filter(function(x){return x.id==i;})[0];closeSheet();if(!mf)return;try{await rpc('photo_report',{p_uid:mf.user_id});toast('Laporan foto diterima. Terima kasih');}catch(er){toast(errMsg(er));}return;}
  if(s==='blk'){sheet('blk',i);return;}
+ if(s==='ajak2'){var tx=(el('#jxaj',SH).value||'').trim();if(tx.length<3){toast('Tulis ajakan dulu');return;}var fr2=filterMsg(tx);if(fr2){toast(fr2.indexOf('Kamu')===0?fr2:'Ajakan ditolak: '+fr2);return;}
+  b.disabled=true;b.textContent='Memeriksa lokasi…';var f=await ajFix();
+  try{if(!f)throw new Error('lokasi_kosong');var nid=await rpc('ajakan_create',{p_room:X.room,p_body:tx,p_lat:f.lat,p_lon:f.lng});closeSheet();
+   if(nid==-1){toast('Anda kena pelanggaran. +1 poin',5000);loadStatus();return;}toast('Ajakan dibuat');await loadAjak();drawMsgs(true);}
+  catch(er){b.disabled=false;b.textContent='Buat ajakan';toast(errMsg(er));}
+  return;}
+ if(s==='ajbatal2'){closeSheet();try{await rpc('ajakan_leave',{p_id:+i});await loadAjak();}catch(er){toast(errMsg(er));}return;}
+ if(s==='ajrpt'){closeSheet();try{await rpc('ajakan_report',{p_id:+i});toast('Laporan diterima. Terima kasih');}catch(er){toast(errMsg(er));}return;}
  if(s==='blk2'){
   var m=X.msgs.filter(function(x){return x.id==i;})[0];closeSheet();if(!m)return;
   try{await rpc('block_user',{p_user:m.user_id});X.msgs=X.msgs.filter(function(x){return x.user_id!==m.user_id;});toast('Pengguna diblokir');drawTop();drawMsgs(false);}catch(er){toast(errMsg(er));}
@@ -517,7 +598,7 @@ window.__jchat={
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
  rpc:rpc,errMsg:errMsg,unread:unrTotal,seen:function(){seen();if(X.root)drawTop();},cats:CATS,filter:filterMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
- state:X,seg:segHTML,sb:getSB,stickers:function(){var r3=rank();return STKL.filter(function(x){return TRK[x.t]<=r3;});},stk:function(id){return STKB[id]||'';},emos:function(){return EMOL.map(function(x){return {id:x.id,n:x.n,svg:emoSVG(x.id,2)};});},txtH:txtH,ce2s:ce2s,names:function(){return X.names;}
+ state:X,seg:segHTML,status:function(f){if(f)return loadStatus();return {points:X.vs.points,ban:banned()?X.vs.ban:0,txt:banTxt()};},sb:getSB,stickers:function(){var r3=rank();return STKL.filter(function(x){return TRK[x.t]<=r3;});},stk:function(id){return STKB[id]||'';},emos:function(){return EMOL.map(function(x){return {id:x.id,n:x.n,svg:emoSVG(x.id,2)};});},txtH:txtH,ce2s:ce2s,names:function(){return X.names;}
 };
 /* status login dibaca saat aplikasi dibuka, tidak menunggu tab Chat */
 setTimeout(function(){loadAuth().catch(function(){X.authOn=false;});},400);

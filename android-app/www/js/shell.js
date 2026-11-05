@@ -100,6 +100,8 @@ var css=''+
 '.jrow .g{flex:1;min-width:0}'+
 '.jrow .v{color:var(--ink-2);font-size:13px;font-weight:600}'+
 '.jhd{display:flex;align-items:center;gap:14px;padding:6px 0 16px}'+
+'.jviol{background:rgba(216,38,43,.08);border:1px solid rgba(216,38,43,.35);border-radius:10px;padding:10px 14px;margin:4px 0 0;font-size:14px;color:var(--ink)}.jviol .jvb{color:var(--jred);font-weight:700;margin-top:2px}.jviol .jvs{font-size:12px;color:var(--ink-2);margin-top:4px}'+
+'.jrd{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;box-sizing:border-box}.jrd.on{border:6px solid var(--jacc,#1F5FB5)}.jck{width:20px;height:20px;border-radius:5px;border:2px solid var(--line);flex:none;box-sizing:border-box;position:relative}.jck.on{background:var(--jacc,#1F5FB5);border-color:transparent}.jck.on::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}'+
 '.jhd0{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;margin:0 0 4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:left;font:inherit}.jhd0 .g{flex:1;min-width:0}.jhn{font-size:18px;font-weight:800}.jhs{font-size:12.5px;color:var(--ink-2);font-weight:500}'+
 '.jrs{display:block;font-size:12.5px;font-weight:500;color:var(--ink-2);margin-top:2px}.jnote{font-size:12.5px;color:var(--ink-2);margin:4px 4px 12px;line-height:1.45}'+
 '.jtg{width:46px;height:28px;border-radius:14px;background:#C5CCD4;position:relative;flex:none;transition:background .15s}.jtg:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}.jtg.on{background:#2F5FB5}.jtg.on:after{left:21px}.jtgr{cursor:pointer}.jsub{padding-left:16px}'+
@@ -260,6 +262,7 @@ function renderProf(){
   var lum=function(h){var n=parseInt(h.slice(1),16);return (.2126*(n>>16&255)+.7152*(n>>8&255)+.0722*(n&255))/255;};
   vProf.innerHTML='<div class="jscr" style="padding-top:12px">'+
   '<button type="button" class="jhd0" data-a="me"><div class="jav me" style="background:'+col+';color:'+(lum(col)<.4?'#fff':'#14202B')+'">'+esc(ini)+'</div><div class="g"><div class="jhn">'+esc(name||'Jecom')+'</div><div class="jhs">Ketuk untuk ubah foto, nama, dan warna</div></div>'+ic('chev',18)+'</button>'+
+  violHTML()+
   '<div class="jlbl">Teman</div><div class="jcrd" id="jteman" style="padding:0 14px"></div>'+
   '<div class="jlbl">Pengaturan</div><div class="jcrd">'+
   prow('akun','user','Akun',akunSub())+prow('priv','lock','Privasi',privSub())+prow('tamp','sliders','Tampilan','Tema, gaya peta, ukuran')+prow('chat','chat','Chat',muteSum())+'</div>'+
@@ -268,6 +271,18 @@ function renderProf(){
   var jt=vProf.querySelector('#jteman');if(jt&&window.__jteman)window.__jteman.mount(jt);
   if(window.__jtemanDeco)window.__jtemanDeco();
 }
+function violHTML(){var st=null;try{st=window.__jchat&&window.__jchat.uid&&window.__jchat.uid()?window.__jchat.status():null;}catch(e){}
+  if(!st||(!st.points&&!st.ban))return '';
+  return '<div class="jviol"><div><b>Pelanggaran: '+st.points+' poin</b></div>'+(st.ban?'<div class="jvb">'+esc(st.txt)+'</div>':'')+'<div class="jvs">Poin hilang 3 hari setelah pelanggaran terakhir. Setiap 5 poin, chat umum dikunci sementara.</div></div>';}
+var PV={vis:'friends',ids:[],at:0,busy:false};
+async function pvLoad(){var J=window.__jchat;if(!(J&&J.uid&&J.uid())||PV.busy)return;PV.busy=true;try{var r=await J.rpc('avatar_vis_get');if(r){PV.vis=r.vis||'friends';PV.ids=r.ids||[];PV.at=Date.now();}}catch(e){}PV.busy=false;if(SUB.cur==='priv'||SUB.cur==='me')drawSub();}
+var pvT=null;function pvSave(){clearTimeout(pvT);pvT=setTimeout(async function(){var J=window.__jchat;try{await J.rpc('avatar_vis_set',{p_vis:PV.vis,p_ids:PV.vis==='pick'?PV.ids:null});toast('Disimpan');}catch(e){toast(J.errMsg(e));}},500);}
+var PVN={friends:'Hanya teman',pick:'Pilih teman',all:'Semua orang'};
+function pvHTML(){var J=window.__jchat;if(!(J&&J.uid&&J.uid()))return '<div class="jcrd"><div class="jrow"><span class="g jrs" style="font-weight:400">Masuk dulu untuk mengatur foto profil.</span></div></div>';
+  var fr=[];try{fr=window.__jteman&&window.__jteman.friends?window.__jteman.friends():[];}catch(e){}
+  return '<div class="jcrd">'+['friends','pick','all'].map(function(k){return '<button class="jrow jpv" data-pv="'+k+'"><span class="g">'+PVN[k]+'</span><span class="jrd'+(PV.vis===k?' on':'')+'" role="radio" aria-checked="'+(PV.vis===k)+'"></span></button>';}).join('')+'</div>'+
+  (PV.vis==='pick'?'<div class="jlbl">Teman yang bisa melihat</div><div class="jcrd">'+(fr.length?fr.map(function(f){var on=PV.ids.indexOf(f.id)>-1;return '<button class="jrow jsub" data-pvf="'+esc(f.id)+'"><span class="g">'+esc(f.name)+'</span><span class="jck'+(on?' on':'')+'" role="checkbox" aria-checked="'+on+'"></span></button>';}).join(''):'<div class="jrow"><span class="g jrs" style="font-weight:400">Belum ada teman.</span></div>')+'</div>':'')+
+  '<p class="jnote">Foto diperiksa otomatis sebelum dipasang. Foto yang tidak pantas ditolak dan kena 5 poin pelanggaran.</p>';}
 function prow(a,i,t){return '<button class="jrow" data-a="'+a+'">'+ic(i)+'<span class="g">'+t+'</span>'+ic('chev',18)+'</button>';}
 function akunSub(){var J=window.__jchat;return J&&J.uid&&J.uid()?'Google, kode teman, keluar':'Belum masuk';}
 function privSub(){return window.__ghost&&window.__ghost()?'Mode hantu aktif':'Lokasi, foto profil';}
@@ -280,13 +295,13 @@ vProf.addEventListener('click',function(e){
 /* ---------- sub halaman Profil ---------- */
 var SUB={cur:null,stack:[]};window.__openSub=function(p){SUB.stack=[];openSub(p);};
 var SUBT={me:'Profil saya',akun:'Akun',priv:'Privasi',chat:'Chat',ajak:'Ajak teman',masukan:'Kirim masukan',about:'Tentang Jecom',kebijakan:'Kebijakan privasi',syarat:'Syarat penggunaan'};
-function openSub(p,push){if(push&&SUB.cur)SUB.stack.push(SUB.cur);SUB.cur=p;vProf.hidden=true;vTamp.hidden=false;drawSub();var sc=vTamp.querySelector('.jscr');if(sc)sc.scrollTop=0;}
+function openSub(p,push){if(push&&SUB.cur)SUB.stack.push(SUB.cur);SUB.cur=p;if((p==='priv'||p==='me')&&Date.now()-PV.at>30000)pvLoad();vProf.hidden=true;vTamp.hidden=false;drawSub();var sc=vTamp.querySelector('.jscr');if(sc)sc.scrollTop=0;}
 function subBack(){stashPm();if(SUB.stack.length){SUB.cur=SUB.stack.pop();drawSub();return;}SUB.cur=null;vTamp.hidden=true;renderProf();vProf.hidden=false;}
 function tgl(k,on,t,s,cls){return '<div class="jrow jtgr'+(cls?' '+cls:'')+'" data-tg="'+esc(k)+'"><span class="g">'+t+(s?'<small class="jrs">'+s+'</small>':'')+'</span><span class="jtg'+(on?' on':'')+'" role="switch" aria-checked="'+!!on+'"></span></div>';}
 function stashPm(){var pm=document.getElementById('pfMount');if(pm&&vTamp.contains(pm)){pm.hidden=true;document.body.appendChild(pm);}}
 function drawSub(){var p=SUB.cur,h='';if(p!=='me')stashPm();
   if(p==='me'){var pm=document.getElementById('pfMount');
-    h='<div class="jcrd" style="padding:14px"><div class="jhd"><div class="jav me" id="jmeav"></div><div class="jhs" style="flex:1">Foto hanya terlihat oleh temanmu</div></div></div><div class="jcrd" id="jmebox" style="padding:12px 14px"></div>';
+    h='<div class="jcrd" style="padding:14px"><div class="jhd"><div class="jav me" id="jmeav"></div><div class="jhs" style="flex:1">Foto terlihat oleh: '+(PVN[PV.vis]||'Hanya teman').toLowerCase()+'</div></div></div><div class="jcrd" id="jmebox" style="padding:12px 14px"></div>';
     vTamp.innerHTML=top(p)+'<div class="jscr">'+h+'</div>';
     var bx=vTamp.querySelector('#jmebox');if(pm){bx.appendChild(pm);pm.hidden=false;}
     try{var nm=JSON.parse(localStorage.getItem('jc_name')||'""')||'',cl=JSON.parse(localStorage.getItem('jc_color')||'null')||'#1F5FB5';var av=vTamp.querySelector('#jmeav');av.style.background=cl;av.textContent=(nm||'J').charAt(0).toUpperCase();}catch(e){}
@@ -299,11 +314,12 @@ function drawSub(){var p=SUB.cur,h='';if(p!=='me')stashPm();
     (vs.length||gs.length?vs.map(function(v){return '<div class="jrow"><span class="g">'+esc(v.name)+'<small class="jrs">Teman · '+(v.loc?'lokasi '+esc(v.until):'')+(v.loc&&v.route?' · ':'')+(v.route?'rute':'')+'</small></span><button type="button" class="jsb" data-stopf="'+esc(v.id)+'">Hentikan</button></div>';}).join('')+
       gs.map(function(g){return '<div class="jrow"><span class="g">'+esc(g.name)+'<small class="jrs">Grup · '+(g.ar?'lokasi dan rute':'lokasi')+'</small></span><button type="button" class="jsb" data-stopg="'+esc(g.code)+'">Hentikan</button></div>';}).join('')
       :'<div class="jrow"><span class="g jrs" style="font-weight:400">Tidak ada. Lokasimu tidak sedang dibagikan.</span></div>')+'</div>'+
-    '<div class="jlbl">Foto profil</div><div class="jcrd"><div class="jrow"><span class="g">Siapa yang bisa melihat</span><span class="v">Hanya teman</span></div></div>'+
+    '<div class="jlbl">Siapa yang bisa melihat foto profil</div>'+pvHTML()+
     '<p class="jnote">Di chat umum, profil orang tidak bisa dibuka dan tidak ada chat pribadi. Nomor HP dan kode teman tidak bisa dikirim di chat umum.</p>';}
   else if(p==='chat'){var M=muteState();
     h='<div class="jcrd">'+tgl('all',M.all,'Bisukan semua chat','Tidak ada notifikasi dari chat mana pun')+'</div>'+
     '<div class="jlbl">Grup</div><div class="jcrd">'+tgl('grp',M.grp,'Bisukan semua grup')+M.groups.map(function(g){return tgl('g:'+g.code,g.on,esc(g.name),'','jsub');}).join('')+(M.groups.length?'':'<div class="jrow"><span class="g jrs" style="font-weight:400">Belum ikut grup. Grup baru ikut dibisukan kalau "Bisukan semua grup" aktif.</span></div>')+'</div>'+
+    '<div class="jlbl">Teman</div><div class="jcrd">'+tgl('tmn',M.tmn,'Bisukan semua teman')+M.friends.map(function(f){return tgl('d:'+f.id,f.on,esc(f.name),'','jsub');}).join('')+'</div>'+
     '<div class="jlbl">Chat umum</div><div class="jcrd">'+tgl('umum',M.umum,'Bisukan semua chat umum')+M.rooms.map(function(r){return tgl('u:'+r.k,r.on,esc(r.n),'','jsub');}).join('')+'</div>'+
     '<p class="jnote">Pesan tetap masuk dan bisa dibaca kapan saja. Chat yang dibisukan tidak memunculkan angka belum dibaca dan gelembung pesan di peta.</p>';}
   else if(p==='ajak'){h='<p class="jnote" style="margin-top:0">Pesan yang akan dibagikan:</p><div class="jcrd" style="padding:12px 14px;white-space:pre-wrap;font-size:14px;line-height:1.5" id="jajak">'+esc(ajakTxt())+'</div>'+
@@ -328,6 +344,8 @@ vTamp.addEventListener('click',async function(e){if(!SUB.cur)return;
   var b=e.target.closest('[data-a="back"]');if(b){e.stopImmediatePropagation();subBack();return;}
   var sb=e.target.closest('[data-sub]');if(sb){openSub(sb.dataset.sub,true);return;}
   var t=e.target.closest('[data-tg]');if(t){onTgl(t.dataset.tg);return;}
+  var pv=e.target.closest('[data-pv]');if(pv){PV.vis=pv.dataset.pv;drawSub();pvSave();return;}
+  var pf=e.target.closest('[data-pvf]');if(pf){var fi=pf.dataset.pvf,ix=PV.ids.indexOf(fi);if(ix>-1)PV.ids.splice(ix,1);else PV.ids.push(fi);drawSub();pvSave();return;}
   var sf=e.target.closest('[data-stopf]');if(sf){await window.__jteman.stopFor(sf.dataset.stopf);toast('Berhenti berbagi');drawSub();return;}
   var sg=e.target.closest('[data-stopg]');if(sg){try{window.__grp.all.forEach(function(x){if(x.G&&x.G.code===sg.dataset.stopg)x.setShare(false);});}catch(_){}toast('Berhenti berbagi');drawSub();return;}
   var aj=e.target.closest('[data-ajak]');if(aj){var tx=ajakTxt();if(aj.dataset.ajak==='copy'){copyTxt(tx);return;}
@@ -344,7 +362,9 @@ function onTgl(k){
   if(k==='finfo'){var x=vTamp.querySelector('[data-tg="finfo"] .jtg');x.classList.toggle('on');return;}
   if(k==='ghost'){var on=!(window.__ghost&&window.__ghost());if(window.__jteman&&window.__jteman.ghostSet)window.__jteman.ghostSet(on).then(function(){if(SUB.cur==='priv')drawSub();});toast(on?'Mode hantu aktif. Lokasimu tidak dibagikan ke siapa pun':'Mode hantu mati');drawSub();return;}
   var M=muteState(),v;
-  if(k==='all'){v=!M.all;MUTE.ag=v;MUTE.au=v;MUTE.g={};MUTE.u={};M.groups.forEach(function(g){MUTE.g[g.code]=v;});M.rooms.forEach(function(r){MUTE.u[r.k]=v;});}
+  if(k==='all'){v=!M.all;MUTE.ag=v;MUTE.au=v;MUTE.at=v;MUTE.g={};MUTE.u={};MUTE.d={};M.groups.forEach(function(g){MUTE.g[g.code]=v;});M.rooms.forEach(function(r){MUTE.u[r.k]=v;});M.friends.forEach(function(f){MUTE.d[f.id]=v;});}
+  else if(k==='tmn'){v=!M.tmn;MUTE.at=v;MUTE.d={};M.friends.forEach(function(f){MUTE.d[f.id]=v;});}
+  else if(k.indexOf('d:')===0){var di=k.slice(2),cd=muteDm(di);M.friends.forEach(function(f){MUTE.d[f.id]=muteDm(f.id);});MUTE.d[di]=!cd;MUTE.at=M.friends.every(function(f){return MUTE.d[f.id];})&&M.friends.length>0;}
   else if(k==='grp'){v=!M.grp;MUTE.ag=v;MUTE.g={};M.groups.forEach(function(g){MUTE.g[g.code]=v;});}
   else if(k==='umum'){v=!M.umum;MUTE.au=v;MUTE.u={};M.rooms.forEach(function(r){MUTE.u[r.k]=v;});}
   else if(k.indexOf('g:')===0){var c=k.slice(2),cur=muteGrp(c);M.groups.forEach(function(g){MUTE.g[g.code]=muteGrp(g.code);});MUTE.g[c]=!cur;MUTE.ag=M.groups.every(function(g){return MUTE.g[g.code];})&&M.groups.length>0;}
@@ -352,29 +372,41 @@ function onTgl(k){
   muteSave();drawSub();}
 
 /* ---------- bisukan chat ---------- */
-var MUTE={ag:false,au:false,g:{},u:{}};try{var mm=JSON.parse(localStorage.getItem('jc_mute')||'{}');MUTE.ag=!!mm.ag;MUTE.au=!!mm.au;MUTE.g=mm.g||{};MUTE.u=mm.u||{};}catch(e){}
+var MUTE={ag:false,au:false,at:false,g:{},u:{},d:{}};try{var mm=JSON.parse(localStorage.getItem('jc_mute')||'{}');MUTE.ag=!!mm.ag;MUTE.au=!!mm.au;MUTE.at=!!mm.at;MUTE.g=mm.g||{};MUTE.u=mm.u||{};MUTE.d=mm.d||{};}catch(e){}
+function muteDm(id){return id in MUTE.d?!!MUTE.d[id]:!!MUTE.at;}
 var ROOMS=[['Umum','General'],['KRL','KRL'],['MRT','MRT'],['LRT','LRT'],['TJ','TransJakarta'],['JL','JakLingko']];
 function muteGrp(c){return c in MUTE.g?!!MUTE.g[c]:!!MUTE.ag;}
 function muteRoom(k){return k in MUTE.u?!!MUTE.u[k]:!!MUTE.au;}
 function muteState(){var gl=[];try{gl=window.__grp?window.__grp.list():[];}catch(e){}
   var groups=gl.map(function(g){return {code:g.code,name:g.name,on:muteGrp(g.code)};}),rooms=ROOMS.map(function(r){return {k:r[0],n:r[1],on:muteRoom(r[0])};});
-  var grp=groups.length?groups.every(function(g){return g.on;}):!!MUTE.ag,umum=rooms.every(function(r){return r.on;});
-  return {groups:groups,rooms:rooms,grp:grp,umum:umum,all:grp&&umum};}
+  var fl=[];try{fl=window.__jdm?window.__jdm.state.list:[];}catch(e){}var friends=fl.map(function(f){return {id:f.id,name:f.name,on:muteDm(f.id)};});
+  var grp=groups.length?groups.every(function(g){return g.on;}):!!MUTE.ag,umum=rooms.every(function(r){return r.on;}),tmn=friends.length?friends.every(function(f){return f.on;}):!!MUTE.at;
+  return {groups:groups,rooms:rooms,friends:friends,grp:grp,umum:umum,tmn:tmn,all:grp&&umum&&(friends.length?tmn:true)};}
 function muteSum(){var M=muteState(),n=M.groups.filter(function(g){return g.on;}).length+M.rooms.filter(function(r){return r.on;}).length;return M.all?'Semua chat dibisukan':n?n+' chat dibisukan':'Semua chat aktif';}
 function muteSave(){try{localStorage.setItem('jc_mute',JSON.stringify(MUTE));}catch(e){}try{if(window.__grp)window.__grp.all.forEach(function(x){x.unread=muteGrp(x.G&&x.G.code)?0:x.unread;});}catch(e){}
   try{var X=window.__jchat&&window.__jchat.state;if(X&&X.unr)for(var k in X.unr)if(muteRoom(k))X.unr[k]=0;}catch(e){}jcBadge();}
-window.__mute={grp:muteGrp,room:muteRoom};
+window.__mute={grp:muteGrp,room:muteRoom,dm:muteDm};
 
 /* ---------- angka belum dibaca di menu Chat ---------- */
 function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}try{if(window.__jdm)n+=window.__jdm.unread();}catch(e){}
   var b=nav.querySelector('[data-t="chat"] .nbd');if(!b)return;b.textContent=n>9?'9+':String(n);b.hidden=!n;
   [['grup',function(){return window.__grp.unread();}],['teman',function(){return window.__jdm.unread();}]].forEach(function(z){document.querySelectorAll('[data-x="seg"][data-v="'+z[0]+'"]').forEach(function(sg){var gn=0;try{gn=z[1]();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}});});}
 /* keyboard: menu bawah tidak ikut naik, hanya kolom tulis */
-(function(){var touch=window.matchMedia&&matchMedia('(pointer:coarse)').matches;if(!touch)return;
-  function isTxt(t){return t&&(t.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file|color)$/i.test(t.type)||t.tagName==='TEXTAREA'||t.isContentEditable);}
-  document.addEventListener('focusin',function(e){if(isTxt(e.target)&&innerWidth<=760)document.documentElement.classList.add('kbd');});
-  document.addEventListener('focusout',function(e){if(isTxt(e.target))setTimeout(function(){if(!isTxt(document.activeElement))document.documentElement.classList.remove('kbd');},60);});
-  var maxH=innerHeight;addEventListener('resize',function(){if(innerHeight>maxH)maxH=innerHeight;if(document.documentElement.classList.contains('kbd')&&innerHeight>=maxH*0.9&&maxH-innerHeight<80){setTimeout(function(){if(innerHeight>=maxH*0.9)document.documentElement.classList.remove('kbd');},250);}});})();
+(function(){var D=document.documentElement,maxH=Math.max(innerHeight,(window.visualViewport&&visualViewport.height)||0),offT=null;
+  function isTxt(t){return !!t&&(t.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file|color)$/i.test(t.type)||t.tagName==='TEXTAREA'||!!t.isContentEditable);}
+  function narrow(){return Math.min(innerWidth,screen.width||innerWidth)<=760;}
+  function on(){if(!narrow())return;clearTimeout(offT);D.classList.add('kbd');}
+  var sh=false;function off(){clearTimeout(offT);offT=setTimeout(function(){if(!isTxt(document.activeElement))D.classList.remove('kbd');},300);}
+  function curH(){return Math.min(innerHeight,(window.visualViewport&&visualViewport.height)||innerHeight);}
+  function shrunk(){return maxH-curH()>120;}
+  document.addEventListener('focusin',function(e){if(isTxt(e.target))on();},true);
+  document.addEventListener('pointerdown',function(e){var t=e.target&&e.target.closest&&e.target.closest('input,textarea,[contenteditable="true"]');if(t&&isTxt(t))on();},true);
+  document.addEventListener('focusout',function(e){if(!isTxt(e.target))return;setTimeout(function(){if(!isTxt(document.activeElement))off();},80);},true);
+  function rs(){var h=curH();if(!isTxt(document.activeElement)&&h>maxH)maxH=h;
+    if(shrunk()){sh=true;if(isTxt(document.activeElement))on();}
+    else if(sh){sh=false;clearTimeout(offT);offT=setTimeout(function(){if(!shrunk())D.classList.remove('kbd');},250);}}
+  addEventListener('resize',rs);if(window.visualViewport)visualViewport.addEventListener('resize',rs);
+  addEventListener('orientationchange',function(){maxH=0;setTimeout(function(){maxH=curH();},500);});})();
 window.__jcBadge=jcBadge;setInterval(jcBadge,2000);
 function renderTamp(){stashPm();
   var ui='1';try{ui=String(+localStorage.getItem('jc_ui')||1);}catch(e){}

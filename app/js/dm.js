@@ -18,7 +18,7 @@ const V=document.createElement('div');V.id='jdm';V.className='jsc';V.hidden=true
 
 function avHTML(f,big){const im=window.__jav?window.__jav.img(f.id):null,c=colOf(f.id);
   return '<div class="dav'+(big?' big':'')+'" style="'+(im?'background-image:url('+esc(im)+')':'background:'+c)+'">'+(im?'':esc((f.name||'?').charAt(0).toUpperCase()))+(f.online?'<i class="don"></i>':'')+'</div>';}
-function unread(){if(window.__mute&&window.__mute.room&&window.__mute.room('Teman'))return 0;return D.list.reduce((n,f)=>n+(window.__mute&&window.__mute.dm&&window.__mute.dm(f.id)?0:(f.unread||0)),0);}
+function unread(){return D.list.reduce((n,f)=>n+(window.__mute&&window.__mute.dm&&window.__mute.dm(f.id)?0:(f.unread||0)),0);}
 function lastTxt(f){const l=f.last;if(!l)return '';const me=l.sender===uid()?'Kamu: ':'';
   if(l.kind==='sticker')return me+'Stiker';if(l.kind==='invite')return me+'📨 Undangan: '+((l.meta&&l.meta.name)||'grup');if(l.kind==='route')return me+'🗺 Rute';return me+(l.body||'');}
 

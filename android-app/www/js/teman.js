@@ -38,7 +38,17 @@ async function shrink(f){const url=URL.createObjectURL(f);
   let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>55000&&q>.3){q-=.12;d=c.toDataURL('image/jpeg',q);}
   if(d.length>55000||d.indexOf('data:image/jpeg;base64,')!==0)throw new Error('foto_tidak_valid');return d;}
  catch(e){throw new Error('foto_tidak_valid');}finally{URL.revokeObjectURL(url);}}
-async function avUpload(f){try{const d=await shrink(f);const v=await rpc('avatar_set',{p_img:d});AV.u=T.uid;AV.m[T.uid]={ver:v,img:d};avSave();avPaint();toast('Foto profil diperbarui');}catch(e){toast(em(e));}}
+/* pemeriksaan foto di HP sebelum diunggah */
+const NSB=(window.__NSFW_BASE||'https://jejakcommuter.com/vendor/nsfw/');let NSP=null;
+function ldS(u){return new Promise((res,rej)=>{const x=document.createElement('script');x.src=u;x.onload=res;x.onerror=()=>rej(new Error('nsfw_lib'));document.head.appendChild(x);});}
+function nsfwModel(){if(NSP)return NSP;NSP=(async()=>{if(!window.tf)await ldS(NSB+'tf.min.js');if(!window.nsfwjs)await ldS(NSB+'nsfwjs.min.js');await ldS(NSB+'models/mobilenet_v2/model.min.js');await ldS(NSB+'models/mobilenet_v2/group1-shard1of1.min.js');return await nsfwjs.load();})();NSP.catch(()=>{NSP=null;});return NSP;}
+async function nsfwBad(d){const m=await nsfwModel();const im=await new Promise((res,rej)=>{const x=new Image();x.onload=()=>res(x);x.onerror=rej;x.src=d;});
+ const c=document.createElement('canvas');c.width=c.height=224;c.getContext('2d').drawImage(im,0,0,224,224);const p=await m.classify(c,5);const o={};p.forEach(x=>{o[x.className]=x.probability;});
+ return ((o.Porn||0)+(o.Hentai||0))>0.5||(o.Sexy||0)>0.85;}
+window.__nsfwBad=nsfwBad;
+async function avUpload(f){try{const d=await shrink(f);toast('Memeriksa foto…',8000);let bad=false;try{bad=await nsfwBad(d);}catch(e){toast('Pemeriksaan foto gagal. Periksa sinyal lalu coba lagi');return;}
+ if(bad){let r=null;try{r=await rpc('photo_violation');}catch(e){}toast('Foto ditolak karena tidak pantas. Anda kena pelanggaran +5 poin',6000);try{const c2=C();if(c2&&c2.status)c2.status(true);}catch(e){}return;}
+ const v=await rpc('avatar_set',{p_img:d});AV.u=T.uid;AV.m[T.uid]={ver:v,img:d};avSave();avPaint();toast('Foto profil diperbarui');}catch(e){toast(em(e));}}
 function pickAv(){if(!T.uid){toast('Masuk dengan Google dulu untuk memasang foto');return;}
  const i=document.createElement('input');i.type='file';i.accept='image/*';i.style.display='none';document.body.appendChild(i);
  i.onchange=()=>{const f=i.files&&i.files[0];i.remove();if(f)avUpload(f);};i.click();}
@@ -52,7 +62,14 @@ window.__jtemanDeco=decoProf;
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-av]');if(!b||!b.closest('.jhd'))return;
  if(b.dataset.av==='pick'){pickAv();return;}
  if(b.dataset.av==='del'){try{await rpc('avatar_del');delete AV.m[T.uid];avSave();avPaint();toast('Foto profil dihapus');}catch(er){toast(em(er));}}});
-window.__jav={img:avImg,sync:avSync,upload:avUpload};
+/* foto pengguna lain di chat umum: server hanya mengirim yang boleh dilihat */
+const PUB={m:{},at:{},busy:false};
+function pubImg(id){if(!id)return null;return avImg(id)||(PUB.m[id]||null);}
+async function pubLoad(ids,cb){if(!T.uid||PUB.busy)return;const now=Date.now();const need=[...new Set(ids)].filter(i=>i&&i!==T.uid&&!(PUB.at[i]&&now-PUB.at[i]<300000)).slice(0,60);if(!need.length)return;PUB.busy=true;
+ try{need.forEach(i=>{PUB.at[i]=now;});const v=(await rpc('avatar_vers',{p_ids:need}))||{};let ch=false;need.forEach(i=>{if(!v[i]&&PUB.m[i]){delete PUB.m[i];ch=true;}});
+  const g=need.filter(i=>v[i]);for(let k=0;k<g.length;k+=20){const r=(await rpc('avatars_get',{p_ids:g.slice(k,k+20)}))||[];r.forEach(x=>{PUB.m[x.id]=x.img;});ch=true;}
+  if(ch&&cb)cb();}catch(e){}finally{PUB.busy=false;}}
+window.__jav={img:avImg,sync:avSync,upload:avUpload,pub:pubImg,pubLoad};
 
 /* ---------- gaya ---------- */
 const css=document.createElement('style');css.textContent=
@@ -276,6 +293,6 @@ async function ghostSet(on){GH=!!on;try{localStorage.setItem('jc_ghost',GH?'1':'
 function viewers(){return T.st?okF().filter(f=>f.my_loc||f.my_route).map(f=>({id:f.id,name:f.name,loc:f.my_loc,route:!!f.my_route,until:f.my_loc?fmtUntil(f.my_loc):''})):[];}
 async function stopFor(id){const f=okF().find(x=>x.id===id);if(!f)return;
  try{if(f.my_loc)await rpc('loc_share_stop',{p_viewer:id});if(f.my_route){const rest=myShares().route.filter(x=>x!==id);if(rest.length)await rpc('route_share_set',{p_viewers:rest});else await rpc('route_share_stop');}T.push.sig='';await poll(true);}catch(e){toast(em(e));}}
-window.__jteman={ghostSet,viewers,stopFor,mount(el){T.mount=el;render();decoProf();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
+window.__jteman={friends:()=>okF().map(f=>({id:f.id,name:f.name||'Teman'})),ghostSet,viewers,stopFor,mount(el){T.mount=el;render();decoProf();if(T.uid&&(!T.st||Date.now()-T.lastPoll>5000))poll(true);},poll,state:T,draw};
 (function w(n){if(window.__jc&&window.__jc.map&&window.__jchat){ensureChip();poll(true);return;}if(n<300)setTimeout(()=>w(n+1),200);})(0);
 })();
