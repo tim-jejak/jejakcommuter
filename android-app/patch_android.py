@@ -5,6 +5,10 @@ perms=['android.permission.ACCESS_COARSE_LOCATION','android.permission.ACCESS_FI
 add=''.join('    <uses-permission android:name="%s" />\n'%x for x in perms if x not in s)
 assert '<application' in s
 s=s.replace('<application',add+'    <application',1)
+# keyboard tidak menggeser seluruh layar (header tetap terlihat)
+if 'windowSoftInputMode' in s: s=re.sub(r'android:windowSoftInputMode="[^"]*"','android:windowSoftInputMode="adjustResize"',s)
+else: s=s.replace('android:name=".MainActivity"','android:name=".MainActivity"\n            android:windowSoftInputMode="adjustResize"',1)
+assert 'adjustResize' in s
 open(p,'w',encoding='utf-8').write(s)
 print('manifest ok')
 # nama versi
@@ -38,7 +42,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-  private volatile int insTop = 0, insBot = 0;
+  private volatile int insTop = 0, insBot = 0, insKb = 0;
   private volatile boolean full = false, dark = false;
   private static final int BAR_90 = 0xFF2E3236;   // abu-abu tua (mode 90%)
   private static final int SCRIM_FULL = 0x59000000; // abu-abu transparan di atas (mode Penuh)
@@ -79,8 +83,8 @@ public class MainActivity extends BridgeActivity {
   private void push() {
     final WebView wv = bridge == null ? null : bridge.getWebView();
     if (wv == null) return;
-    final int t = full ? insTop : 0, b = full ? insBot : 0;
-    final String js = "(function(){var r=document.documentElement;r.style.setProperty('--sat','" + t + "px');r.style.setProperty('--sab','" + b + "px');window.dispatchEvent(new Event('resize'));})()";
+    final int t = full ? insTop : 0, b = full ? insBot : 0, k = full ? insKb : 0;
+    final String js = "(function(){var r=document.documentElement;r.style.setProperty('--sat','" + t + "px');r.style.setProperty('--sab','" + b + "px');r.style.setProperty('--kb','" + k + "px');window.dispatchEvent(new Event('resize'));})()";
     wv.post(() -> wv.evaluateJavascript(js, null));
   }
 
@@ -99,6 +103,7 @@ public class MainActivity extends BridgeActivity {
       float d = getResources().getDisplayMetrics().density;
       insTop = Math.round(i.top / d);
       insBot = Math.round(i.bottom / d);
+      insKb = ins.isVisible(WindowInsetsCompat.Type.ime()) ? Math.round(ins.getInsets(WindowInsetsCompat.Type.ime()).bottom / d) : 0;
       push();
       return ViewCompat.onApplyWindowInsets(v, ins);
     });

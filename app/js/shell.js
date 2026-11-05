@@ -67,7 +67,7 @@ function ic(n,sz){sz=sz||22;return '<svg width="'+sz+'" height="'+sz+'" viewBox=
 /* ---------- CSS ---------- */
 var css=''+
 ':root{--jnh:calc(60px + var(--sab,env(safe-area-inset-bottom,0px)));--jred:#D8262B}'+
-'html.kbd{--jnh:0px}html.kbd #jnav{display:none}'+
+'html.kbd{--jnh:var(--kbo,0px)}html.kbd #jnav{display:none}'+
 'html.jn .acct,html.jn #urgentBtn,html.jn #grpBtn,html.jn #chatBtn{display:none!important}'+
 'html.jn #results{bottom:var(--jnh);padding-bottom:0}'+
 'html.jn .maplibregl-ctrl-bottom-right{margin-bottom:var(--jnh)}'+
@@ -391,22 +391,19 @@ window.__mute={grp:muteGrp,room:muteRoom,dm:muteDm};
 function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}try{if(window.__jdm)n+=window.__jdm.unread();}catch(e){}
   var b=nav.querySelector('[data-t="chat"] .nbd');if(!b)return;b.textContent=n>9?'9+':String(n);b.hidden=!n;
   [['grup',function(){return window.__grp.unread();}],['teman',function(){return window.__jdm.unread();}]].forEach(function(z){document.querySelectorAll('[data-x="seg"][data-v="'+z[0]+'"]').forEach(function(sg){var gn=0;try{gn=z[1]();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}});});}
-/* keyboard: menu bawah tidak ikut naik, hanya kolom tulis */
-(function(){var D=document.documentElement,maxH=Math.max(innerHeight,(window.visualViewport&&visualViewport.height)||0),offT=null;
-  function isTxt(t){return !!t&&(t.tagName==='INPUT'&&!/^(checkbox|radio|range|button|submit|file|color)$/i.test(t.type)||t.tagName==='TEXTAREA'||!!t.isContentEditable);}
-  function narrow(){return Math.min(innerWidth,screen.width||innerWidth)<=760;}
-  function on(){if(!narrow())return;clearTimeout(offT);D.classList.add('kbd');}
-  var sh=false;function off(){clearTimeout(offT);offT=setTimeout(function(){if(!isTxt(document.activeElement))D.classList.remove('kbd');},300);}
-  function curH(){return Math.min(innerHeight,(window.visualViewport&&visualViewport.height)||innerHeight);}
-  function shrunk(){return maxH-curH()>120;}
-  document.addEventListener('focusin',function(e){if(isTxt(e.target))on();},true);
-  document.addEventListener('pointerdown',function(e){var t=e.target&&e.target.closest&&e.target.closest('input,textarea,[contenteditable="true"]');if(t&&isTxt(t))on();},true);
-  document.addEventListener('focusout',function(e){if(!isTxt(e.target))return;setTimeout(function(){if(!isTxt(document.activeElement))off();},80);},true);
-  function rs(){var h=curH();if(!isTxt(document.activeElement)&&h>maxH)maxH=h;
-    if(shrunk()){sh=true;if(isTxt(document.activeElement))on();}
-    else if(sh){sh=false;clearTimeout(offT);offT=setTimeout(function(){if(!shrunk())D.classList.remove('kbd');},250);}}
-  addEventListener('resize',rs);if(window.visualViewport)visualViewport.addEventListener('resize',rs);
-  addEventListener('orientationchange',function(){maxH=0;setTimeout(function(){maxH=curH();},500);});})();
+/* keyboard: menu bawah tetap di tempat (tertutup keyboard), hanya kolom tulis yang naik.
+   Tinggi keyboard dibaca dari aplikasi Android (--kb) atau dari layar yang mengecil (web). */
+(function(){var D=document.documentElement,VV=window.visualViewport;
+  function curH(){return Math.min(innerHeight,(VV&&VV.height)||innerHeight);}
+  var maxH=curH();
+  function nkb(){return parseFloat(D.style.getPropertyValue('--kb'))||0;}
+  function upd(){var h=curH(),kb=nkb();if(kb<40&&h>maxH)maxH=h;var sh=Math.max(0,maxH-h),on=kb>40||sh>120;
+    D.style.setProperty('--kbo',(on?Math.max(0,kb-sh):0)+'px');D.classList.toggle('kbd',on);}
+  addEventListener('resize',upd);if(VV)VV.addEventListener('resize',upd);
+  addEventListener('orientationchange',function(){maxH=0;setTimeout(function(){maxH=curH();upd();},600);});
+  /* kolom tulis kosong: hapus sisa <br> dari keyboard supaya tulisan "Tulis pesan" muncul lagi */
+  document.addEventListener('input',function(e){var t=e.target;if(t&&t.isContentEditable&&!t.textContent&&!t.querySelector('[data-tok],img,svg'))t.innerHTML='';},true);
+  window.__kbUpd=upd;upd();})();
 window.__jcBadge=jcBadge;setInterval(jcBadge,2000);
 function renderTamp(){stashPm();
   var ui='1';try{ui=String(+localStorage.getItem('jc_ui')||1);}catch(e){}

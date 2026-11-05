@@ -129,7 +129,7 @@ new MutationObserver(()=>{if(document.documentElement.dataset.tab!=='chat'&&D.on
 window.__jdmBack=()=>{if(!D.on)return false;if(D.panel){D.panel=null;panel();return true;}if(D.cur){D.cur=null;D.panel=null;draw();return true;}close();if(window.__jshell)window.__jshell.setTab('peta');return true;};
 
 const css=document.createElement('style');css.textContent=
-'#jdm{background:var(--bg)}'+
+'#jdm{background:var(--surface)}#jdm .dms{background:var(--bg)}'+
 '#jdm .dtop{background:var(--surface);border-bottom:1px solid var(--line);flex:none;padding-bottom:10px}'+
 '#jdm .ctop{padding:8px 14px 0}#jdm .cseg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}'+
 '#jdm .cseg button{flex:1;min-height:36px;border:0;background:transparent;color:var(--ink-2);border-radius:9px;font:700 14px var(--f-body,system-ui);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer}'+
