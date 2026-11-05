@@ -22,7 +22,8 @@ var P={
  flag:'<path d="M6 21V4M6 5h11l-2 4 2 4H6"/>',
  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
  sticker:'<path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M20 14h-5a1 1 0 00-1 1v5M8.5 9.5h.01M14.5 9.5h.01M8.5 14c1 1 2.2 1.4 3.5 1"/>',
- chev:'<path d="M6 9l6 6 6-6"/>'
+ chev:'<path d="M6 9l6 6 6-6"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>'
 };
 function ic(n,c){return '<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true">'+P[n]+'</svg>';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -195,7 +196,7 @@ function roomStat(r){
 }
 function tinfo(uid){var t=(X.names[uid]||{}).tier;return t?{c:' t-x t-line t-'+t,k:'<span class="tk">'+t[0].toUpperCase()+'</span>'}:{c:'',k:''};}
 function av(uid){var n=(X.names[uid]||{}).name||'?',t=(X.names[uid]||{}).tier;return '<div class="av'+(t==='gold'?' gfr':t==='diamond'?' dfr':t==='admin'?' afr':'')+'" style="background:'+avc(n)+'">'+esc(n.charAt(0).toUpperCase())+'</div>';}
-function msgHTML(m,agg){
+function msgHTML(m,agg,cont){
  var mine=m.user_id===X.uid,nm=(X.names[m.user_id]||{}).name||'Pengguna',h,body,card='',tc='';
  if(m.kind==='sticker'){
   return '<div class="xmsg'+(mine?' mine':'')+'">'+(mine?'':av(m.user_id))+'<div class="mb">'+(mine?'':'<div class="mn">'+esc(nm)+(agg?'<span class="rt"> · '+esc(m.room)+'</span>':'')+'</div>')+'<div class="stk">'+(STKB[m.sticker]||'')+'</div><div class="mt"><span data-ts="'+m.ts+'">'+wt(m.ts)+'</span></div></div>'+(mine?'':'<button class="mo" data-x="msg" data-i="'+m.id+'" aria-label="Opsi pesan">'+ic('more','s')+'</button>')+'</div>';
@@ -204,30 +205,36 @@ function msgHTML(m,agg){
   var v=X.votes[m.id]||{ok:0,no:0},tot=v.ok+v.no,st='',my=X.my[m.id];
   if(tot>=10&&v.ok/tot>=.8)st='ok';else if(tot>=10&&v.ok/tot<.4)st='dbt';
   card=' xcard'+(st==='dbt'?' dbt':'')+'" style="--rc:'+REPC[m.rep];
-  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(m.stn?' · '+esc(m.stn):'')+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div><div class="l2">'+esc(m.room)+' · <span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span></div>'+
+  body='<div class="l1"><span style="width:10px;height:10px;border-radius:50%;background:'+REPC[m.rep]+'"></span>'+esc(m.rep)+(m.stn?' · '+esc(m.stn):'')+(st==='ok'?'<span class="xchip ok">Dikonfirmasi</span>':(st==='dbt'?'<span class="xchip dbt">Diragukan</span>':''))+'</div><div class="l2">'+esc(m.room)+' · <span data-agots="'+m.ts+'">'+agoTxt(m.ts)+'</span> · berakhir '+Math.max(1,Math.ceil((REP_MS-(Date.now()-m.ts))/60000))+' mnt lagi</div>'+
   (mine?'<div class="l2" style="margin-top:6px">'+v.ok+' membenarkan · '+v.no+' menolak</div>':
   '<div class="vt"><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="ok" aria-pressed="'+(my==='ok')+'">Masih sesuai <b>'+v.ok+'</b></button><button class="vb" data-x="vote" data-i="'+m.id+'" data-v="no" aria-pressed="'+(my==='no')+'">Tidak sesuai <b>'+v.no+'</b></button></div>');
  }else{
   body=txtH(m.body||'');if(/^(\s*⟦[a-z]+:\d⟧\s*)+$/.test(m.body||''))body='<span class="ebig">'+body+'</span>';
   var ti=tinfo(m.user_id);tc=ti.c;body+=ti.k;
  }
- h='<div class="xmsg'+(mine?' mine':'')+'">'+(mine?'':av(m.user_id))+'<div class="mb">'+(mine?'':'<div class="mn">'+esc(nm)+(agg?'<span class="rt"> · '+esc(m.room)+'</span>':'')+'</div>')+'<div class="bub'+card+tc+'">'+body+'</div><div class="mt"><span data-ts="'+m.ts+'">'+wt(m.ts)+'</span>'+(mine?' '+ic('check','s'):'')+'</div></div>'+(mine?'':'<button class="mo" data-x="msg" data-i="'+m.id+'" aria-label="Opsi pesan">'+ic('more','s')+'</button>')+'</div>';
+ h='<div class="xmsg'+(mine?' mine':'')+(cont?' cont':'')+'">'+(mine?'':av(m.user_id))+'<div class="mb">'+(mine||cont?'':'<div class="mn">'+esc(nm)+(agg?'<span class="rt"> · '+esc(m.room)+'</span>':'')+'</div>')+'<div class="bub'+card+tc+'">'+body+'</div><div class="mt"><span data-ts="'+m.ts+'">'+wt(m.ts)+'</span>'+(mine?' '+ic('check','s'):'')+'</div></div>'+(mine?'':'<button class="mo" data-x="msg" data-i="'+m.id+'" aria-label="Opsi pesan">'+ic('more','s')+'</button>')+'</div>';
  return h;
 }
 function dotH(n){return KC[n]?'<i class="kd" style="background:'+KC[n]+'"></i>':'';}
+function segHTML(on){var gn=0,tn=0;try{gn=window.__grp?window.__grp.unread():0;}catch(e){}try{tn=window.__jdm?window.__jdm.unread():0;}catch(e){}
+ var b=function(v,t,n){return '<button data-x="seg" data-v="'+v+'" aria-pressed="'+(on===v)+'">'+t+(n?'<b class="run">'+(n>9?'9+':n)+'</b>':'')+'</button>';};
+ return '<div class="ctop"><div class="cseg">'+b('umum','Umum',0)+b('grup','Grup',gn)+b('teman','Teman',tn)+'</div></div>';}
+function repAgg(r){var o={};roomMsgs(r).forEach(function(m){if(m.kind!=='report')return;var v=X.votes[m.id]||{ok:0,no:0};var k=o[m.rep]||(o[m.rep]={n:0,ts:0});k.n+=1+v.ok;k.ts=Math.max(k.ts,m.ts);});
+ return Object.keys(o).map(function(k){return {k:k,n:o[k].n,ts:o[k].ts};}).sort(function(a,b){return b.n-a.n;});}
 function topHTML(){
- var rc=catOf(X.room),isU=X.room==='Umum',h='<div class="ctop"><div class="cseg"><button data-x="seg" data-v="umum" aria-pressed="true">Umum</button><button data-x="seg" data-v="grup" aria-pressed="false">Grup</button></div></div>';
+ var rc=catOf(X.room),isU=X.room==='Umum',h=segHTML('umum');
  h+='<div class="rooms">'+CATS.map(function(x){var r=x[0]==='Umum'?'Umum':x[0]==='JL'?'JakLingko':x[0],st=(x[0]==='MRT'||x[0]==='LRT'||x[0]==='JL')?roomStat(r):'';
   if(x[0]==='KRL'||x[0]==='TJ'){var worst='Normal';subRooms(x[0]).forEach(function(s){var z=roomStat(s);if(z==='Gangguan'||(z==='Padat'&&worst==='Normal'))worst=z;});st=worst;}
   var un=(rc!==x[0]&&X.unr[x[0]]&&!(window.__mute&&window.__mute.room(x[0])))?'<b class="run">'+(X.unr[x[0]]>9?'9+':X.unr[x[0]])+'</b>':'';
   return '<button class="room" data-x="cat" data-c="'+x[0]+'" aria-pressed="'+(rc===x[0])+'">'+x[1]+un+(st&&st!=='Normal'?'<i class="sd3" style="background:'+SCOL[st]+'"></i>':'')+'</button>';}).join('')+'</div>';
  if(isU)return h;
- var rs=roomStat(X.room),hasDD=(rc==='KRL'||rc==='TJ'),pill='<span class="stp" style="--c:'+SCOL[rs]+'"><i></i>'+rs+'</span>';
+ var hasDD=(rc==='KRL'||rc==='TJ');
  var nm=X.room.replace(/^(KRL|TJ) /,''),sh=nm==='Rangkasbitung'?'Rangkas':nm;
  var lbl=rc==='KRL'?dotH(nm)+esc(sh):(nm==='Non-BRT'?'Non-BRT':'Koridor '+esc(nm));
- h+='<div class="rln">'+(hasDD?'<div class="ddw fl"><button class="ddb" data-x="dd" aria-expanded="'+X.dd+'">'+lbl+ic('chev','s')+'</button>'+(X.dd?'<div class="ddl" role="listbox">'+subRooms(rc).map(function(r){var n2=r.replace(/^(KRL|TJ) /,''),z=roomStat(r);return '<button class="ddi" role="option" data-x="room" data-r="'+esc(r)+'" aria-selected="'+(X.room===r)+'"><span class="dn">'+(rc==='KRL'?dotH(n2):'')+(rc==='TJ'&&n2!=='Non-BRT'?'Koridor ':'')+esc(n2)+'</span>'+(z!=='Normal'?'<i class="sd3" style="background:'+SCOL[z]+'"></i>':'')+'</button>';}).join('')+'</div>':'')+'</div>':'<div class="ddw fl"><div class="ddb stat">'+pill+'</div></div>')+
-  '<div class="ddw fl"><button class="lap" data-x="lapor" aria-expanded="'+X.rdd+'" aria-pressed="'+X.rdd+'">'+ic('flag','s')+'Lapor</button>'+(X.rdd?'<div class="ddl rt" role="menu">'+QR[rc].map(function(n){return '<button class="ddi" role="menuitem" data-x="rep" data-n="'+n+'"><span class="dn"><i class="kd" style="background:'+REPC[n]+'"></i>'+n+'</span></button>';}).join('')+'</div>':'')+'</div></div>';
- h+='<div class="rln2">'+(hasDD&&rs!=='Normal'?pill:'')+'<span class="pt">'+(X.pins[X.room]?ic('pin','s')+esc(X.pins[X.room]):'')+'</span></div>';
+ var ag=repAgg(X.room),chips=ag.length?ag.map(function(a){return '<span class="stc" style="--c:'+REPC[a.k]+'">'+esc(a.k)+' <small>'+a.n+' org · '+Math.max(1,Math.round((Date.now()-a.ts)/60000))+' mnt</small></span>';}).join(''):'<span class="stc ok" style="--c:#2F9E6E">Belum ada laporan</span>';
+ h+='<div class="rln">'+(hasDD?'<div class="ddw"><button class="ddb sm" data-x="dd" aria-expanded="'+X.dd+'">'+lbl+ic('chev','s')+'</button>'+(X.dd?'<div class="ddl" role="listbox">'+subRooms(rc).map(function(r){var n2=r.replace(/^(KRL|TJ) /,''),z=roomStat(r);return '<button class="ddi" role="option" data-x="room" data-r="'+esc(r)+'" aria-selected="'+(X.room===r)+'"><span class="dn">'+(rc==='KRL'?dotH(n2):'')+(rc==='TJ'&&n2!=='Non-BRT'?'Koridor ':'')+esc(n2)+'</span>'+(z!=='Normal'?'<i class="sd3" style="background:'+SCOL[z]+'"></i>':'')+'</button>';}).join('')+'</div>':'')+'</div>':'')+
+  '<div class="stcs">'+chips+'</div></div>';
+ if(X.pins[X.room])h+='<div class="rln2"><span class="pt">'+ic('pin','s')+esc(X.pins[X.room])+'</span></div>';
  return h;
 }
 function compHTML(){
@@ -236,10 +243,13 @@ function compHTML(){
  var nl=newLeft();
  if(nl)return '<div class="comp"><div class="lockb">'+ic('lock','s')+'<span>Akun baru. Menulis dan vote terbuka '+nl+' hari lagi.</span></div></div>';
  var d=X.draft[X.room]||'',ln=dlen(d);
- return '<div class="comp"><div class="xcnt'+(ln>=MAXC?' full':'')+'">'+(ln>=70?ln+'/'+MAXC:'')+'</div><div class="rowc"><button class="xib" data-x="stk" aria-pressed="'+!!X.panel+'" aria-label="Emot dan stiker">'+ic('sticker')+'</button><div class="inp ce" contenteditable="true" role="textbox" data-ph="'+(X.room==='Umum'?'Tulis ke General':'Tulis pesan')+'" aria-label="Tulis pesan">'+txtH(d)+'</div><button class="snd" data-x="send" aria-label="Kirim">'+ic('send')+'</button></div></div>';
+ return '<div class="comp"><div class="xcnt'+(ln>=MAXC?' full':'')+'">'+(ln>=70?ln+'/'+MAXC:'')+'</div><div class="rowc"><button class="xib plus" data-x="plus" aria-pressed="'+(X.panel==='plus')+'" aria-label="Lapor dan ajakan">'+ic('plus')+'</button><div class="inp ce" contenteditable="true" role="textbox" data-ph="'+(X.room==='Umum'?'Tulis ke General':'Tulis pesan')+'" aria-label="Tulis pesan">'+txtH(d)+'</div><button class="xib" data-x="stk" aria-pressed="'+(!!X.panel&&X.panel!=='plus')+'" aria-label="Emot dan stiker">'+ic('sticker')+'</button><button class="snd" data-x="send" aria-label="Kirim">'+ic('send')+'</button></div></div>';
 }
 function panelHTML(){
  if(!X.panel||!X.uid)return '';
+ if(X.panel==='plus'){var rc2=catOf(X.room),q=QR[rc2];
+  return '<div class="epn plusp">'+(q?'<div class="plh">LAPOR KONDISI '+esc(X.room.toUpperCase())+'</div><div class="plk">'+q.map(function(n){return '<button data-x="rep" data-n="'+n+'"><i style="background:'+REPC[n]+'"></i>'+n+'</button>';}).join('')+'</div>':'')+
+   '<div class="plh">AJAKAN</div><button class="pla" data-x="ajak"><span>🙋</span><b>Buat ajakan</b></button></div>';}
  var r3=rank(),cl=r3?[0,1,2,3,4]:[2,0],tab=r3?X.panel:'emo',h='<div class="epn">';
  if(r3)h+='<div class="etabs"><button data-x="ptab" data-t="emo" aria-pressed="'+(tab==='emo')+'">Emot</button><button data-x="ptab" data-t="stk" aria-pressed="'+(tab==='stk')+'">Stiker</button></div>';
  if(tab==='emo'){
@@ -291,7 +301,7 @@ function drawMsgs(toBottom){
  if(!X.ready)h='<div class="empty">Memuat…</div>';
  else if(X.err&&!list.length)h='<div class="empty">'+esc(X.err)+'</div>';
  else if(!list.length)h=isU?'<div class="empty">Belum ada pesan.</div>':'<div class="empty">Belum ada laporan di jalur ini.<br>Jadilah yang pertama.</div>';
- else h=list.map(function(x){return msgHTML(x,false);}).join('');
+ else h=list.map(function(x,i){var p=list[i-1];return msgHTML(x,false,!!(p&&p.user_id===x.user_id&&p.kind==='text'&&x.kind==='text'&&x.ts-p.ts<180000));}).join('');
  m.innerHTML=h;
  if(toBottom||near)m.scrollTop=m.scrollHeight;else m.scrollTop=st;
 }
@@ -325,7 +335,7 @@ async function sendSticker(id){
  }catch(e){toast(errMsg(e));}
 }
 async function lapor(n){
- X.rdd=false;drawTop();
+ X.rdd=false;X.panel=null;drawTop();drawComp();drawPanel();
  if(!need())return;
  toast('Mengecek lokasi…');
  var f=await getFix();
@@ -358,14 +368,16 @@ function onClick(e){
  if(X.noClick&&t.closest('.rooms'))return;
  if(X.lpF&&t.classList.contains('emb')){X.lpF=false;return;}
  var a=t.dataset.x,d=t.dataset;
- if(a==='seg'){if(d.v==='grup'&&window.__jshell&&window.__jshell.openGrp)window.__jshell.openGrp();return;}
+ if(a==='seg'){if(d.v==='grup'&&window.__jshell&&window.__jshell.openGrp)window.__jshell.openGrp();else if(d.v==='teman'&&window.__jdm)window.__jdm.open();return;}
+ if(a==='plus'){X.panel=X.panel==='plus'?null:'plus';X.emPick=null;drawComp();drawPanel();return;}
+ if(a==='ajak'){X.panel=null;drawComp();drawPanel();toast('Ajakan segera hadir');return;}
  if(a==='cat'){var c=d.c;setRoom(c==='Umum'?'Umum':c==='MRT'?'MRT':c==='LRT'?'LRT':c==='JL'?'JakLingko':X.lastRoom[c]);return;}
  if(a==='dd'){X.dd=!X.dd;X.rdd=false;drawTop();return;}
  if(a==='room'){setRoom(d.r);return;}
  if(a==='lapor'){X.rdd=!X.rdd;X.dd=false;drawTop();return;}
  if(a==='rep'){lapor(d.n);return;}
  if(a==='login'){sheet('login');return;}
- if(a==='stk'){X.panel=X.panel?null:'emo';X.emPick=null;drawComp();drawPanel();return;}
+ if(a==='stk'){X.panel=(X.panel&&X.panel!=='plus')?null:'emo';X.emPick=null;drawComp();drawPanel();return;}
  if(a==='ptab'){X.panel=d.t;X.emPick=null;drawPanel();return;}
  if(a==='emoins'){emoAdd(d.id,X.emc[d.id]==null?2:X.emc[d.id]);return;}
  if(a==='emocol'){var id=X.emPick;X.emc[id]=+d.i;X.emPick=null;emoAdd(id,+d.i);drawPanel();return;}
@@ -505,7 +517,7 @@ window.__jchat={
  show:function(){if(X.root){draw();if(!X.ready&&!X.loading)loadAll();}},
  acct:acctHTML,
  rpc:rpc,errMsg:errMsg,unread:unrTotal,seen:function(){seen();if(X.root)drawTop();},cats:CATS,filter:filterMsg,googleLogin:function(){return googleLogin().catch(function(er){toast(errMsg(er));});},uid:function(){return X.uid;},
- state:X
+ state:X,seg:segHTML,sb:getSB,stickers:function(){var r3=rank();return STKL.filter(function(x){return TRK[x.t]<=r3;});},stk:function(id){return STKB[id]||'';},names:function(){return X.names;}
 };
 /* status login dibaca saat aplikasi dibuka, tidak menunggu tab Chat */
 setTimeout(function(){loadAuth().catch(function(){X.authOn=false;});},400);

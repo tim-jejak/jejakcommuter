@@ -212,3 +212,46 @@
 #jchat .av.afr{position:relative}
 #jchat .av.afr::before{content:"";position:absolute;inset:-3px;padding:3px;border-radius:11px;background:conic-gradient(from var(--ang),#0b0c0e,#6b727a,#f2f5f8,#8a9199,#0b0c0e,#454a51,#dfe4e9,#0b0c0e);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:dsp 3s linear infinite}
 @media (prefers-reduced-motion:reduce){#jchat .bub.t-admin,#jchat .av.afr::before{animation:none}}
+/* ===== tampilan chat baru ===== */
+#jchat .ctop{padding:8px 14px 8px}
+#jchat .cseg{background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}
+#jchat .cseg button{min-height:36px;border:0;background:transparent;color:var(--ink-2);border-radius:9px;font-weight:700;font-size:14px;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+#jchat .cseg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+#jchat .cseg .run{min-width:17px;height:17px;border-radius:9px;background:#D8262B;color:#fff;font-size:10.5px;font-weight:800;line-height:17px;padding:0 4px;text-align:center}
+#jchat .rooms{margin:0 14px;gap:6px;padding:0 0 8px}
+#jchat .room{border-radius:999px;padding:6px 12px;font-weight:600;position:relative}
+#jchat .room[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+#jchat .room .run{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#D8262B;color:#fff;font-size:10px;line-height:16px;padding:0 4px;text-align:center;margin:0}
+#jchat .rln{padding:0 14px 8px;gap:8px;display:flex;align-items:center;min-height:0}
+#jchat .rln .ddw{flex:none}
+#jchat .ddb.sm{height:32px;min-width:0;width:auto;border-radius:10px;background:var(--surface-2);border:0;padding:0 10px;gap:6px;font-weight:700;font-size:14px;display:inline-flex;align-items:center}
+#jchat .stcs{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#jchat .stcs::-webkit-scrollbar{display:none}
+#jchat .stc{flex:none;font-size:12px;font-weight:800;padding:5px 9px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent);white-space:nowrap}
+#jchat .stc small{font-weight:600;opacity:.8}
+#jchat .stc.ok{font-weight:600}
+#jchat .rln2{height:auto;min-height:0;padding:0 14px 6px;font-size:12.5px;color:var(--ink-2)}
+#jchat #jxtop{border-bottom:1px solid var(--line)}
+#jchat .xmsg{margin-bottom:8px;gap:7px}
+#jchat .xmsg.cont{margin-top:-5px}
+#jchat .xmsg.cont .av{visibility:hidden}
+#jchat .av{width:28px;height:28px;border-radius:50%;font-size:12px}
+#jchat .av.dfr::before,#jchat .av.afr::before{border-radius:50%}
+#jchat .bub{border-radius:16px;border-bottom-left-radius:5px;padding:8px 12px}
+#jchat .xmsg.mine .bub{border-radius:16px;border-bottom-right-radius:5px}
+#jchat .xmsg.cont .bub{border-top-left-radius:6px}
+#jchat .bub.xcard{border-radius:12px;border-left-width:4px}
+#jchat .comp{padding:8px 10px}
+#jchat .rowc{display:flex;align-items:center;gap:6px}
+#jchat .rowc .xib{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface)}
+#jchat .rowc .xib.plus{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:transparent;color:var(--accent)}
+#jchat .rowc .xib[aria-pressed="true"]{background:var(--accent);color:var(--on);border-color:transparent}
+#jchat .rowc .inp{flex:1;min-width:0;border-radius:20px}
+#jchat .snd{width:40px;height:40px;border-radius:50%}
+#jchat .plusp{padding:12px!important}
+#jchat .plh{font-size:11.5px;font-weight:800;letter-spacing:.05em;color:var(--ink-2);margin:2px 2px 8px}
+#jchat .plk{display:grid;grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:6px;margin-bottom:12px}
+#jchat .plk button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 0;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+#jchat .plk i{width:12px;height:12px;border-radius:50%;display:block}
+#jchat .pla{width:100%;display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:14.5px}
+#jchat .pla span{width:36px;height:36px;border-radius:11px;background:#FFF4D6;display:flex;align-items:center;justify-content:center;font-size:18px}

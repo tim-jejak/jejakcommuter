@@ -175,6 +175,7 @@ window.__sysCopy=function(){var m=/Android (\d+)/.exec(navigator.userAgent||'');
 function isNative(){var C=window.Capacitor;return !!(C&&C.isNativePlatform&&C.isNativePlatform());}
 function onBack(){
   if(window.__jtemanBack&&window.__jtemanBack())return 'ok';
+  if(window.__jdmBack&&window.__jdmBack())return 'ok';
   var chx=document.getElementById('chat');
   if(chx&&chx.classList.contains('open')){var cx=document.getElementById('chX');if(cx)cx.click();return 'ok';}
   var grp=document.getElementById('grp');
@@ -364,9 +365,9 @@ function muteSave(){try{localStorage.setItem('jc_mute',JSON.stringify(MUTE));}ca
 window.__mute={grp:muteGrp,room:muteRoom};
 
 /* ---------- angka belum dibaca di menu Chat ---------- */
-function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}
+function jcBadge(){var n=0;try{if(window.__grp&&window.__grp.unread)n+=window.__grp.unread();}catch(e){}try{if(window.__jchat&&window.__jchat.unread)n+=window.__jchat.unread();}catch(e){}try{if(window.__jdm)n+=window.__jdm.unread();}catch(e){}
   var b=nav.querySelector('[data-t="chat"] .nbd');if(!b)return;b.textContent=n>9?'9+':String(n);b.hidden=!n;
-  var sg=document.querySelector('#jchat [data-x="seg"][data-v="grup"]');if(sg){var gn=0;try{gn=window.__grp.unread();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}}}
+  [['grup',function(){return window.__grp.unread();}],['teman',function(){return window.__jdm.unread();}]].forEach(function(z){document.querySelectorAll('[data-x="seg"][data-v="'+z[0]+'"]').forEach(function(sg){var gn=0;try{gn=z[1]();}catch(e){}var d=sg.querySelector('.run');if(gn&&!d){d=document.createElement('b');d.className='run';sg.appendChild(d);}if(d){if(gn)d.textContent=gn>9?'9+':gn;else d.remove();}});});}
 window.__jcBadge=jcBadge;setInterval(jcBadge,2000);
 function renderTamp(){stashPm();
   var ui='1';try{ui=String(+localStorage.getItem('jc_ui')||1);}catch(e){}
