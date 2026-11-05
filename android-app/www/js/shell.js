@@ -50,6 +50,8 @@ var IC={
   store:'<path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6"/>',
   fuel:'<path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16M5 21h10M15 9l3 2v6a1.5 1.5 0 003 0v-8l-3-3"/><path d="M7 7h6"/>',
   hosp:'<path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/>',
+  clinic:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>',
+  pill:'<rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-40 12 12.5)"/><path d="M9.2 8.6l5.4 6.4"/>',
   flame:'<path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
   badge:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>',
   nav:'<path d="M12 3L5 20l7-4 7 4z"/>',
@@ -394,7 +396,7 @@ vTamp.addEventListener('input',function(e){
 });
 
 /* ---------- Urgent ---------- */
-var UC=[['transum','Transum terdekat','bus'],['masjid','Masjid','mosque'],['mm','Minimarket','store'],['spbu','SPBU','fuel'],['rs','Rumah sakit','hosp']];
+var UC=[['transum','Transum terdekat','bus'],['masjid','Masjid','mosque'],['mm','Minimarket','store'],['spbu','SPBU','fuel'],['rs','Rumah sakit','hosp'],['klinik','Klinik','clinic'],['apotek','Apotek','pill']];
 function renderUrg(){
   vUrg.innerHTML='<div class="jscr" style="padding-top:14px">'+UC.map(function(c){return '<button type="button" class="jug" data-c="'+c[0]+'"><span class="ui2">'+ic(c[2])+'</span><span class="t">'+c[1]+'</span>'+ic('chev',18)+'</button>';}).join('')+'</div>'+
   '<div class="jemg">'+[['badge','Polisi','110'],['hosp','Ambulans','119'],['flame','Pemadam','113']].map(function(x){return '<a href="tel:'+x[2]+'" aria-label="Telepon '+x[1]+'">'+ic(x[0],24)+x[1]+'<small>'+x[2]+'</small></a>';}).join('')+'</div>';
@@ -413,19 +415,25 @@ function loadPOI(){
   U._pp=new Promise(function(res){(function t(i){if(i>=urls.length){U._pp=null;return res(null);}var s=document.createElement('script');s.src=urls[i];s.onload=function(){res(window.__POI||null);};s.onerror=function(){t(i+1);};document.head.appendChild(s);})(0);});
   return U._pp;
 }
-async function fetchRS(p){
-  var key='jc_rs_'+p.lat.toFixed(2)+'_'+p.lon.toFixed(2),c=null;
+var OVQ={rs:'nwr[amenity=hospital](around:R);nwr[healthcare=hospital](around:R);',klinik:'nwr[amenity~"^(clinic|doctors)$"](around:R);nwr[healthcare~"^(clinic|doctor|centre)$"](around:R);',apotek:'nwr[amenity=pharmacy](around:R);nwr[healthcare=pharmacy](around:R);'};
+var OVN={rs:'Rumah sakit',klinik:'Klinik',apotek:'Apotek'};
+async function fetchOv(k,p){
+  var key='jc_ov2_'+k+'_'+p.lat.toFixed(2)+'_'+p.lon.toFixed(2),c=null;
   try{c=JSON.parse(localStorage.getItem(key)||'null');}catch(e){}
-  if(c&&Date.now()-c.t<14*864e5)return c.d;
-  var q='[out:json][timeout:25];nwr[amenity=hospital](around:4000,'+p.lat+','+p.lon+');out center 60;';
-  var ctl=new AbortController(),to=setTimeout(function(){ctl.abort();},20000);
-  try{
-    var r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ctl.signal});
-    var j=await r.json();clearTimeout(to);
-    var d=(j.elements||[]).map(function(e){return [e.lat||(e.center&&e.center.lat),e.lon||(e.center&&e.center.lon),(e.tags&&(e.tags.name||e.tags.operator))||'Rumah sakit',''];}).filter(function(x){return x[0];});
-    try{localStorage.setItem(key,JSON.stringify({t:Date.now(),d:d}));}catch(e){}
-    return d;
-  }catch(e){clearTimeout(to);return c?c.d:[];}
+  if(c&&c.d&&c.d.length&&Date.now()-c.t<14*864e5)return c.d;
+  var q='[out:json][timeout:25];('+OVQ[k].replace(/R/g,'4500,'+p.lat+','+p.lon)+');out center 200;';
+  var urls=['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+  for(var u=0;u<urls.length;u++){
+    var ctl=new AbortController(),to=setTimeout(function(){ctl.abort();},20000);
+    try{
+      var r=await fetch(urls[u],{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ctl.signal});
+      var j=await r.json();clearTimeout(to);
+      var d=(j.elements||[]).map(function(e){return [e.lat||(e.center&&e.center.lat),e.lon||(e.center&&e.center.lon),(e.tags&&(e.tags.name||e.tags.brand||e.tags.operator))||OVN[k],''];}).filter(function(x){return x[0];});
+      if(d.length)try{localStorage.setItem(key,JSON.stringify({t:Date.now(),d:d}));}catch(e){}
+      return d;
+    }catch(e){clearTimeout(to);}
+  }
+  return c?c.d:[];
 }
 async function dataFor(c,p){
   var J=window.__jc;
@@ -433,11 +441,11 @@ async function dataFor(c,p){
     var t=Math.floor(J.S.t||0);
     return J.ST.map(function(s){var li=[...s.lines][0],L=J.LINES[li]||{};return {lat:s.lat,lon:s.lon,name:(s.g==='tj'?'Halte ':'Stasiun ')+s.name,tag:L.label||'',col:L.col||'#555'};});
   }
-  if(c==='rs'){var P=await loadPOI();var arr=(P&&P.rs)?P.rs:await fetchRS(p);return arr.map(function(r){return {lat:r[0],lon:r[1],name:r[2]};});}
+  if(OVQ[c]){var P=await loadPOI();var arr=(P&&P[c]&&P[c].length)?P[c]:await fetchOv(c,p);return arr.map(function(r){return {lat:r[0],lon:r[1],name:r[2]};});}
   var P2=await loadPOI();var arr2=(P2&&P2[c])||[];return arr2.map(function(r){return {lat:r[0],lon:r[1],name:r[2]};});
 }
-function radC(){return U.c==='rs'?3500:2000;}
-function radT(){return U.c==='rs'?'3,5 km':'2 km';}
+function radC(){return OVQ[U.c]?3500:2000;}
+function radT(){return OVQ[U.c]?'3,5 km':'2 km';}
 function ucat(c){return UC.filter(function(x){return x[0]===c;})[0];}
 function nearby(p){
   return U.all.map(function(x,i){return {i:i,name:x.name,lat:x.lat,lon:x.lon,tag:x.tag,col:x.col,d:hav(p,x)};}).filter(function(x){return x.d<=radC();}).sort(function(a,b){return a.d-b.d;}).slice(0,30);
