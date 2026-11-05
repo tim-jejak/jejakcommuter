@@ -1,0 +1,23 @@
+name: Ukur data Jawa (sementara)
+on: {workflow_dispatch: {}}
+jobs:
+  ukur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          curl -sSfL -o java.osm.pbf https://download.geofabrik.de/asia/indonesia/java-latest.osm.pbf
+          ls -la java.osm.pbf
+          osmium tags-filter java.osm.pbf nwr/amenity=fuel,place_of_worship,hospital,clinic,doctors,pharmacy nwr/shop=convenience,supermarket nwr/healthcare=hospital,clinic,doctor,centre,pharmacy -o poi.osm.pbf
+          osmium export poi.osm.pbf -f geojsonseq -o poi.geojsonseq
+          python3 - <<'PY'
+          import importlib.util,json,os,gzip
+          spec=importlib.util.spec_from_file_location('b','scripts/bake_poi.py');b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
+          d=b.from_geojson('poi.geojsonseq')
+          for k,v in d.items(): print(k,len(v))
+          s=('window.__POI='+json.dumps({"v":1,**d},ensure_ascii=False,separators=(',',':'))+';').encode()
+          print('JAWA total byte',len(s),'gzip',len(gzip.compress(s)))
+          for k,v in d.items():
+            x=json.dumps(v,ensure_ascii=False,separators=(',',':')).encode();print(' ',k,len(x),'gzip',len(gzip.compress(x)))
+          PY
