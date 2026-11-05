@@ -129,7 +129,8 @@ def kinds(t):
         out.append("masjid")
     if a == "hospital" or h == "hospital":
         out.append("rs")
-    elif a in ("clinic", "doctors") or h in ("clinic", "doctor", "centre"):
+    elif (a in ("clinic", "doctors") or h in ("clinic", "doctor")) and not re.search(
+            "posyandu|laborator|kecantikan|aesthetic|estetik|beauty|skin ?care|zap |spa\\b|salon|hewan|vet", nm, re.I):
         out.append("klinik")
     if a == "pharmacy" or h == "pharmacy":
         out.append("apotek")
